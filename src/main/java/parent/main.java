@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.*;
 
-public class Main {
+public class main {
     public static int n, m;
     public static int[][] map_info;
     public static int[][] user_info;
@@ -59,13 +59,12 @@ public class Main {
         if (pos0 == pos1) {
             ArrayList<int[]> returnList = new ArrayList<>();
 
-            for (int i = 0; i < 4; i ++) {
-                for (int j = 0; j < 4; j++) {
-                    returnList.add({i, j});
-                }
+//            for (int i = 0; i < 4; i ++) {
+//                for (int j = 0; j < 4; j++) {
+//                    returnList.add({i, j});
+//                }
             }
         }
-    }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -159,5 +158,4 @@ public class Main {
         }
         return true;
     }
-}
 }
