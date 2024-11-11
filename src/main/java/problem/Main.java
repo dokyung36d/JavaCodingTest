@@ -32,7 +32,7 @@ public class Main {
         @Override
         public int compareTo(TravelPresent anotherPresent) {
             if (this.profit != anotherPresent.profit) {
-                return Integer.compare(this.profit, anotherPresent.profit);
+                return Integer.compare(-this.profit, -anotherPresent.profit);
             }
 
             return Integer.compare(this.id, anotherPresent.id);
@@ -75,10 +75,27 @@ public class Main {
     public static final int initValue = (int) Math.pow(10, 5);
 
     public static void main(String[] args) throws IOException {
-        init();
+//        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+//        int i = 0;
+//        while (true) {
+//            String x = br.readLine();
+//            i++;
+//            if (x == null) {
+//                break;
+//            }
+//
+//            System.out.println(i);
+//        }
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        while (Q-- > 0) {
-            StringTokenizer st = new StringTokenizer(br.readLine());
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        Q = Integer.parseInt(st.nextToken());
+
+        init();
+        for (int i = 0; i < Q; i++) {
+
+//            if (line == null) { break; }
+            st = new StringTokenizer(br.readLine());
 
 
             int command_kind = Integer.parseInt(st.nextToken());
@@ -125,12 +142,15 @@ public class Main {
             graphMap.get(secondNodeUniqueNum).connectedNodeDict.computeIfAbsent(firstNodeUniqueNum, k -> 101);
 
 
-            int min_value = graphMap.get(firstNodeUniqueNum).connectedNodeDict.get(secondNodeUniqueNum);
+            int min_value = Math.max(graphMap.get(firstNodeUniqueNum).connectedNodeDict.get(secondNodeUniqueNum),
+                    graphMap.get(secondNodeUniqueNum).connectedNodeDict.get(firstNodeUniqueNum));
             if (value < min_value) {
                 graphMap.get(firstNodeUniqueNum).connectedNodeDict.put(secondNodeUniqueNum, value);
                 graphMap.get(secondNodeUniqueNum).connectedNodeDict.put(firstNodeUniqueNum, value);
             }
         }
+
+        updateDijkstra();
     }
     public static void prcoess200(StringTokenizer st) throws IOException {
         int id = Integer.parseInt(st.nextToken());
@@ -139,9 +159,8 @@ public class Main {
 
         int profit;
         int spentMoney = dijkstra.get(dest);
-
-        if (spentMoney > revenue) { return; }
         profit = revenue - spentMoney;
+
 
         TravelPresent newTravelPresent = new TravelPresent(id, profit, dest, revenue);
         travelPresentPriorityQueue.add(newTravelPresent);
@@ -161,10 +180,20 @@ public class Main {
             //In case, the present is removed
             if (travelPresentMap.get(travelPresent.id) == null) { continue; }
 
+            if (travelPresent.profit < 0) {
+                System.out.println(-1);
+
+                // that present is sold, but need to store in queue in case when start change
+                travelPresentPriorityQueue.add(travelPresent);
+                return;
+            }
+
             System.out.println(travelPresent.id);
             travelPresentMap.remove(travelPresent.id);
             return ;
         }
+
+        System.out.println(-1);
     }
 
     public static void process500(StringTokenizer st) throws IOException {
@@ -180,7 +209,7 @@ public class Main {
         }
 
         for (TravelPresent travelPresent : travelPresents) {
-            int spentMoney = dijkstra.get(travelPresent.id);
+            int spentMoney = dijkstra.get(travelPresent.dest);
             travelPresent.setProfit(spentMoney);
 
             travelPresentPriorityQueue.add(travelPresent);
@@ -189,13 +218,6 @@ public class Main {
     }
 
     public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        Q = Integer.parseInt(st.nextToken());
-        System.out.println("Q is allocated");
-
-        int initValue = (int) Math.pow(10, 5);
         dijkstra = new ArrayList<>(Collections.nCopies(2000, initValue));
     }
 
@@ -204,10 +226,17 @@ public class Main {
 
         //value previous calculated
 //        if (destValue != initValue) { return destValue; }
+        dijkstra = new ArrayList<>(Collections.nCopies(2000, initValue));
 
         PriorityQueue<QueueNode> queue = new PriorityQueue<>();
         QueueNode initNode = new QueueNode(startPoint, 0);
         queue.add(initNode);
+
+        dijkstra.set(startPoint, 0);
+
+        if (graphMap.get(startPoint) == null) {
+            return;
+        }
 
         ArrayList<Integer> connectedNodesUniqueNum = new ArrayList<>(graphMap.get(startPoint).connectedNodeDict.keySet());
 
@@ -224,7 +253,9 @@ public class Main {
             QueueNode queueNode = queue.poll();
 
             //Final change
-            dijkstra.set(queueNode.curPos, queueNode.usedMoney);
+            if (queueNode.usedMoney < dijkstra.get(queueNode.curPos)) {
+                dijkstra.set(queueNode.curPos, queueNode.usedMoney);
+            }
 
             ArrayList<Integer> nearNodes = new ArrayList<>(graphMap.get(queueNode.curPos).connectedNodeDict.keySet());
 
