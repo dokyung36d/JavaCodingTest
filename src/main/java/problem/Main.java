@@ -1,4 +1,4 @@
-package CodeTreeTour;
+package problem;
 
 import java.util.*;
 import java.io.*;
@@ -19,11 +19,14 @@ public class Main {
         int id;
         int dest;
         int profit;
+        int revenue;
 
-        TravelPresent(int id, int profit, int dest) {
+
+        TravelPresent(int id, int profit, int dest, int revenue) {
             this.id = id;
             this.profit = profit;
             this.dest = dest;
+            this.revenue = revenue;
         }
 
         @Override
@@ -33,6 +36,18 @@ public class Main {
             }
 
             return Integer.compare(this.id, anotherPresent.id);
+        }
+
+        public void setProfit(int money) {
+            int newProfit = this.revenue - money;
+
+            if (newProfit < 0) {
+                this.profit = -1;
+                return ;
+            }
+
+            this.profit = newProfit;
+
         }
     }
 
@@ -62,13 +77,13 @@ public class Main {
     public static void main(String[] args) throws IOException {
         init();
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        for (int i = 0; i < Q; i++) {
+        while (Q-- > 0) {
             StringTokenizer st = new StringTokenizer(br.readLine());
+
 
             int command_kind = Integer.parseInt(st.nextToken());
             if (command_kind == 100) {
                 prcoess100(st);
-                System.out.println("hello");
             }
 
             else if (command_kind == 200) {
@@ -87,9 +102,6 @@ public class Main {
                 process500(st);
             }
         }
-        updateDijkstra();
-        System.out.println("hello");
-
     }
     public static void prcoess100(StringTokenizer st) throws IOException {
         int n = Integer.parseInt(st.nextToken());
@@ -131,7 +143,7 @@ public class Main {
         if (spentMoney > revenue) { return; }
         profit = revenue - spentMoney;
 
-        TravelPresent newTravelPresent = new TravelPresent(id, profit, dest);
+        TravelPresent newTravelPresent = new TravelPresent(id, profit, dest, revenue);
         travelPresentPriorityQueue.add(newTravelPresent);
         travelPresentMap.put(id, 1);
 
@@ -160,8 +172,19 @@ public class Main {
         startPoint = newStartPoint;
 
         updateDijkstra();
+        ArrayList<TravelPresent> travelPresents = new ArrayList<>();
 
+        while (!travelPresentPriorityQueue.isEmpty()) {
+            TravelPresent travelPresent = travelPresentPriorityQueue.poll();
+            travelPresents.add(travelPresent);
+        }
 
+        for (TravelPresent travelPresent : travelPresents) {
+            int spentMoney = dijkstra.get(travelPresent.id);
+            travelPresent.setProfit(spentMoney);
+
+            travelPresentPriorityQueue.add(travelPresent);
+        }
 
     }
 
@@ -170,6 +193,7 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         Q = Integer.parseInt(st.nextToken());
+        System.out.println("Q is allocated");
 
         int initValue = (int) Math.pow(10, 5);
         dijkstra = new ArrayList<>(Collections.nCopies(2000, initValue));
@@ -212,9 +236,6 @@ public class Main {
                 QueueNode newQueueNode = new QueueNode(nearNode, queueNode.usedMoney + spentMoney);
                 queue.add(newQueueNode);
             }
-
         }
-
-
     }
 }

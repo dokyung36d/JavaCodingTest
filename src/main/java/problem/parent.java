@@ -1,15 +1,12 @@
-package parent;
+package problem;
 
 
-import javax.management.ObjectName;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
-import java.util.StringTokenizer;
 import java.util.*;
 
-public class main {
+public class parent {
     public static int n, m;
     public static int[][] map_info;
     public static int[][] user_info;
@@ -23,7 +20,7 @@ public class main {
     public static int answer = 0;
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main_parent(String[] args) throws IOException {
         init();
         queue.add(user_info);
 

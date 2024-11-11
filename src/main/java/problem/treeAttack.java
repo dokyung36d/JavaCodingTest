@@ -1,8 +1,11 @@
-package TreeAttack;
+package problem;
 
-import java.util.*;
-import java.io.*;
-public class Main {
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class treeAttack {
     public static final int MAX_N = 100;
     public static final int MAX_M = 100;
 
@@ -14,7 +17,7 @@ public class Main {
 
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main_treeattack(String[] args) throws IOException {
         init();
 
         for (int i = 0; i < 2; i++) {
