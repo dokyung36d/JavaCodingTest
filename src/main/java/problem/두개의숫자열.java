@@ -1,9 +1,11 @@
 package problem;
 
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
 
-public class Main {
+public class 두개의숫자열 {
     public static int T;
     public static int[][] AList;
     public static int[][] BList;
