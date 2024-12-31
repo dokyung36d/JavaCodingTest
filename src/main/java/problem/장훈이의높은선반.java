@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 장훈이의높은선반 {
     static class Node {
         int curIndex;
         int totalHeight;
