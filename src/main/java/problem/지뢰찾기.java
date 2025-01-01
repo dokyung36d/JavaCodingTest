@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 지뢰찾기 {
     public static class Pos {
         int row;
         int col;
