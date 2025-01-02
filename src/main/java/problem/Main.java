@@ -4,161 +4,114 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    public static class Pos {
-        int row;
-        int col;
+    static int N;
+    static int M;
+    static Map<Integer, City> nodeMap = new HashMap<>();
+    static Map<List<Integer>, Integer> visitableMap = new HashMap<>();
+    static int[] travelPlan;
 
-        public Pos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
+    public static class City {
+        int unqiueNum;
+        Map<Integer, Integer> neighbors = new HashMap<>();
 
-        public Pos addPos(Pos anotherPos) {
-            return new Pos(this.row + anotherPos.row, this.col + anotherPos.col);
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.asList(this.row, this.col).hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) {
-                return true;
-            }
-
-            return false;
+        public City(int uniqueNum) {
+            this.unqiueNum = uniqueNum;
         }
     }
-    public static Map<Pos, Integer> visited;
-    public static char[][] matrix;
-
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
+        init();
+        int flag = 0;
 
-        int T = Integer.parseInt(st.nextToken());
-        for (int i = 0; i < T; i++) {
-            init();
-            int answer = solution(br);
-            System.out.println("#" + (i + 1) + " " + answer);
-        }
-    }
+        for (int i = 0; i < M - 1; i++) {
+            int startCity = travelPlan[i];
+            int destCity = travelPlan[i + 1];
 
-    public static void init() throws IOException {
-        visited = new HashMap<>();
-    }
-
-    public static int solution(BufferedReader br) throws IOException {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        int N = Integer.parseInt(st.nextToken());
-
-        matrix = new char[N][N];
-        for (int i = 0; i < N; i++) {
-            String input = br.readLine();
-            for (int j = 0; j < N; j++) {
-                matrix[i][j] = input.charAt(j);
-            }
-        }
-        Map<List<Integer>, Integer> outedMap = new HashMap<>();
-        ArrayList<Pos> zeroNearBombPosList = new ArrayList<>();
-
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (calculateNearBomb(new Pos(i, j)) == 0) {
-                    zeroNearBombPosList.add(new Pos(i, j));
-                }
-            }
-        }
-        int answer = 0;
-        for (int i = 0; i < zeroNearBombPosList.size(); i++) {
-            Pos zeroNearBombPos = zeroNearBombPosList.get(i);
-            if (visited.get(zeroNearBombPos) != null) {
+            if (startCity == destCity) {
                 continue;
             }
-            bfs(zeroNearBombPos);
-            answer += 1;
-        }
 
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (matrix[i][j] == '*') {
-                    continue;
-                }
-
-                if (visited.get(new Pos(i, j)) == null) {
-                    answer += 1;
-                }
+            if (visitableMap.get(Arrays.asList(startCity, destCity)) != null) {
+                continue;
             }
+            if (dfs(startCity, destCity)) {
+                continue;
+            }
+
+            flag = 1;
+            break;
         }
 
-        return answer;
+        if (flag == 0) {
+            System.out.println("YES");
+        }
+        else {
+            System.out.println("NO");
+        }
+
+
     }
 
-    public static void bfs(Pos startPos) {
-        Deque<Pos> queue = new ArrayDeque<>();
-        queue.addLast(startPos);
-        visited.put(startPos, 1);
+    public static boolean dfs(int startCity, int destCity) {
+        Deque<Integer> queue = new ArrayDeque<>();
+        queue.addLast(startCity);
+
+        Map<Integer, Integer> visited = new HashMap<>();
+        visited.put(startCity, 1);
 
         while (!queue.isEmpty()) {
-            Pos pos = queue.pollFirst();
-            int numNearBomb = calculateNearBomb(pos);
-            if (numNearBomb != 0) {
-                continue;
-            }
+            int curCity = queue.pollLast();
+            Set<Integer> neighborKeys = nodeMap.get(curCity).neighbors.keySet();
 
-            for (int i = -1; i <= 1; i++) {
-                for (int j = -1; j <= 1; j++) {
-                    Pos direction = new Pos(i, j);
-                    Pos movedPos = pos.addPos(direction);
-                    if (!checkIndex(movedPos, matrix.length)) {
-                        continue;
-                    }
-                    if (matrix[movedPos.row][movedPos.col] == '*') {
-                        continue;
-                    }
-                    if (visited.get(movedPos) != null) {
-                        continue;
-                    }
-                    visited.put(movedPos, 1);
-
-                    if (calculateNearBomb(movedPos) != 0) {
-                        continue;
-                    }
-
-                    queue.addLast(movedPos);
-                }
-            }
-        }
-    }
-
-    public static int calculateNearBomb(Pos pos) {
-        int numBomb = 0;
-        for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-                Pos movedPos = pos.addPos(new Pos(i, j));
-                if (!checkIndex(movedPos, matrix.length)) {
+            for (Integer neighborKey : neighborKeys) {
+                if (visited.get(neighborKey) != null) {
                     continue;
                 }
+                visited.put(neighborKey, 1);
 
-                if (matrix[movedPos.row][movedPos.col] == '*') {
-                    numBomb += 1;
-                    continue;
+                visitableMap.put(Arrays.asList(startCity, neighborKey), 1);
+                visitableMap.put(Arrays.asList(neighborKey, startCity), 1);
+
+                if (neighborKey == destCity) {
+                    return true;
                 }
+
+                queue.addLast(neighborKey);
             }
-        }
-
-        return numBomb;
-    }
-
-    public static boolean checkIndex(Pos pos, int N) {
-        if (0 <= pos.row && pos.row < N && 0 <= pos.col && pos.col < N) {
-            return true;
         }
 
         return false;
+    }
+
+    public static void init() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        for (int i = 0; i < N; i++) {
+            nodeMap.put(i, new City(i));
+        }
+
+        st = new StringTokenizer(br.readLine());
+        M = Integer.parseInt(st.nextToken());
+        travelPlan = new int[M];
+
+        for (int i = 0; i < N; i++) {
+            st = new StringTokenizer(br.readLine());
+            for (int j = 0; j < N; j++) {
+                int whetherNeighbor = Integer.parseInt(st.nextToken());
+                if (whetherNeighbor == 0) {
+                    continue;
+                }
+                nodeMap.get(i).neighbors.put(j, 1);
+            }
+        }
+
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < M; i++) {
+            int travelCity = Integer.parseInt(st.nextToken());
+            travelPlan[i] = travelCity - 1;
+        }
+
     }
 }
