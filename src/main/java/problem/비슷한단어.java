@@ -1,11 +1,10 @@
-package problem;
-
+package  problem;
 
 import java.util.*;
 import java.io.*;
 import java.util.List;
 
-public class Main {
+public class 비슷한단어 {
     static int N;
     static String[] wordList;
     static Map<String, String> partStringMap = new HashMap<>();
@@ -13,7 +12,7 @@ public class Main {
 
     static class TreeNode {
         char curAlphabet;
-        Map<Character, TreeNode> childNodeMap;
+        Map<Character, problem.Main.TreeNode> childNodeMap;
 
         public TreeNode(char curAlphabet) {
             this.curAlphabet = curAlphabet;
@@ -39,7 +38,7 @@ public class Main {
         for (int i = 0; i < N; i++) {
             String curString = wordList[i];
             stringIndexMap.put(curString, i);
-            ReturnNode resultNode = processString(curString);
+            problem.Main.ReturnNode resultNode = processString(curString);
 
             if (resultNode.record > bestRecord) {
                 bestRecord = resultNode.record;
@@ -56,7 +55,7 @@ public class Main {
         System.out.println(pairString.get(1));
     }
 
-    public static ReturnNode processString(String curString) {
+    public static problem.Main.ReturnNode processString(String curString) {
         int record = 0;
         String pairString = null;
         for (int i = 0; i < curString.length() + 1; i++) {
@@ -69,7 +68,7 @@ public class Main {
             partStringMap.put(partString, curString);
         }
 
-        return new ReturnNode(record, pairString);
+        return new problem.Main.ReturnNode(record, pairString);
     }
 
     public static void init() throws IOException {
