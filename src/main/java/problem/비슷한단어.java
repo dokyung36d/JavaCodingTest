@@ -12,7 +12,7 @@ public class 비슷한단어 {
 
     static class TreeNode {
         char curAlphabet;
-        Map<Character, problem.Main.TreeNode> childNodeMap;
+        Map<Character, TreeNode> childNodeMap;
 
         public TreeNode(char curAlphabet) {
             this.curAlphabet = curAlphabet;
@@ -38,7 +38,7 @@ public class 비슷한단어 {
         for (int i = 0; i < N; i++) {
             String curString = wordList[i];
             stringIndexMap.put(curString, i);
-            problem.Main.ReturnNode resultNode = processString(curString);
+            ReturnNode resultNode = processString(curString);
 
             if (resultNode.record > bestRecord) {
                 bestRecord = resultNode.record;
@@ -55,7 +55,7 @@ public class 비슷한단어 {
         System.out.println(pairString.get(1));
     }
 
-    public static problem.Main.ReturnNode processString(String curString) {
+    public static ReturnNode processString(String curString) {
         int record = 0;
         String pairString = null;
         for (int i = 0; i < curString.length() + 1; i++) {
@@ -68,7 +68,7 @@ public class 비슷한단어 {
             partStringMap.put(partString, curString);
         }
 
-        return new problem.Main.ReturnNode(record, pairString);
+        return new ReturnNode(record, pairString);
     }
 
     public static void init() throws IOException {

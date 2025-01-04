@@ -1,5 +1,2 @@
-4
-abcd
-abe
-abc
-abchldp
+2
+10 20
