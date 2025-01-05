@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class Main {
+public class 가장큰증가하는부분수열2 {
     static int N;
     static int[] numList;
     static Map<Integer, Deque<Integer>> dpStackMap;
