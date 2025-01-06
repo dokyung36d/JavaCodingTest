@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.util.*;
 
-public class Main {
+public class 피보나치수6 {
     static long n;
     static Map<Long, long[][]> matrixExponentialMap;
     static long[][] fibonacciMatrix = {{(long) 1, (long) 1}, {(long) 1, (long) 0}};
