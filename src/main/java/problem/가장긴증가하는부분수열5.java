@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.util.*;
 
-public class Main {
+public class 가장긴증가하는부분수열5 {
     static int N;
     static int[] numList;
     static Map<Integer, ArrayList<Integer>> dpStackMap;
