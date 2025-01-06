@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.util.*;
 
-public class Main {
+public class 줄세우기 {
     static int N;
     static int[] numList;
     public static void main(String[] args) throws IOException {
