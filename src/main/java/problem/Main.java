@@ -14,15 +14,27 @@ public class Main {
     static int C;
     static char[][] matrix;
     static Map<Pos, Integer> fireMap = new HashMap<>();
+    static Deque<Pos> fireQueue = new ArrayDeque<>();
     static List<Pos> fireOriginPosList = new ArrayList<>();
+    static int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
     public static class Pos {
         int row;
         int col;
+        int rowDirection;
+        int colDirection;
 
         public Pos(int row, int col) {
             this.row = row;
             this.col = col;
+        }
+
+
+        public Pos(int row, int col, int rowDirection, int colDirection) {
+            this.row = row;
+            this.col = col;
+            this.rowDirection = rowDirection;
+            this.colDirection = colDirection;
         }
 
         public Pos addPos(Pos anotherPos) {
@@ -53,6 +65,11 @@ public class Main {
             return true;
         }
 
+        public Pos advance() {
+            return new Pos(this.row + this.rowDirection, this.col + this.colDirection,
+                    this.rowDirection, this.colDirection);
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(this.row, this.col);
@@ -74,8 +91,33 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         init();
+        for (int i = 0; i < fireOriginPosList.size(); i++) {
+            Pos fireOriginPos = fireOriginPosList.get(i);
+            fireMap.put(fireOriginPos, 1);
+            for (int j = 0; j < 4; j++) {
+                Pos fire = new Pos(fireOriginPos.row, fireOriginPos.col, directions[i][0], directions[i][1]);
+                fireQueue.addLast(fire);
+            }
+        }
+
+
 
         int consumedTime = 0;
+    }
+
+    public static void advanceFires() throws IOException {
+        int queueLength = fireQueue.size();
+        for (int i = 0; i < queueLength; i++) {
+            Pos prevFire = fireQueue.pollFirst();
+            Pos movedFire = prevFire.advance();
+
+            if (movedFire.checkWall() || movedFire.checkIndex()) {
+                continue;
+            }
+
+            fireMap.put(movedFire, 1);
+            fireQueue.addLast(movedFire);
+        }
     }
 
 
@@ -92,6 +134,10 @@ public class Main {
             String row = st.nextToken();
             for (int j = 0; j < C; j++) {
                 matrix[i][j] = row.charAt(j);
+
+                if (matrix[i][j] == 'F') {
+                    fireOriginPosList.add(new Pos(i, j));
+                }
             }
         }
     }
