@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.*;
 import java.util.StringTokenizer;
 
-public class Main {
+public class 불 {
     static int R;
     static int C;
     static char[][] matrix;
