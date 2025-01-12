@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-public class Main {
+public class LCS {
     static String firstString;
     static String secondString;
     static int[][] dpMatrix;
