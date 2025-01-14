@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-public class Main {
+public class 하늘에서별똥별이 {
     static int N, M, L, K;
     static Map<Pos, Integer> starMap = new HashMap<>();
     static Pos[] starList;
