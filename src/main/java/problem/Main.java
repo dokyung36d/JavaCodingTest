@@ -4,65 +4,60 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int N, M, L, K;
-    static Map<Pos, Integer> starMap = new HashMap<>();
-    static Pos[] starList;
-
-    public static class Pos {
-        int row;
-        int col;
-
-        public Pos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row  && this.col == anotherPos.col) {
-                return true;
-            }
-
-            return false;
-
-        }
-    }
-
+    static int N;
+    static int[] numList;
+    static Map<Integer, Integer> closestBuildingMap = new HashMap<>();
     public static void main(String[] args) throws Exception {
-        int answer = 0;
         init();
+        int[] leftToRightList = new int[N];
+        Deque<Integer> stack = new ArrayDeque<>();
+        for (int i = N - 1; i >= 0; i--) {
+            int value = 0;
+            int curNum = numList[i];
 
-        for (int i = 0; i < K; i++) {
-            for (int j = 0; j < K; j++) {
-                int startRow = starList[i].row;
-                int startCol = starList[j].col;
-                Pos standardPos = new Pos(startRow, startCol);
-                int value = 0;
-
-                for (int v = 0; v < K; v++) {
-                    value += checkBelong(standardPos, starList[v]);
+            while (!stack.isEmpty()) {
+                int tailNum = stack.pollLast();
+                if (tailNum > curNum) {
+                    stack.addLast(tailNum);
+                    break;
                 }
 
-                if (value > answer) {
-                    answer = value;
-                }
+                value += 1;
             }
+
+            leftToRightList[i] = stack.size();
+            stack.addLast(curNum);
         }
 
-        System.out.println(K - answer);
-    }
+        int[] rightToLeftList = new int[N];
+        stack = new ArrayDeque<>();
+        for (int i = 0; i < N; i++) {
+            int value = 0;
+            int curNum = numList[i];
 
+            while (!stack.isEmpty()) {
+                int tailNum = stack.pollLast();
+                if (tailNum > curNum) {
+                    stack.addLast(tailNum);
+                    break;
+                }
 
-    public static int checkBelong(Pos standardPoint, Pos anotherStar) {
-        if (standardPoint.row <= anotherStar.row && anotherStar.row <= standardPoint.row + L
-                && standardPoint.col <= anotherStar.col && anotherStar.col <= standardPoint.col + L) {
-            return 1;
+                value += 1;
+            }
+
+            rightToLeftList[i] = stack.size();
+            stack.addLast(curNum);
         }
 
-        return 0;
+
+        for (int i = 0; i < N; i++) {
+            int value = leftToRightList[i] + rightToLeftList[i];
+            if (value == 0) {
+                System.out.println(0);
+            }
+
+
+        }
     }
 
     public static void init() throws IOException {
@@ -70,18 +65,11 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
-        L = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
-        starList = new Pos[K];
+        numList = new int[N];
 
-        for (int i = 0; i < K; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int col = Integer.parseInt(st.nextToken());
-            int row = Integer.parseInt(st.nextToken());
-            starMap.put(new Pos(row, col), 1);
-            starList[i] = new Pos(row, col);
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            numList[i] = Integer.parseInt(st.nextToken());
         }
     }
 }
