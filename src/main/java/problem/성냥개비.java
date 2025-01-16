@@ -1,10 +1,8 @@
-package problem;
-
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 
-public class Main {
+public class 성냥개비 {
     static int T;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     static Map<Integer, Integer> numStickRequiredMap = new HashMap<>();
