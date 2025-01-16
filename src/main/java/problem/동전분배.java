@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-public class Main {
+public class 동전분배 {
     static int N;
     static int[] coinList;
     static HashMap<Integer, Integer> numCoinMap;
