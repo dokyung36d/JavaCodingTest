@@ -4,7 +4,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 
-public class Main {
+public class One의개수세기 {
     static BigInteger A, B;
     static List<BigInteger> numOneInGapList = new ArrayList<>();
     static List<BigInteger> numOneTotalList = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Main {
         BigInteger smallerValue = getNumOne(A.subtract(new BigInteger("1")));
         System.out.println(biggerValue.subtract(smallerValue));
     }
-    
+
     public static BigInteger getNumOne(BigInteger num) {
         BigInteger answer = new BigInteger("0");
 
