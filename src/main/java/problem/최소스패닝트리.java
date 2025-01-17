@@ -6,7 +6,7 @@ import java.nio.Buffer;
 import java.util.*;
 import java.util.List;
 
-public class Main {
+public class 최소스패닝트리 {
     static int V, E;
     static Map<Integer, List<Node>> graphMap;
     static int minCost;
