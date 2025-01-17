@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 사이클게임 {
     static int n;
     static int m;
     static int[] parentList;
