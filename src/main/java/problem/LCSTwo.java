@@ -4,7 +4,7 @@ import java.io.*;
 import java.nio.Buffer;
 import java.util.*;
 
-public class Main {
+public class LCSTwo {
     static String str1;
     static String str2;
     static int[][] dpMatrix;
