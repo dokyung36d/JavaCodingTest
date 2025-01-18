@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class DanceDanceRevolution {
     static List<Integer> numList = new ArrayList<>();
     static int[][][] dpMatrix;
 
