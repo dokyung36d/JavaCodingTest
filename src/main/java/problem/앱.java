@@ -1,15 +1,13 @@
-package problem;
-
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 앱 {
     static int N, M;
     static List<Integer> byteList = new ArrayList<>();
     static List<Integer> costList = new ArrayList<>();
     static int maxCost;
 
-    public static class Node implements Comparable<Node> {
+    public static class Node implements Comparable<problem.Main.Node> {
         int byteRequired;
         int cost;
 
@@ -18,12 +16,12 @@ public class Main {
             this.cost = cost;
         }
 
-        public Node addNode(Node anotherNode) {
-            return new Node(this.byteRequired + anotherNode.byteRequired, this.cost + anotherNode.cost);
+        public problem.Main.Node addNode(problem.Main.Node anotherNode) {
+            return new problem.Main.Node(this.byteRequired + anotherNode.byteRequired, this.cost + anotherNode.cost);
         }
 
         @Override
-        public int compareTo(Node anotherNode) {
+        public int compareTo(problem.Main.Node anotherNode) {
             return Integer.compare(this.byteRequired, anotherNode.byteRequired);
         }
     }
