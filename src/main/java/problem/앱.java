@@ -1,3 +1,5 @@
+package problem;
+
 import java.util.*;
 import java.io.*;
 
@@ -7,7 +9,7 @@ public class 앱 {
     static List<Integer> costList = new ArrayList<>();
     static int maxCost;
 
-    public static class Node implements Comparable<problem.Main.Node> {
+    public static class Node implements Comparable<Node> {
         int byteRequired;
         int cost;
 
@@ -16,12 +18,12 @@ public class 앱 {
             this.cost = cost;
         }
 
-        public problem.Main.Node addNode(problem.Main.Node anotherNode) {
-            return new problem.Main.Node(this.byteRequired + anotherNode.byteRequired, this.cost + anotherNode.cost);
+        public Node addNode(Node anotherNode) {
+            return new Node(this.byteRequired + anotherNode.byteRequired, this.cost + anotherNode.cost);
         }
 
         @Override
-        public int compareTo(problem.Main.Node anotherNode) {
+        public int compareTo(Node anotherNode) {
             return Integer.compare(this.byteRequired, anotherNode.byteRequired);
         }
     }

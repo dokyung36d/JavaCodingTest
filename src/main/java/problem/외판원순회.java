@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 외판원순회 {
     static int N;
     static int[][] graphMatrix;
     public static void main(String[] args) throws Exception {
