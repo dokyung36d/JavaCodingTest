@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 열쇠 {
     static int T;
     static char[][] matrix;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
