@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 텀프로젝트 {
     static int T;
     static int N;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
