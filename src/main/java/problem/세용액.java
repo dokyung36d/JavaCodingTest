@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 세용액 {
     static int N;
     static long[] liquidList;
 
