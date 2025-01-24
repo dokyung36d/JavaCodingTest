@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 최솟값찾기 {
     static int N, L;
     static int[] numList;
 
