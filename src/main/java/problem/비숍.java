@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 비숍 {
     static int N;
     static int[][] matrix;
     static List<Pos> evenAvailPosList;
