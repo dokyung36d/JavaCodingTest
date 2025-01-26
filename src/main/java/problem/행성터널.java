@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 행성터널 {
     static int N;
     static Pos[] posList;
     static int[] parentList;
