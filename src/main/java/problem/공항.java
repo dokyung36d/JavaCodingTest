@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 공항 {
     static int G, P;
     static int[] airplaneList;
     static int[] parentList;
