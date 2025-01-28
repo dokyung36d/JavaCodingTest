@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 배열정렬 {
     static int N, M;
     static List<Integer> numList;
     static Command[] commandList;
