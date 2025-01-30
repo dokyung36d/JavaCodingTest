@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 부분수열의합 {
     static int N, S;
     static List<Integer> firstArray, secondArray;
 

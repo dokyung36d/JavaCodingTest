@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 트리의순회 {
     static int N;
     static List<Integer> inOrderList;
     static List<Integer> postOrderList;
