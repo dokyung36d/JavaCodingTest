@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 트리의지름 {
     public static int N;
     public static  Map<Integer, List<Edge>> graphMap;
 
