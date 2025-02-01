@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 두배열의합 {
     public static int T, n, m;
     public static int[] nList, mList;
 
