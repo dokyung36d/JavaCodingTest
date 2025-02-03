@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 펠린드롬 {
     static int N, M;
     static int[] numList, commandList;
 
