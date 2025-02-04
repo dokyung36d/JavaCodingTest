@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class ACMCraft {
     static int N, K, W;
     static long[] costList, reqyuredCost;
     static int[] unstartableList;
