@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 줄세우기2623 {
     static int N, M;
     static Map<Integer, List<Integer>> graphMap;
     static int[] numPointed;
