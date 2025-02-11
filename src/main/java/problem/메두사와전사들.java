@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 메두사와전사들 {
     static int N, M;
     static int[][] roadMatrix, warriorMatrix;
     static Pos medusaStartPos;
@@ -230,7 +230,7 @@ public class Main {
         }
 
 
-            //RightDiagDirection
+        //RightDiagDirection
         for (int i = medusaPos.row + 1; i < N - 1; i++) {
             int left = medusaPos.col + 1;
             int right = Math.min(N - 1, medusaPos.col + (i - medusaPos.row));
