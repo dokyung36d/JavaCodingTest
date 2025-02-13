@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 미지의공간탈출 {
     static int N, M, F;
     static int[][] floorMatrix;
     static int[][] columnMatrix;
