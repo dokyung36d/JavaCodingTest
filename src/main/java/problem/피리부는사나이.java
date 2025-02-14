@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 피리부는사나이 {
     public static int N, M;
     static Pos[][] nextPosMatrix;
     static Pos[][] parentMatrix;
