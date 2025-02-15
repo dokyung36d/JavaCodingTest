@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 수나누기게임 {
     static int N;
     static int[] numList, sortedNumList;
 
@@ -28,7 +28,7 @@ public class Main {
 
                 scoreMap.put(divisor, scoreMap.getOrDefault(divisor, 0) + 1);
                 scoreMap.put(sortedNumList[i], scoreMap.getOrDefault(sortedNumList[i], 0) - 1);
-                }
+            }
         }
 
         StringBuilder sb = new StringBuilder();
