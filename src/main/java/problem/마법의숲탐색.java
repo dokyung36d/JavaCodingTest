@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 마법의숲탐색 {
     static int R, C, K;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
     //북 -> 동 -> 남 -> 서
@@ -118,8 +118,8 @@ public class Main {
 
         public boolean isGoDownPossible() {
             Pos[] nextPosList = {new Pos(centerPos.row + 2, centerPos.col),
-                                new Pos(centerPos.row + 1, centerPos.col - 1),
-                                new Pos(centerPos.row + 1, centerPos.col + 1)};
+                    new Pos(centerPos.row + 1, centerPos.col - 1),
+                    new Pos(centerPos.row + 1, centerPos.col + 1)};
 
             for (Pos nextPos : nextPosList) {
                 if (!nextPos.isValidIndex()) { return false; }
@@ -135,10 +135,10 @@ public class Main {
 
         public boolean isGoLeftPossible() {
             Pos[] nextPosList = {new Pos(centerPos.row - 1, centerPos.col - 1),
-                                new Pos(centerPos.row, centerPos.col - 2),
-                                new Pos(centerPos.row + 1, centerPos.col - 1),
-                                new Pos(centerPos.row + 1, centerPos.col - 2),
-                                new Pos(centerPos.row + 2, centerPos.col - 1)};
+                    new Pos(centerPos.row, centerPos.col - 2),
+                    new Pos(centerPos.row + 1, centerPos.col - 1),
+                    new Pos(centerPos.row + 1, centerPos.col - 2),
+                    new Pos(centerPos.row + 2, centerPos.col - 1)};
 
             for (Pos nextPos : nextPosList) {
                 if (!nextPos.isValidIndex()) { return false; }
@@ -154,10 +154,10 @@ public class Main {
 
         public boolean isGoRightPossible() {
             Pos[] nextPosList = {new Pos(centerPos.row - 1, centerPos.col + 1),
-                                new Pos(centerPos.row, centerPos.col + 2),
-                                new Pos(centerPos.row + 1, centerPos.col + 1),
-                                new Pos(centerPos.row + 2, centerPos.col + 1),
-                                new Pos(centerPos.row + 1, centerPos.col + 2)};
+                    new Pos(centerPos.row, centerPos.col + 2),
+                    new Pos(centerPos.row + 1, centerPos.col + 1),
+                    new Pos(centerPos.row + 2, centerPos.col + 1),
+                    new Pos(centerPos.row + 1, centerPos.col + 2)};
 
             for (Pos nextPos : nextPosList) {
                 if (!nextPos.isValidIndex()) { return false; }
