@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 문제집 {
     static int N, M;
     static Map<Integer, List<Integer>> graphMap;
     static int[] numParentList;
