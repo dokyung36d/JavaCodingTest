@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 벽부수고이동하기4 {
     public static int N, M;
     public static int[][] matrix;
     public static Pos[] directions = {new Pos(-1, 0), new Pos(1, 0),
@@ -26,7 +26,7 @@ public class Main {
 
         public boolean isValidIndex() {
             if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-                 return false;
+                return false;
             }
 
             return true;
