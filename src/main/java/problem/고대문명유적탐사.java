@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 고대문명유적탐사 {
     public static int K, M;
     public static int[][] matrix;
     public static Deque<Integer> treasureQueue;
