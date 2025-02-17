@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 트리와쿼리 {
     static int N, R, Q;
     static Map<Integer, List<Integer>> graphMap;
     static Map<Integer, Integer> answerMap;
