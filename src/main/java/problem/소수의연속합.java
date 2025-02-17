@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 소수의연속합 {
     static int N;
 
     public static void main(String[] args) throws Exception {
