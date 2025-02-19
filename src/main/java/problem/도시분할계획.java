@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 도시분할계획 {
     static int N, M;
     static PriorityQueue<Edge> pq;
     static int[] parentList;
@@ -32,15 +32,15 @@ public class Main {
         int answer = 0;
 
         while (numParents > 2) {
-                Edge edge = pq.poll();
+            Edge edge = pq.poll();
 
-                int vertex1Parent = findParent(edge.vertex1);
-                int vertex2Parent = findParent(edge.vertex2);
-                if (vertex1Parent != vertex2Parent) {
-                    union(vertex1Parent, vertex2Parent);
-                    numParents -= 1;
-                    answer += edge.cost;
-                }
+            int vertex1Parent = findParent(edge.vertex1);
+            int vertex2Parent = findParent(edge.vertex2);
+            if (vertex1Parent != vertex2Parent) {
+                union(vertex1Parent, vertex2Parent);
+                numParents -= 1;
+                answer += edge.cost;
+            }
         }
 
         System.out.println(answer);
