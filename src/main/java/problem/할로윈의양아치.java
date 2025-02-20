@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 할로윈의양아치 {
     static int N, M, K;
     static int[] kidsCandyList;
     static int[] parentList;
