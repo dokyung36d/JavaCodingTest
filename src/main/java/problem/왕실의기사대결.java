@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 왕실의기사대결 {
     static int L, N, Q;
     static int[][] floorMatrix;
     static int[][] warriorMatrix;
