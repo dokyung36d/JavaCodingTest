@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 팰린드롬분할 {
     static String string;
 
     public static void main(String[] args) throws Exception {
