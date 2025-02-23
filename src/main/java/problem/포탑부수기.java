@@ -4,14 +4,14 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 포탑부수기 {
     static int N, M, K;
     static Pos[][] posMatrix;
     static Pos[] directions = {new Pos(0, 1, 0), new Pos(1, 0, 0),
-                                new Pos(0, -1, 0), new Pos(-1, 0, 0)};
+            new Pos(0, -1, 0), new Pos(-1, 0, 0)};
     static Pos[] sidePosDirections = {new Pos(-1, -1, 0), new Pos(-1, 0,0), new Pos(-1, 1, 0),
-                        new Pos(0, -1, 0), new Pos(0, 0, 0), new Pos(0, 1, 0),
-                        new Pos(1, -1, 0), new Pos(1, 0, 0), new Pos(1, 1, 0)};
+            new Pos(0, -1, 0), new Pos(0, 0, 0), new Pos(0, 1, 0),
+            new Pos(1, -1, 0), new Pos(1, 0, 0), new Pos(1, 1, 0)};
 
     public static class Pos implements Comparable<Pos> {
         int row;
