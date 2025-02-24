@@ -4,12 +4,12 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 낚시왕 {
     static int R, C, M;
     static Shark[][] sharkMatrix;
     static Map<Pos, Shark> sharkMap;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1),
-                                new Pos(1, 0), new Pos(0, -1)};
+            new Pos(1, 0), new Pos(0, -1)};
 
     public static class Pos {
         int row;
