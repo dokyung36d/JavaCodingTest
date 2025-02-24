@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 전깃줄 {
     static int N;
     static Edge[] edgeList;
 
