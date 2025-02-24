@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 본대산책 {
     static int D;
     static int MAX_VALUE = 1000000007;
     static long[][] baseMatrix = {
