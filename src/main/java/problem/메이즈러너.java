@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 메이즈러너 {
     static int N, M, K;
     static int[][] mainMatrix;
     static int[][] playerMatrix;
@@ -205,7 +205,7 @@ public class Main {
 
     public static boolean isPosInRectange(Pos pos, Rectangle rectangle) {
         if (rectangle.topLeftPos.row <= pos.row && pos.row < rectangle.topLeftPos.row + rectangle.length &&
-            rectangle.topLeftPos.col <= pos.col && pos.col < rectangle.topLeftPos.col + rectangle.length) {
+                rectangle.topLeftPos.col <= pos.col && pos.col < rectangle.topLeftPos.col + rectangle.length) {
             return true;
         }
 
