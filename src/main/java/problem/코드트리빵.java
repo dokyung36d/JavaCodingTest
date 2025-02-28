@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 코드트리빵 {
     static int n, m;
     static int[][] baseCampMatrix;
     static int[][] prohibitedMatrix;
