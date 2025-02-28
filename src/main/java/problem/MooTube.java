@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class MooTube {
     static int N, Q;
     static Map<Integer, List<Edge>> graphMap;
     static Question[] questions;
