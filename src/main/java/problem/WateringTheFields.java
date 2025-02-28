@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class WateringTheFields {
     static int N, C;
     static Pos[] posList;
     static int[] parentList;
