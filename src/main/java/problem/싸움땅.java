@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 싸움땅 {
     static int N, M, K;
     static PriorityQueue<Integer>[][] gunMatrix;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
