@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 새로운게임 {
     static int N, K;
     static int flag;
     static int[][] chessMatrix;
