@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 피보나치함수 {
     static int N;
     static int[] numList;
     static int[] zeroList;
