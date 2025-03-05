@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 동전 {
     static int N, K;
     static int[] coinList;
 
