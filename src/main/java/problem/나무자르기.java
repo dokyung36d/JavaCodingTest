@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 나무자르기 {
     static int N, M;
     static int minHeight, maxHeight;
     static int[] treeList;
