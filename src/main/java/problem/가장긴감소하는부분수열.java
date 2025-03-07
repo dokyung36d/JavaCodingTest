@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 가장긴감소하는부분수열 {
     static int N;
     static int[] numList;
 
