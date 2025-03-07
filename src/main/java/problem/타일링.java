@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 타일링 {
     static int N;
     static int[] dpList;
 
