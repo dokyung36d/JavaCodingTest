@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 계단오르기 {
     static int N;
     static int[] stairList;
 
