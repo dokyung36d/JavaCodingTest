@@ -4,20 +4,16 @@ import java.util.*;
 import java.io.*;
 
 
-public class 메두사와전사들 {
+public class Main {
     static int N, M;
-    static int[][] roadMatrix, warriorMatrix;
-    static Pos medusaStartPos;
-    static Pos parkPos;
-    static List<Pos> warriorPosList;
-
-    static Pos[] medusaMoveDirections = {new Pos(-1, 0), new Pos(1, 0),
-            new Pos(0, -1), new Pos(0, 1)};
-    static Pos[] warriorFirstMoveDirections = {new Pos(-1, 0), new Pos(1, 0),
-            new Pos(0, -1), new Pos(0, 1)};
-    static Pos[] warriorSecondMoveDirections = {new Pos(0, -1), new Pos(0, 1),
-            new Pos(-1, 0), new Pos(1, 0)};
-
+    static Pos medusaHomePos, parkPos;
+    static Pos[] medusaDirections = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)};
+    static Pos[] warriorFirstDirections = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)};
+    static Pos[] warriorSecondDirections = {new Pos(0, -1), new Pos(0, 1), new Pos(-1, 0), new Pos(1, 0)};
+    static int[][] roadMatrix;
+    static List<Warrior> warriorList;
+    static Map<Pos, Integer> warriorPosMap;
+    static int totalNumMoved, totalNumWarriorRocked, totalNumWarriorAttackedMedusa;
 
     public static class Pos {
         int row;
@@ -28,8 +24,8 @@ public class 메두사와전사들 {
             this.col = col;
         }
 
-        public Pos addPos(Pos anotherPos) {
-            return new Pos(this.row + anotherPos.row, this.col + anotherPos.col);
+        public Pos addPos(Pos direction) {
+            return new Pos(this.row + direction.row, this.col + direction.col);
         }
 
         public boolean isValidIndex() {
@@ -40,11 +36,16 @@ public class 메두사와전사들 {
             return true;
         }
 
+        public int calcDistance(Pos anotherPos) {
+            return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) { return true; }
             if (obj == null || this.getClass() != obj.getClass()) { return false; }
             Pos anotherPos = (Pos) obj;
+
             if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
             return false;
         }
@@ -55,444 +56,367 @@ public class 메두사와전사들 {
         }
     }
 
-    public static class SeeNode {
-        int[][] matrix;
-        int numWarriorRocked;
+    public static class Node {
+        Pos pos;
+        List<Pos> path;
 
-        public SeeNode(int[][] matrix, int numWarriorRocked) {
-            this.matrix = matrix;
-            this.numWarriorRocked = numWarriorRocked;
+        public Node(Pos pos, List<Pos> path) {
+            this.pos = pos;
+            this.path = path;
         }
     }
 
-    public static boolean isRoad(Pos pos) {
-        if (roadMatrix[pos.row][pos.col] == 1) {
-            return false;
-        }
-        return true;
-    }
+    public static class Warrior {
+        int uniqueNum;
+        Pos pos;
 
-    public static class BfsNode {
-        Pos curPos;
-        int depth;
-        List<Pos> pathList;
-
-        public BfsNode(Pos pos, int depth, List<Pos> pathList) {
-            this.curPos = pos;
-            this.depth = depth;
-            this.pathList = pathList;
+        public Warrior(int uniqueNum, Pos pos) {
+            this.uniqueNum = uniqueNum;
+            this.pos = pos;
         }
     }
-    public static void main(String args[]) throws Exception {
+
+    public static void main(String[] args) throws Exception {
         init();
-        BfsNode bfsNode = getFastestPath();
-        if (bfsNode.pathList.size() == 0) {
+
+        warriorPosMap = getWarriorPosMap();
+        List<Pos> path = getFastestPath();
+        if (path.size() == 0) {
             System.out.println(-1);
             return;
         }
 
-        for (int i = 0; i < bfsNode.pathList.size() - 1; i++) {
-            int totalDistanceWarriorMoved = 0;
-            int numRockedWarrior;
-            int numWarriorAttackedMedusa = 0;
-
-            Pos medusaPos = bfsNode.pathList.get(i);
-            SeeNode bestSeeNode = getBestSeeNode(medusaPos, warriorMatrix);
-
-            numRockedWarrior = bestSeeNode.numWarriorRocked;
-            int[][] medusaSightMatrix = bestSeeNode.matrix;
-
-            List<Pos> updatedWarriorPosList = new ArrayList<>();
-            int[][] updatedWarriorMatrix = new int[N][N];
-            for (int j = 0; j < warriorPosList.size(); j++) {
-                Pos warriorPos = warriorPosList.get(j);
-                if (warriorPos.equals(medusaPos)) {
-                    continue;
-                }
-
-                if (medusaSightMatrix[warriorPos.row][warriorPos.col] == 1) {
-                    updatedWarriorPosList.add(warriorPos);
-                    updatedWarriorMatrix[warriorPos.row][warriorPos.col] += 1;
-                    continue;
-                }
-
-                Pos firstMovedPos = moveWarrior(medusaPos, warriorPos, medusaSightMatrix, warriorFirstMoveDirections);
-                if (!firstMovedPos.equals(warriorPos)) { totalDistanceWarriorMoved += 1; }
-                if (firstMovedPos.equals(medusaPos)) {
-                    numWarriorAttackedMedusa += 1;
-                    continue;
-                }
-
-                Pos secondMovedPos = moveWarrior(medusaPos, firstMovedPos, medusaSightMatrix, warriorSecondMoveDirections);
-                if (!secondMovedPos.equals(firstMovedPos)) { totalDistanceWarriorMoved += 1; }
-                if (secondMovedPos.equals(medusaPos)) {
-                    numWarriorAttackedMedusa += 1;
-                    continue;
-                }
-
-                updatedWarriorPosList.add(secondMovedPos);
-                updatedWarriorMatrix[secondMovedPos.row][secondMovedPos.col] += 1;
+        for (Pos curMedusaPos : path) {
+            if (curMedusaPos.equals(parkPos)) {
+                break;
             }
+            totalNumMoved = 0;
+            totalNumWarriorRocked = 0;
+            totalNumWarriorAttackedMedusa = 0;
 
-            warriorPosList = updatedWarriorPosList;
-            warriorMatrix = updatedWarriorMatrix;
+            int[][] bestSeeMatrix = getBestSeeMatrix(curMedusaPos);
+            totalNumWarriorRocked = getNumWarriorRocked(bestSeeMatrix);
 
-            System.out.println(totalDistanceWarriorMoved + " " + numRockedWarrior + " " + numWarriorAttackedMedusa);
+            moveWarrior(bestSeeMatrix, curMedusaPos, warriorFirstDirections);
+            moveWarrior(bestSeeMatrix, curMedusaPos, warriorSecondDirections);
+
+            warriorPosMap = getWarriorPosMap();
+
+
+            System.out.println(totalNumMoved + " " + totalNumWarriorRocked + " " + totalNumWarriorAttackedMedusa);
         }
+
         System.out.println(0);
     }
 
-    public static Pos moveWarrior(Pos medusaPos, Pos warriorPos, int[][] medusaSightMatrix, Pos[] directionOrder) {
-        int minDistance = getDistance(medusaPos, warriorPos);
-        Pos minDistancePos = new Pos(warriorPos.row,  warriorPos.col);
+    public static void moveWarrior(int[][] seeMatrix, Pos medusaPos, Pos[] directionOrder) {
+        List<Warrior> updatedWarriorList = new ArrayList<>();
+        for (Warrior warrior : warriorList) {
+            if (warrior.pos.equals(medusaPos)) {
+                continue;
+            }
+            if (seeMatrix[warrior.pos.row][warrior.pos.col] == 1) {
+                updatedWarriorList.add(warrior);
+                continue;
+            }
 
-        for (Pos direction : directionOrder) {
-            Pos movedPos = warriorPos.addPos(direction);
-            if (!movedPos.isValidIndex() || medusaSightMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+            int prevDistance = warrior.pos.calcDistance(medusaPos);
+            int flag = 0;
+            for (Pos direction : directionOrder) {
+                Pos movedPos = warrior.pos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
+                if (seeMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+                if (movedPos.calcDistance(medusaPos) >= prevDistance) { continue; }
 
-            int movedDistance = getDistance(medusaPos, movedPos);
-            if (movedDistance < minDistance) {
-                minDistance = movedDistance;
-                minDistancePos = movedPos;
+                flag = 1;
+                totalNumMoved += 1;
+                if (movedPos.equals(medusaPos)) {
+                    totalNumWarriorAttackedMedusa += 1;
+                    break;
+                }
+                updatedWarriorList.add(new Warrior(warrior.uniqueNum, movedPos));
+                break;
+            }
 
-                return minDistancePos;
+            if (flag == 0) {
+                updatedWarriorList.add(warrior);
             }
         }
 
-        return minDistancePos;
+        warriorList = updatedWarriorList;
     }
 
+    public static int[][] getBestSeeMatrix(Pos medusaPos) {
+        int maxWarriorRocked = -1;
+        int[][] bestSeeMatrix = new int[N][N];
+
+        int[][] seeUpMatrix = seeUp(medusaPos);
+        int seeUpNumRocked = getNumWarriorRocked(seeUpMatrix);
+        if (seeUpNumRocked > maxWarriorRocked) {
+            bestSeeMatrix = seeUpMatrix;
+            maxWarriorRocked = seeUpNumRocked;
+        }
 
 
-    public static int getDistance(Pos pos1, Pos pos2) {
-        return Math.abs(pos1.row - pos2.row) + Math.abs(pos1.col - pos2.col);
+        int[][] seeDownMatrix = seeDown(medusaPos);
+        int seeDownNumRocked = getNumWarriorRocked(seeDownMatrix);
+        if (seeDownNumRocked > maxWarriorRocked) {
+            bestSeeMatrix = seeDownMatrix;
+            maxWarriorRocked = seeDownNumRocked;
+        }
+
+
+        int[][] seeLeftMatrix = seeLeft(medusaPos);
+        int seeLeftNumRocked = getNumWarriorRocked(seeLeftMatrix);
+        if (seeLeftNumRocked > maxWarriorRocked) {
+            bestSeeMatrix = seeLeftMatrix;
+            maxWarriorRocked = seeLeftNumRocked;
+        }
+
+
+        int[][] seeRightMatrix = seeRight(medusaPos);
+        int seeRightNumRocked = getNumWarriorRocked(seeRightMatrix);
+        if (seeRightNumRocked > maxWarriorRocked) {
+            bestSeeMatrix = seeRightMatrix;
+            maxWarriorRocked = seeRightNumRocked;
+        }
+
+
+        return bestSeeMatrix;
     }
 
-    public static SeeNode getBestSeeNode(Pos medusaPos, int[][] warriorMatrix) {
-        SeeNode bestSeeNode = new SeeNode(new int[N][N], 0);
+    public static int getNumWarriorRocked(int[][] seeMatrix) {
+        int numRocked = 0;
 
-        SeeNode upSeeNode = medusaSeeUp(medusaPos, warriorMatrix);
-        if (upSeeNode.numWarriorRocked >= bestSeeNode.numWarriorRocked) {
-            bestSeeNode = upSeeNode;
+        for (Warrior warrior : warriorList) {
+            if (seeMatrix[warrior.pos.row][warrior.pos.col] == 1) {
+                numRocked += 1;
+            }
         }
 
-        SeeNode downSeeNode = medusaSeeDown(medusaPos, warriorMatrix);
-        if (downSeeNode.numWarriorRocked > bestSeeNode.numWarriorRocked) {
-            bestSeeNode = downSeeNode;
-        }
-
-        SeeNode leftSeeNode = medusaSeeLeft(medusaPos, warriorMatrix);
-        if (leftSeeNode.numWarriorRocked > bestSeeNode.numWarriorRocked) {
-            bestSeeNode = leftSeeNode;
-        }
-
-        SeeNode rightSeeNode = medusaSeeRight(medusaPos, warriorMatrix);
-        if (rightSeeNode.numWarriorRocked > bestSeeNode.numWarriorRocked) {
-            bestSeeNode = rightSeeNode;
-        }
-
-        return bestSeeNode;
+        return numRocked;
     }
 
-    public static SeeNode medusaSeeDown(Pos medusaPos, int[][] warriorMatrix) {
-        List<Pos> rockedSoldierList = new ArrayList<>();
-        int[][] matrix = new int[N][N];
-        Pos direction = new Pos(1, 0);
+    public static int[][] seeLeft(Pos curMedusaPos) {
+        int[][] seeMatrix = new int[N][N];
 
-        for (int i = medusaPos.row + 1; i < N; i++) {
-            int left = Math.max(0, medusaPos.col - (i - medusaPos.row));
-            int right = Math.min(N - 1, medusaPos.col + (i - medusaPos.row));
+        for (int j = curMedusaPos.col - 1; j >= 0; j--) {
+            int upRow = Math.max(0, curMedusaPos.row - (curMedusaPos.col - j));
+            int downRow = Math.min(N - 1, curMedusaPos.row + (curMedusaPos.col - j));
 
-            for (int j = left; j<= right; j++) {
-                matrix[i][j] = 1;
+            for (int i = upRow; i <= downRow; i++) {
+                seeMatrix[i][j] = 1;
             }
         }
 
-        //leftDiagDirection
-        for (int i = medusaPos.row + 1; i < N - 1; i++) {
-            int left = Math.max(0, medusaPos.col - (i - medusaPos.row));
-            int right = medusaPos.col - 1;
-
-            for (int j = left; j <= right; j++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i + 1][j] = 0;
-                    if (j >= 1) {
-                        matrix[i + 1][j - 1] = 0;
-                    }
-                }
-            }
-        }
-        //CenterDirection
-        for (int i = medusaPos.row + 1; i < N - 1; i++) {
-            if (warriorMatrix[i][medusaPos.col] >= 1 || matrix[i][medusaPos.col] == 0) {
-                matrix[i + 1][medusaPos.col] = 0;
+        for (int j = curMedusaPos.col - 1; j >= 1; j--) {
+            if (seeMatrix[curMedusaPos.row][j] == 0 || warriorPosMap.get(new Pos(curMedusaPos.row, j)) != null) {
+                seeMatrix[curMedusaPos.row][j - 1] = 0;
             }
         }
 
+        for (int j = curMedusaPos.col - 1; j >= 1; j--) {
+            int upRow = Math.max(0, curMedusaPos.row - (curMedusaPos.col - j));
 
-        //RightDiagDirection
-        for (int i = medusaPos.row + 1; i < N - 1; i++) {
-            int left = medusaPos.col + 1;
-            int right = Math.min(N - 1, medusaPos.col + (i - medusaPos.row));
-
-            for (int  j = left; j <= right; j++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i + 1][j] = 0;
-                    if (j < N - 1) {
-                        matrix[i + 1][j + 1] = 0;
-                    }
-                }
-            }
-        }
-
-        int numRockedSoldier = 0;
-        for (int i = medusaPos.row + 1; i < N; i++) {
-            int left = Math.max(0, medusaPos.col - (i - medusaPos.row));
-            int right = Math.min(N - 1, medusaPos.col + (i - medusaPos.row));
-
-            for (int j = left; j<= right; j++) {
-                if (matrix[i][j] == 1 && warriorMatrix[i][j] >= 1) {
-                    numRockedSoldier += warriorMatrix[i][j];
-                }
-            }
-        }
-
-
-        return new SeeNode(matrix, numRockedSoldier);
-    }
-
-    public static SeeNode medusaSeeUp(Pos medusaPos, int[][] warriorMatrix) {
-        List<Pos> rockedSoldierList = new ArrayList<>();
-        int[][] matrix = new int[N][N];
-        Pos direction = new Pos(-1, 0);
-
-        for (int i = medusaPos.row - 1; i >= 0; i--) {
-            int left = Math.max(0, medusaPos.col - (medusaPos.row - i));
-            int right = Math.min(N - 1, medusaPos.col + (medusaPos.row - i));
-
-            for (int j = left; j<= right; j++) {
-                matrix[i][j] = 1;
-            }
-        }
-
-        //leftDiagDirection
-        for (int i = medusaPos.row - 1; i >= 1; i--) {
-            int left = Math.max(0, medusaPos.col - (medusaPos.row - i));
-            int right = medusaPos.col - 1;
-
-            for (int j = left; j <= right; j++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i - 1][j] = 0;
-                    if (j >= 1) {
-                        matrix[i - 1][j - 1] = 0;
-                    }
-                }
-            }
-        }
-        //CenterDirection
-        for (int i = medusaPos.row - 1; i >= 1; i--) {
-            if (warriorMatrix[i][medusaPos.col] >= 1 || matrix[i][medusaPos.col] == 0) {
-                matrix[i - 1][medusaPos.col] = 0;
-            }
-        }
-
-
-        //RightDiagDirection
-        for (int i = medusaPos.row - 1; i >= 1; i--) {
-            int left = medusaPos.col + 1;
-            int right = Math.min(N - 1, medusaPos.col + (medusaPos.row - i));
-
-            for (int  j = left; j <= right; j++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i - 1][j] = 0;
-                    if (j < N - 1) {
-                        matrix[i - 1][j + 1] = 0;
-                    }
-                }
-            }
-        }
-
-        int numRockedSoldier = 0;
-        for (int i = medusaPos.row - 1; i >= 0; i--) {
-            int left = Math.max(0, medusaPos.col - (medusaPos.row - i));
-            int right = Math.min(N - 1, medusaPos.col + (medusaPos.row - i));
-
-            for (int j = left; j<= right; j++) {
-                if (matrix[i][j] == 1 && warriorMatrix[i][j] >= 1) {
-                    numRockedSoldier += warriorMatrix[i][j];
-                }
-            }
-        }
-
-
-        return new SeeNode(matrix, numRockedSoldier);
-    }
-    public static SeeNode medusaSeeRight(Pos medusaPos, int[][] warriorMatrix) {
-        int[][] matrix = new int[N][N];
-
-        for (int j = medusaPos.col + 1; j <= N - 1; j++) {
-            int up = Math.max(0, medusaPos.row - (j - medusaPos.col));
-            int down = Math.min(N - 1, medusaPos.row + (j - medusaPos.col));
-
-            for (int i = up; i<= down; i++) {
-                matrix[i][j] = 1;
-            }
-        }
-
-
-        //UpDirection
-        for (int j = medusaPos.col + 1; j < N - 1; j++) {
-            int up = Math.max(0, medusaPos.row - (j - medusaPos.col));
-            int down = medusaPos.row - 1;
-
-            for (int i = up; i <= down; i++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i][j + 1] = 0;
+            for (int i = upRow; i < curMedusaPos.row; i++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i][j - 1] = 0;
                     if (i >= 1) {
-                        matrix[i - 1][j + 1] = 0;
+                        seeMatrix[i - 1][j - 1] = 0;
                     }
                 }
             }
         }
 
-        //RightDirection
-        for (int j = medusaPos.col + 1; j < N - 1; j++) {
-            if (warriorMatrix[medusaPos.row][j] >= 1 || matrix[medusaPos.row][j] == 0) {
-                matrix[medusaPos.row][j + 1] = 0;
-            }
-        }
+        for (int j = curMedusaPos.col - 1; j >= 1; j--) {
+            int downRow = Math.min(N - 1, curMedusaPos.row + (curMedusaPos.col - j));
 
-        //DownDirection
-        for (int j = medusaPos.col + 1; j < N - 1; j++) {
-            int up = medusaPos.row + 1;
-            int down = Math.min(N - 1, medusaPos.row + (j - medusaPos.col));
-
-            for (int i = up; i <= down; i++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i][j + 1] = 0;
+            for (int i = curMedusaPos.row + 1; i <= downRow; i++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i][j - 1] = 0;
                     if (i < N - 1) {
-                        matrix[i + 1][j + 1] = 0;
+                        seeMatrix[i + 1][j - 1] = 0;
                     }
                 }
             }
         }
 
-        int numRockedWarrior = 0;
-        for (int j = medusaPos.col + 1; j <= N - 1; j++) {
-            int up = Math.max(0, medusaPos.row - (j - medusaPos.col));
-            int down = Math.min(N - 1, medusaPos.row + (j - medusaPos.col));
-
-            for (int i = up; i<= down; i++) {
-                if (matrix[i][j] == 1 && warriorMatrix[i][j] >= 1) {
-                    numRockedWarrior += warriorMatrix[i][j];
-                }
-            }
-        }
-
-        return new SeeNode(matrix, numRockedWarrior);
+        return seeMatrix;
     }
 
-    public static SeeNode medusaSeeLeft(Pos medusaPos, int[][] warriorMatrix) {
-        int[][] matrix = new int[N][N];
+    public static int[][] seeRight(Pos curMedusaPos) {
+        int[][] seeMatrix = new int[N][N];
+        for (int j = curMedusaPos.col + 1; j < N; j++) {
+            int upRow = Math.max(0, curMedusaPos.row - (j - curMedusaPos.col));
+            int downRow = Math.min(N - 1, curMedusaPos.row + (j - curMedusaPos.col));
 
-        for (int j = medusaPos.col - 1; j >= 0; j--) {
-            int up = Math.max(0, medusaPos.row - (medusaPos.col - j));
-            int down = Math.min(N - 1, medusaPos.row + (medusaPos.col - j));
-
-            for (int i = up; i<= down; i++) {
-                matrix[i][j] = 1;
+            for (int i = upRow; i <= downRow; i++) {
+                seeMatrix[i][j] = 1;
             }
         }
 
+        for (int j = curMedusaPos.col + 1; j < N - 1; j++) {
+            if (seeMatrix[curMedusaPos.row][j] == 0 || warriorPosMap.get(new Pos(curMedusaPos.row, j)) != null) {
+                seeMatrix[curMedusaPos.row][j + 1] = 0;
+            }
+        }
 
-        //UpDirection
-        for (int j = medusaPos.col - 1; j >= 1; j--) {
-            int up = Math.max(0, medusaPos.row - (medusaPos.col - j));
-            int down = medusaPos.row - 1;
+        for (int j = curMedusaPos.col + 1; j < N - 1; j++) {
+            int upRow = Math.max(0, curMedusaPos.row - (j - curMedusaPos.col));
 
-            for (int i = up; i <= down; i++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i][j - 1] = 0;
+            for (int i = upRow; i < curMedusaPos.row; i++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i][j + 1] = 0;
                     if (i >= 1) {
-                        matrix[i - 1][j - 1] = 0;
+                        seeMatrix[i - 1][j + 1] = 0;
                     }
                 }
             }
         }
 
-        //RightDirection
-        for (int j = medusaPos.col - 1; j >= 1; j--) {
-            if (warriorMatrix[medusaPos.row][j] >= 1 || matrix[medusaPos.row][j] == 0) {
-                matrix[medusaPos.row][j - 1] = 0;
-            }
-        }
+        for (int j = curMedusaPos.col + 1; j < N - 1; j++) {
+            int downRow = Math.min(N - 1, curMedusaPos.row + (j - curMedusaPos.col));
 
-        //DownDirection
-        for (int j = medusaPos.col - 1; j >= 1; j--) {
-            int up = medusaPos.row + 1;
-            int down = Math.min(N - 1, medusaPos.row + (medusaPos.col - j));
-
-            for (int i = up; i <= down; i++) {
-                if (warriorMatrix[i][j] >= 1 || matrix[i][j] == 0) {
-                    matrix[i][j - 1] = 0;
+            for (int i = curMedusaPos.row + 1; i <= downRow; i++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i][j + 1] = 0;
                     if (i < N - 1) {
-                        matrix[i + 1][j - 1] = 0;
+                        seeMatrix[i + 1][j + 1] = 0;
                     }
                 }
             }
         }
 
-        int numRockedWarrior = 0;
-        for (int j = medusaPos.col - 1; j >= 0; j--) {
-            int up = Math.max(0, medusaPos.row - (medusaPos.col - j));
-            int down = Math.min(N - 1, medusaPos.row + (medusaPos.col - j));
+        return seeMatrix;
+    }
 
-            for (int i = up; i<= down; i++) {
-                if (matrix[i][j] == 1 && warriorMatrix[i][j] >= 1) {
-                    numRockedWarrior += warriorMatrix[i][j];
+    public static int[][] seeUp(Pos curMedusaPos) {
+        int[][] seeMatrix = new int[N][N];
+        for (int i = curMedusaPos.row - 1; i >= 0; i--) {
+            int leftCol = Math.max(0, curMedusaPos.col - (curMedusaPos.row - i));
+            int rightCol = Math.min(N - 1, curMedusaPos.col + (curMedusaPos.row - i));
+
+            for (int j = leftCol; j <= rightCol; j++) {
+                seeMatrix[i][j] = 1;
+            }
+        }
+
+        for (int i = curMedusaPos.row - 1; i >= 1; i--) {
+            if (seeMatrix[i][curMedusaPos.col] == 0 || warriorPosMap.get(new Pos(i, curMedusaPos.col)) != null) {
+                seeMatrix[i - 1][curMedusaPos.col] = 0;
+            }
+        }
+
+        for (int i = curMedusaPos.row - 1; i >= 1; i--) {
+            int leftCol = Math.max(0, curMedusaPos.col - (curMedusaPos.row - i));
+
+            for (int j = leftCol; j < curMedusaPos.col; j++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i - 1][j] = 0;
+                    if (j >= 1) {
+                        seeMatrix[i - 1][j - 1] = 0;
+                    }
                 }
             }
         }
 
-        return new SeeNode(matrix, numRockedWarrior);
-    }
+        for (int i = curMedusaPos.row - 1; i >= 1; i--) {
+            int rightCol = Math.min(N - 1, curMedusaPos.col + (curMedusaPos.row - i));
 
-    public static Pos[] getDiagDirections(Pos direction) {
-        Pos[] diagDiretions = new Pos[2];
-        if (direction.row == 0) {
-            diagDiretions[0] = new Pos(-1, direction.col);
-            diagDiretions[1] = new Pos(1, direction.col);
-            return diagDiretions;
+            for (int j = curMedusaPos.col + 1; j <= rightCol; j++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i - 1][j] = 0;
+                    if (j < N - 1) {
+                        seeMatrix[i - 1][j + 1] = 0;
+                    }
+                }
+            }
         }
 
-        diagDiretions[0] = new Pos(direction.row, -1);
-        diagDiretions[1] = new Pos(direction.row, 1);
-        return diagDiretions;
+        return seeMatrix;
     }
-    public static BfsNode getFastestPath() {
+
+    public static int[][] seeDown(Pos curMedusaPos) {
+        int[][] seeMatrix = new int[N][N];
+        for (int i = curMedusaPos.row + 1; i < N; i++) {
+            int leftCol = Math.max(0, curMedusaPos.col - (i - curMedusaPos.row));
+            int rightCol = Math.min(N - 1, curMedusaPos.col + (i - curMedusaPos.row));
+
+            for (int j = leftCol; j <= rightCol; j++) {
+                seeMatrix[i][j] = 1;
+            }
+        }
+
+
+        for (int i = curMedusaPos.row + 1; i < N - 1; i++) {
+            if (seeMatrix[i][curMedusaPos.col] == 0 || warriorPosMap.get(new Pos(i, curMedusaPos.col)) != null) {
+                seeMatrix[i + 1][curMedusaPos.col] = 0;
+            }
+        }
+
+        for (int i = curMedusaPos.row + 1; i < N - 1; i++) {
+            int leftCol = Math.max(0, curMedusaPos.col - (i - curMedusaPos.row));
+
+            for (int j = leftCol; j < curMedusaPos.col; j++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i + 1][j] = 0;
+                    if (j >= 1) {
+                        seeMatrix[i + 1][j - 1] = 0;
+                    }
+                }
+            }
+        }
+
+        for (int i = curMedusaPos.row + 1; i < N - 1; i++) {
+            int rightCol = Math.min(N - 1, curMedusaPos.col + (i - curMedusaPos.row));
+            for (int j = curMedusaPos.col + 1; j <= rightCol; j++) {
+                if (seeMatrix[i][j] == 0 || warriorPosMap.get(new Pos(i, j)) != null) {
+                    seeMatrix[i + 1][j] = 0;
+                    if (j < N - 1) {
+                        seeMatrix[i + 1][j + 1] = 0;
+                    }
+                }
+            }
+        }
+
+        return seeMatrix;
+    }
+
+    public static List<Pos> getFastestPath() {
+        Deque<Node> queue = new ArrayDeque<>();
         int[][] visited = new int[N][N];
-        Deque<BfsNode> queue = new ArrayDeque<>();
-        queue.add(new BfsNode(medusaStartPos, 0, new ArrayList<>()));
+        queue.add(new Node(medusaHomePos, new ArrayList<>()));
 
         while (!queue.isEmpty()) {
-            BfsNode bfsNode = queue.poll();
-            if (visited[bfsNode.curPos.row][bfsNode.curPos.col] == 1) { continue; }
-            visited[bfsNode.curPos.row][bfsNode.curPos.col] = 1;
+            Node node = queue.pollFirst();
+            if (visited[node.pos.row][node.pos.col] == 1) { continue; }
+            visited[node.pos.row][node.pos.col] = 1;
 
-            if (bfsNode.curPos.equals(parkPos)) { return bfsNode; }
+            for (Pos direction : medusaDirections) {
+                Pos movedPos = node.pos.addPos(direction);
+                if (!movedPos.isValidIndex() || roadMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
 
-            for (Pos direction : medusaMoveDirections) {
-                Pos movedPos = bfsNode.curPos.addPos(direction);
-                if (!movedPos.isValidIndex() || !isRoad(movedPos)) { continue; }
-                if (bfsNode.pathList.contains(movedPos)) { continue; }
+                List<Pos> copiedPath = new ArrayList<>(node.path);
+                copiedPath.add(movedPos);
 
-                List<Pos> copiedPathList = new ArrayList<>(bfsNode.pathList);
-                copiedPathList.add(movedPos);
-                queue.add(new BfsNode(movedPos, bfsNode.depth + 1, copiedPathList));
+                if (movedPos.equals(parkPos)) {
+                    return copiedPath;
+                }
+                queue.add(new Node(movedPos, copiedPath));
             }
         }
 
-        return new BfsNode(new Pos(0, 0), 0, new ArrayList<>());
+        return new ArrayList<>();
+    }
+
+    public static Map<Pos, Integer> getWarriorPosMap() {
+        Map<Pos, Integer> warriorPosMap = new HashMap<>();
+        for (int i = 0; i < warriorList.size(); i++) {
+            warriorPosMap.put(warriorList.get(i).pos, 1);
+        }
+
+        return warriorPosMap;
     }
 
     public static void init() throws IOException {
@@ -501,35 +425,31 @@ public class 메두사와전사들 {
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-        roadMatrix = new int[N][N];
-        warriorMatrix = new int[N][N];
 
         st = new StringTokenizer(br.readLine());
-        int medusaRow = Integer.parseInt(st.nextToken());
-        int medusaCol = Integer.parseInt(st.nextToken());
-        medusaStartPos = new Pos(medusaRow, medusaCol);
+        int medusaHomeRow = Integer.parseInt(st.nextToken());
+        int medusaHomeCol = Integer.parseInt(st.nextToken());
+        medusaHomePos = new Pos(medusaHomeRow, medusaHomeCol);
 
         int parkRow = Integer.parseInt(st.nextToken());
         int parkCol = Integer.parseInt(st.nextToken());
         parkPos = new Pos(parkRow, parkCol);
 
-        warriorPosList = new ArrayList<>();
+        warriorList = new ArrayList<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < M; i++) {
             int warriorRow = Integer.parseInt(st.nextToken());
             int warriorCol = Integer.parseInt(st.nextToken());
 
-            warriorMatrix[warriorRow][warriorCol] += 1;
-            warriorPosList.add(new Pos(warriorRow, warriorCol));
+            warriorList.add(new Warrior(i, new Pos(warriorRow, warriorCol)));
         }
 
-
+        roadMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
             for (int j = 0; j < N; j++) {
                 roadMatrix[i][j] = Integer.parseInt(st.nextToken());
             }
         }
-
     }
 }
