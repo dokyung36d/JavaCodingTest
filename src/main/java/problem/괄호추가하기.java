@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 괄호추가하기 {
     static int N;
     static int[] numList;
     static char[] operatorList;

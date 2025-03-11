@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 메두사와전사들 {
     static int N, M;
     static Pos medusaHomePos, parkPos;
     static Pos[] medusaDirections = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)};
