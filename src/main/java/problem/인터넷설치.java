@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 인터넷설치 {
     static int N, P, K;
     static Map<Integer, List<Edge>> graphMap;
 
