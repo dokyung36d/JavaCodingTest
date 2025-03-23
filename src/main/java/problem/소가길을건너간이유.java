@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 소가길을건너간이유 {
     static int N, R, K;
     static int[][] groupMatrix;
     static Map<Pos, Map<Pos, Integer>> bridgeMap;
