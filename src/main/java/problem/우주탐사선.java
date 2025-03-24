@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 우주탐사선 {
     static int N, K;
     static int[][] graphMatrix;
 
@@ -24,7 +24,7 @@ public class Main {
             return Integer.compare(this.totalCost, anotherNode.totalCost);
         }
     }
-    
+
     public static void main(String[] args) throws Exception {
         init();
         int allVisited = (1 << N) - 1;
@@ -60,7 +60,7 @@ public class Main {
 
         System.out.println(answer);
     }
-    
+
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
