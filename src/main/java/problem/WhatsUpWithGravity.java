@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class WhatsUpWithGravity {
     static int N, M;
     static char[][] originalMatrix;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
@@ -206,13 +206,13 @@ public class Main {
 
             Pos leftMovedPos = node.pos.addPos(directions[3]);
             if (leftMovedPos.isValidIndex() && visited[leftMovedPos.row][leftMovedPos.col][node.flipped] == 0 &&
-                originalMatrix[leftMovedPos.row][leftMovedPos.col] == '.') {
+                    originalMatrix[leftMovedPos.row][leftMovedPos.col] == '.') {
                 pq.add(new Node(leftMovedPos, node.flipped, node.numFlipped));
             }
 
             Pos rightMovedPos = node.pos.addPos(directions[1]);
             if (rightMovedPos.isValidIndex() && visited[rightMovedPos.row][rightMovedPos.col][node.flipped] == 0 &&
-                originalMatrix[rightMovedPos.row][rightMovedPos.col] == '.') {
+                    originalMatrix[rightMovedPos.row][rightMovedPos.col] == '.') {
                 pq.add(new Node(rightMovedPos, node.flipped, node.numFlipped));
             }
 
