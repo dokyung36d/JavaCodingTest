@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 빵집 {
     static int R, C;
     static char[][] mainMatrix;
     static Pos[] directions = {new Pos(-1, 1), new Pos(0, 1), new Pos(1, 1)};
