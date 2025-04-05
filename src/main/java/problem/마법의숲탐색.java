@@ -6,12 +6,16 @@ import java.io.*;
 
 public class 마법의숲탐색 {
     static int R, C, K;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-    //북 -> 동 -> 남 -> 서
-    static int[][] matrix;
+    static int[][] mainMatrix;
     static int[][] jumpMatrix;
-    //matrix에서 0은 빈칸을 의미
-    static Golem[] golemInitPosList;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static Pos[] underCheckPosList = {new Pos(2, 0), new Pos(1, -1), new Pos(1, 1)};
+    static Pos[] leftCheckPosList = {new Pos(-1, - 1), new Pos(0, -2), new Pos(1, -1),
+            new Pos(1, -2), new Pos(2, -1)};
+    static Pos[] rightCheckPosList = {new Pos(-1, 1), new Pos(0, 2), new Pos(1, 1),
+            new Pos(2, 1), new Pos(1, 2)};
+    static GolemInitInfo[] golemInitInfoList;
+
 
     public static class Pos {
         int row;
@@ -34,170 +38,158 @@ public class 마법의숲탐색 {
             return true;
         }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-            return false;
-        }
+        public boolean isValidCenterPos() {
+            if (this.row >= 0 && this.row <= 2) {
+                return false;
+            }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.row, this.col);
+            return true;
+        }
+    }
+
+    public static class GolemInitInfo {
+        int uniqueNum;
+        int startCol;
+        int directionIndex;
+
+        public GolemInitInfo(int uniqueNum, int startCol, int directionIndex) {
+            this.uniqueNum = uniqueNum;
+            this.startCol = startCol;
+            this.directionIndex = directionIndex;
         }
     }
 
     public static class Golem {
-        Pos centerPos;
+        int uniqueNum;
+        Pos curPos;
         int directionIndex;
 
-        public Golem(Pos centerPos, int directionIndex) {
-            this.centerPos = centerPos;
+        public Golem(int uniqueNum, Pos pos, int directionIndex) {
+            this.uniqueNum = uniqueNum;
+            this.curPos = pos;
             this.directionIndex = directionIndex;
         }
 
-        public int soulMove() {
-            int[][] visited = new int[R][C];
-            Deque<Pos> queue = new ArrayDeque<>();
-            queue.add(centerPos);
-
-            int maxRow = centerPos.row;
-            Pos maxPos = centerPos;
-            while (!queue.isEmpty()) {
-                Pos pos = queue.pollFirst();
-                if (visited[pos.row][pos.col] == 1) { continue; }
-
-                visited[pos.row][pos.col] = 1;
-                for (Pos direction : directions) {
-                    Pos movedPos = pos.addPos(direction);
-
-                    if (!movedPos.isValidIndex()) { continue; }
-                    if (matrix[movedPos.row][movedPos.col] == 0) { continue; }
-                    if (jumpMatrix[pos.row][pos.col] == 0 && matrix[pos.row][pos.col] != matrix[movedPos.row][movedPos.col]) { continue; }
-
-                    if (movedPos.row > maxRow) {
-                        maxRow = movedPos.row;
-                        maxPos = movedPos;
-                    }
-                    queue.add(movedPos);
+        public boolean isMovePossible(Pos[] checkDirectionList) {
+            for (Pos checkDirection : checkDirectionList) {
+                Pos movedPos = this.curPos.addPos(checkDirection);
+                if (!movedPos.isValidIndex() || mainMatrix[movedPos.row][movedPos.col] != 0) {
+                    return false;
                 }
-            }
-
-            return maxRow - 2;
-        }
-
-        public void applyToMatrix(int uniqueNum) {
-            int[] dRow = {-1, 0, 1, 0, 0}; //북 -> 동 -> 남 -> 서 -> 가운데
-            int[] dCol = {0, 1, 0, -1, 0};
-
-            for (int i = 0; i < dRow.length; i++) {
-                matrix[centerPos.row + dRow[i]][centerPos.col + dCol[i]] = uniqueNum;
-            }
-
-            Pos jumpDirection = directions[directionIndex];
-            jumpMatrix[centerPos.row + jumpDirection.row][centerPos.col + jumpDirection.col] = 1;
-        }
-
-        public Golem move() {
-            if (isGoDownPossible()) {
-                return goDown();
-            }
-
-            if (isGoLeftPossible()) {
-                return goLeft();
-            }
-
-            if (isGoRightPossible()) {
-                return goRight();
-            }
-
-            return this;
-        }
-
-        public boolean isGoDownPossible() {
-            Pos[] nextPosList = {new Pos(centerPos.row + 2, centerPos.col),
-                    new Pos(centerPos.row + 1, centerPos.col - 1),
-                    new Pos(centerPos.row + 1, centerPos.col + 1)};
-
-            for (Pos nextPos : nextPosList) {
-                if (!nextPos.isValidIndex()) { return false; }
-                if (matrix[nextPos.row][nextPos.col] != 0) { return false; }
             }
 
             return true;
         }
 
         public Golem goDown() {
-            return new Golem(new Pos(centerPos.row + 1, centerPos.col), directionIndex);
-        }
-
-        public boolean isGoLeftPossible() {
-            Pos[] nextPosList = {new Pos(centerPos.row - 1, centerPos.col - 1),
-                    new Pos(centerPos.row, centerPos.col - 2),
-                    new Pos(centerPos.row + 1, centerPos.col - 1),
-                    new Pos(centerPos.row + 1, centerPos.col - 2),
-                    new Pos(centerPos.row + 2, centerPos.col - 1)};
-
-            for (Pos nextPos : nextPosList) {
-                if (!nextPos.isValidIndex()) { return false; }
-                if (matrix[nextPos.row][nextPos.col] != 0) { return false; }
-            }
-
-            return true;
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 0)), this.directionIndex);
         }
 
         public Golem goLeft() {
-            return new Golem(new Pos(centerPos.row + 1, centerPos.col - 1), (directionIndex + 3) % 4);
-        }
-
-        public boolean isGoRightPossible() {
-            Pos[] nextPosList = {new Pos(centerPos.row - 1, centerPos.col + 1),
-                    new Pos(centerPos.row, centerPos.col + 2),
-                    new Pos(centerPos.row + 1, centerPos.col + 1),
-                    new Pos(centerPos.row + 2, centerPos.col + 1),
-                    new Pos(centerPos.row + 1, centerPos.col + 2)};
-
-            for (Pos nextPos : nextPosList) {
-                if (!nextPos.isValidIndex()) { return false; }
-                if (matrix[nextPos.row][nextPos.col] != 0) { return false; }
-            }
-
-            return true;
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, -1)), (this.directionIndex + 3) % 4);
         }
 
         public Golem goRight() {
-            return new Golem(new Pos(centerPos.row + 1, centerPos.col + 1), (directionIndex + 1) % 4);
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 1)), (this.directionIndex + 1) % 4);
+        }
+
+
+        public void applyToMainMatrix() {
+            mainMatrix[this.curPos.row][this.curPos.col] = this.uniqueNum;
+            for (Pos direction : directions) {
+                Pos movedPos = this.curPos.addPos(direction);
+                mainMatrix[movedPos.row][movedPos.col] = this.uniqueNum;
+            }
+
+            Pos jumpPos = this.curPos.addPos(directions[this.directionIndex]);
+            jumpMatrix[jumpPos.row][jumpPos.col] = 1;
         }
     }
 
+    public static Golem fallGolem(GolemInitInfo golemInitInfo) {
+        Golem golem = new Golem(golemInitInfo.uniqueNum, new Pos(1, golemInitInfo.startCol), golemInitInfo.directionIndex);
+
+        while (true) {
+            if (golem.isMovePossible(underCheckPosList)) {
+                golem = golem.goDown();
+            }
+
+            else if (golem.isMovePossible(leftCheckPosList)) {
+                golem = golem.goLeft();
+            }
+
+            else if (golem.isMovePossible(rightCheckPosList)) {
+                golem = golem.goRight();
+            }
+
+            else {
+                break;
+            }
+        }
+
+        return golem;
+    }
 
     public static void main(String[] args) throws Exception {
         init();
+
         int answer = 0;
-        for (int i = 0; i < K; i++) {
-            Golem golem = golemInitPosList[i];
-            while (true) {
-                Golem movedGolem = golem.move();
-                if (golem.centerPos.equals(movedGolem.centerPos)) { break; }
 
-                golem = movedGolem;
-            }
+        for (GolemInitInfo golemInitInfo : golemInitInfoList) {
+            Golem golem = fallGolem(golemInitInfo);
+            golem.applyToMainMatrix();
 
-            golem.applyToMatrix(i + 1);
-            if (golem.centerPos.row < 4) {
-                matrix = new int[R][C];
-                jumpMatrix = new int[R][C];
+            if (golem.curPos.row <= 3) {
+                initMatrix();
                 continue;
             }
-            answer += golem.soulMove();
+
+            int maxRow = bfs(golem.curPos);
+            answer += maxRow;
         }
 
         System.out.println(answer);
+
     }
 
-    public static void init() throws Exception {
+    public static int bfs(Pos startPos) {
+        int[][] visited = new int[R][C];
+
+        Deque<Pos> queue = new ArrayDeque<>();
+        queue.add(startPos);
+
+
+        int maxRow = startPos.row;
+        while (!queue.isEmpty()) {
+            Pos curPos = queue.pollFirst();
+            if (visited[curPos.row][curPos.col] == 1) { continue; }
+            visited[curPos.row][curPos.col] = 1;
+
+            maxRow = Math.max(maxRow, curPos.row);
+
+            for (Pos direction : directions) {
+                Pos movedPos = curPos.addPos(direction);
+                if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+
+                if (mainMatrix[curPos.row][curPos.col] == mainMatrix[movedPos.row][movedPos.col]) {
+                    queue.add(movedPos);
+                }
+                else if (jumpMatrix[curPos.row][curPos.col] == 1) {
+                    queue.add(movedPos);
+                }
+            }
+        }
+
+        return maxRow - 2;
+    }
+
+    public static void initMatrix() {
+        mainMatrix = new int[R][C];
+        jumpMatrix = new int[R][C];
+    }
+
+    public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
@@ -206,16 +198,17 @@ public class 마법의숲탐색 {
         K = Integer.parseInt(st.nextToken());
 
         R += 3;
-        matrix = new int[R][C];
+        mainMatrix = new int[R][C];
         jumpMatrix = new int[R][C];
 
-        golemInitPosList = new Golem[K];
+        golemInitInfoList = new GolemInitInfo[K];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
-            int column = Integer.parseInt(st.nextToken()) - 1;
+            int col = Integer.parseInt(st.nextToken()) - 1;
             int directionIndex = Integer.parseInt(st.nextToken());
 
-            golemInitPosList[i] = new Golem(new Pos(1, column), directionIndex);
+            golemInitInfoList[i] = new GolemInitInfo(i + 1, col, directionIndex);
         }
+
     }
 }

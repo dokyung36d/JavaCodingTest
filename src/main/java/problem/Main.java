@@ -5,12 +5,19 @@ import java.io.*;
 
 
 public class Main {
+    static int R, C, K;
     static int[][] mainMatrix;
-    static int K, M;
-    static Deque<Integer> treasureQueue;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, - 1)};
+    static int[][] jumpMatrix;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static Pos[] underCheckPosList = {new Pos(2, 0), new Pos(1, -1), new Pos(1, 1)};
+    static Pos[] leftCheckPosList = {new Pos(-1, - 1), new Pos(0, -2), new Pos(1, -1),
+            new Pos(1, -2), new Pos(2, -1)};
+    static Pos[] rightCheckPosList = {new Pos(-1, 1), new Pos(0, 2), new Pos(1, 1),
+            new Pos(2, 1), new Pos(1, 2)};
+    static GolemInitInfo[] golemInitInfoList;
 
-    public static class Pos implements Comparable<Pos> {
+
+    public static class Pos {
         int row;
         int col;
 
@@ -24,211 +31,183 @@ public class Main {
         }
 
         public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= 5 || this.col < 0 || this.col >= 5) {
+            if (this.row < 0 || this.row >= R || this.col < 0 || this.col >= C) {
                 return false;
             }
 
             return true;
         }
 
-        @Override
-        public int compareTo(Pos anotherPos) {
-            if (this.col != anotherPos.col) {
-                return Integer.compare(this.col, anotherPos.col);
+        public boolean isValidCenterPos() {
+            if (this.row >= 0 && this.row <= 2) {
+                return false;
             }
 
-            return Integer.compare(-this.row, -anotherPos.row);
+            return true;
         }
     }
 
-    public static class Node implements Comparable<Node> {
-        PriorityQueue<Pos> poppedTreasurePriorityQueue;
-        int numRotated;
-        Pos topLeftPos;
-        int[][] partMatrix;
+    public static class GolemInitInfo {
+        int uniqueNum;
+        int startCol;
+        int directionIndex;
 
-        public Node(PriorityQueue<Pos> poppedTreasurePriorityQueue, int numRotated, Pos topLeftPos, int[][] partMatrix) {
-            this.poppedTreasurePriorityQueue = poppedTreasurePriorityQueue;
-            this.numRotated = numRotated;
-            this.topLeftPos = topLeftPos;
-            this.partMatrix = partMatrix;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            if (this.poppedTreasurePriorityQueue.size() != anotherNode.poppedTreasurePriorityQueue.size()) {
-                return Integer.compare(this.poppedTreasurePriorityQueue.size(), anotherNode.poppedTreasurePriorityQueue.size());
-            }
-
-            if (this.numRotated != anotherNode.numRotated) {
-                return Integer.compare(-this.numRotated, -anotherNode.numRotated);
-            }
-
-            if (this.topLeftPos.col != anotherNode.topLeftPos.col) {
-                return Integer.compare(-this.topLeftPos.col, -anotherNode.topLeftPos.col);
-            }
-
-            return Integer.compare(-this.topLeftPos.row, -anotherNode.topLeftPos.row);
+        public GolemInitInfo(int uniqueNum, int startCol, int directionIndex) {
+            this.uniqueNum = uniqueNum;
+            this.startCol = startCol;
+            this.directionIndex = directionIndex;
         }
     }
 
-    public static int[][] getPartMatrix(Pos topLeftPos) {
-        int[][] partMatrix = new int[3][3];
+    public static class Golem {
+        int uniqueNum;
+        Pos curPos;
+        int directionIndex;
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                partMatrix[i][j] = mainMatrix[topLeftPos.row + i][topLeftPos.col + j];
-            }
+        public Golem(int uniqueNum, Pos pos, int directionIndex) {
+            this.uniqueNum = uniqueNum;
+            this.curPos = pos;
+            this.directionIndex = directionIndex;
         }
 
-        return partMatrix;
+        public boolean isMovePossible(Pos[] checkDirectionList) {
+            for (Pos checkDirection : checkDirectionList) {
+                Pos movedPos = this.curPos.addPos(checkDirection);
+                if (!movedPos.isValidIndex() || mainMatrix[movedPos.row][movedPos.col] != 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public Golem goDown() {
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 0)), this.directionIndex);
+        }
+
+        public Golem goLeft() {
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, -1)), (this.directionIndex + 3) % 4);
+        }
+
+        public Golem goRight() {
+            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 1)), (this.directionIndex + 1) % 4);
+        }
+
+
+        public void applyToMainMatrix() {
+            mainMatrix[this.curPos.row][this.curPos.col] = this.uniqueNum;
+            for (Pos direction : directions) {
+                Pos movedPos = this.curPos.addPos(direction);
+                mainMatrix[movedPos.row][movedPos.col] = this.uniqueNum;
+            }
+
+            Pos jumpPos = this.curPos.addPos(directions[this.directionIndex]);
+            jumpMatrix[jumpPos.row][jumpPos.col] = 1;
+        }
     }
 
-    public static int[][] rotateMatrix(int[][] matrix) {
-        int[][] rotatedMatrix = new int[3][3];
+    public static Golem fallGolem(GolemInitInfo golemInitInfo) {
+        Golem golem = new Golem(golemInitInfo.uniqueNum, new Pos(1, golemInitInfo.startCol), golemInitInfo.directionIndex);
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                rotatedMatrix[j][3 - i - 1] = matrix[i][j];
+        while (true) {
+            if (golem.isMovePossible(underCheckPosList)) {
+                golem = golem.goDown();
+            }
+
+            else if (golem.isMovePossible(leftCheckPosList)) {
+                golem = golem.goLeft();
+            }
+
+            else if (golem.isMovePossible(rightCheckPosList)) {
+                golem = golem.goRight();
+            }
+
+            else {
+                break;
             }
         }
 
-        return rotatedMatrix;
-    }
-
-    public static int[][] applyPartMatrixToMainMatrix(int[][] partMatrix, Pos topLeftPos) {
-        int[][] appliedMatrix = new int[5][5];
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                appliedMatrix[i][j] = mainMatrix[i][j];
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                appliedMatrix[topLeftPos.row + i][topLeftPos.col + j] = partMatrix[i][j];
-            }
-        }
-
-        return appliedMatrix;
+        return golem;
     }
 
     public static void main(String[] args) throws Exception {
         init();
 
-        StringBuilder sb = new StringBuilder();
-        for (int k = 0; k < K; k++) {
-            int answer = 0;
+        int answer = 0;
 
-            Node bestNode = getBestNode();
-            if (bestNode.poppedTreasurePriorityQueue.size() < 3) {
-                break;
+        for (GolemInitInfo golemInitInfo : golemInitInfoList) {
+            Golem golem = fallGolem(golemInitInfo);
+            golem.applyToMainMatrix();
+
+            if (golem.curPos.row <= 3) {
+                initMatrix();
+                continue;
             }
 
-            answer += bestNode.poppedTreasurePriorityQueue.size();
-            mainMatrix = applyPartMatrixToMainMatrix(bestNode.partMatrix, bestNode.topLeftPos);
-            putTreasureToMainMatrix(bestNode.poppedTreasurePriorityQueue);
-
-            while (true) {
-                PriorityQueue<Pos> priorityQueue = searchTreasure(mainMatrix);
-                if (priorityQueue.size() < 3) {
-                    break;
-                }
-
-                answer += priorityQueue.size();
-                putTreasureToMainMatrix(priorityQueue);
-            }
-            sb.append(answer + " ");
+            int maxRow = bfs(golem.curPos);
+            answer += maxRow;
         }
 
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
+        System.out.println(answer);
+
     }
 
-    public static void putTreasureToMainMatrix(PriorityQueue<Pos> posPriorityQueue) {
-        while (!posPriorityQueue.isEmpty()) {
-            Pos pos = posPriorityQueue.poll();
-            int value = treasureQueue.pollFirst();
+    public static int bfs(Pos startPos) {
+        int[][] visited = new int[R][C];
 
-            mainMatrix[pos.row][pos.col] = value;
-        }
-    }
+        Deque<Pos> queue = new ArrayDeque<>();
+        queue.add(startPos);
 
-    public static Node getBestNode() {
-        Node bestNode = new Node(new PriorityQueue<>(), 4, new Pos(3, 3), new int[3][3]);
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                Pos topLeftPos = new Pos(i, j);
-                int[][] partMatrix = getPartMatrix(topLeftPos);
-                for (int numRotated = 1; numRotated <= 3; numRotated++) {
-                    partMatrix = rotateMatrix(partMatrix);
-                    int[][] appliedMatrix = applyPartMatrixToMainMatrix(partMatrix, topLeftPos);
-                    PriorityQueue<Pos> searchedTreasurePriorityQueue = searchTreasure(appliedMatrix);
-                    Node node = new Node(searchedTreasurePriorityQueue, numRotated, topLeftPos, partMatrix);
-                    if (node.compareTo(bestNode) == 1) {
-                        bestNode = node;
-                    }
+        int maxRow = startPos.row;
+        while (!queue.isEmpty()) {
+            Pos curPos = queue.pollFirst();
+            if (visited[curPos.row][curPos.col] == 1) { continue; }
+            visited[curPos.row][curPos.col] = 1;
+
+            maxRow = Math.max(maxRow, curPos.row);
+
+            for (Pos direction : directions) {
+                Pos movedPos = curPos.addPos(direction);
+                if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+
+                if (mainMatrix[curPos.row][curPos.col] == mainMatrix[movedPos.row][movedPos.col]) {
+                    queue.add(movedPos);
+                }
+                else if (jumpMatrix[curPos.row][curPos.col] == 1) {
+                    queue.add(movedPos);
                 }
             }
         }
 
-        return bestNode;
+        return maxRow - 2;
     }
 
-    public static PriorityQueue<Pos> searchTreasure(int[][] matrix) {
-        int[][] visited = new int[5][5];
-        PriorityQueue<Pos> priorityQueue = new PriorityQueue();
-
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                if (visited[i][j] == 1) { continue; }
-
-                List<Pos> treasureList = new ArrayList<>();
-                Deque<Pos> queue = new ArrayDeque<>();
-                queue.addLast(new Pos(i, j));
-                while (!queue.isEmpty()) {
-                    Pos curPos = queue.pollFirst();
-                    if (visited[curPos.row][curPos.col] == 1) { continue; }
-                    visited[curPos.row][curPos.col] = 1;
-                    treasureList.add(curPos);
-
-                    for (Pos direction : directions) {
-                        Pos movedPos = curPos.addPos(direction);
-                        if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
-                        if (matrix[curPos.row][curPos.col] != matrix[movedPos.row][movedPos.col]) { continue; }
-
-                        queue.addLast(movedPos);
-                    }
-                }
-
-                if (treasureList.size() >= 3) {
-                    priorityQueue.addAll(treasureList);
-                }
-            }
-        }
-
-        return priorityQueue;
+    public static void initMatrix() {
+        mainMatrix = new int[R][C];
+        jumpMatrix = new int[R][C];
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
+        R = Integer.parseInt(st.nextToken());
+        C = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
 
-        mainMatrix = new int[5][5];
-        for (int i = 0; i < 5; i++) {
+        R += 3;
+        mainMatrix = new int[R][C];
+        jumpMatrix = new int[R][C];
+
+        golemInitInfoList = new GolemInitInfo[K];
+        for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < 5; j++) {
-                mainMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
+            int col = Integer.parseInt(st.nextToken()) - 1;
+            int directionIndex = Integer.parseInt(st.nextToken());
 
-        treasureQueue = new ArrayDeque<>();
-        st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < M; i++) {
-            treasureQueue.addLast(Integer.parseInt(st.nextToken()));
+            golemInitInfoList[i] = new GolemInitInfo(i + 1, col, directionIndex);
         }
 
     }
