@@ -5,210 +5,268 @@ import java.io.*;
 
 
 public class Main {
-    static int R, C, K;
-    static int[][] mainMatrix;
-    static int[][] jumpMatrix;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-    static Pos[] underCheckPosList = {new Pos(2, 0), new Pos(1, -1), new Pos(1, 1)};
-    static Pos[] leftCheckPosList = {new Pos(-1, - 1), new Pos(0, -2), new Pos(1, -1),
-            new Pos(1, -2), new Pos(2, -1)};
-    static Pos[] rightCheckPosList = {new Pos(-1, 1), new Pos(0, 2), new Pos(1, 1),
-            new Pos(2, 1), new Pos(1, 2)};
-    static GolemInitInfo[] golemInitInfoList;
-
-
+    static int N, M, K;
+    static Tower[][] mainMatrix;
+    static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0, -1), new Pos(-1, 0)};
+    
     public static class Pos {
-        int row;
-        int col;
-
-        public Pos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public Pos addPos(Pos direction) {
-            return new Pos(this.row + direction.row, this.col + direction.col);
-        }
-
-        public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= R || this.col < 0 || this.col >= C) {
-                return false;
-            }
-
-            return true;
-        }
-
-        public boolean isValidCenterPos() {
-            if (this.row >= 0 && this.row <= 2) {
-                return false;
-            }
-
-            return true;
-        }
+    	int row;
+    	int col;
+    	
+    	public Pos(int row, int col) {
+    		this.row = row;
+    		this.col = col;
+    	}
+    	
+    	public Pos addPos(Pos direction) {
+    		return new Pos((this.row + direction.row + N) % N, 
+    				(this.col + direction.col + M) % M);
+    	}
+    	
+    	
+    	@Override
+    	public boolean equals(Object obj) {
+    		if (this == obj) { return true; }
+    		if (obj == null || this.getClass() != obj.getClass()) { return false; }
+    		Pos anotherPos = (Pos) obj;
+    		
+    		if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+    		return false;
+    	}
+    	
+    	@Override
+    	public int hashCode() {
+    		return Objects.hash(this.row, this.col);
+    	}
     }
-
-    public static class GolemInitInfo {
-        int uniqueNum;
-        int startCol;
-        int directionIndex;
-
-        public GolemInitInfo(int uniqueNum, int startCol, int directionIndex) {
-            this.uniqueNum = uniqueNum;
-            this.startCol = startCol;
-            this.directionIndex = directionIndex;
-        }
+    
+    
+    public static class Tower implements Comparable<Tower> {
+    	Pos curPos;
+    	int lastAttackedTime;
+    	int attackValue;
+    	
+    	public Tower(Pos pos, int lastAttackedTime, int attackValue) {
+    		this.curPos = pos;
+    		this.lastAttackedTime = lastAttackedTime;
+    		this.attackValue = attackValue;
+    	}
+    	
+ 
+    	@Override
+    	public int compareTo(Tower anotherTower) {
+//    		int attackValue = mainMatrix[curPos.row][curPos.col];
+//    		int anotherTowerAttackValue = mainMatrix[anotherTower.curPos.row][anotherTower.curPos.col];
+    		if (this.attackValue != anotherTower.attackValue) {
+    			return Integer.compare(attackValue, anotherTower.attackValue);
+    		}
+    		
+    		if (this.lastAttackedTime != anotherTower.lastAttackedTime) {
+    			return Integer.compare(-this.lastAttackedTime, -anotherTower.lastAttackedTime);
+    		}
+    		
+    		
+    		int sumValue = this.curPos.row + this.curPos.col;
+    		int anotherTowerSumValue = anotherTower.curPos.row + anotherTower.curPos.col;
+    		if (sumValue != anotherTowerSumValue) {
+    			return Integer.compare(-sumValue, -anotherTowerSumValue);
+    		}
+    		
+    		return Integer.compare(-this.curPos.col, -anotherTower.curPos.col);
+    	}
     }
-
-    public static class Golem {
-        int uniqueNum;
-        Pos curPos;
-        int directionIndex;
-
-        public Golem(int uniqueNum, Pos pos, int directionIndex) {
-            this.uniqueNum = uniqueNum;
-            this.curPos = pos;
-            this.directionIndex = directionIndex;
-        }
-
-        public boolean isMovePossible(Pos[] checkDirectionList) {
-            for (Pos checkDirection : checkDirectionList) {
-                Pos movedPos = this.curPos.addPos(checkDirection);
-                if (!movedPos.isValidIndex() || mainMatrix[movedPos.row][movedPos.col] != 0) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public Golem goDown() {
-            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 0)), this.directionIndex);
-        }
-
-        public Golem goLeft() {
-            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, -1)), (this.directionIndex + 3) % 4);
-        }
-
-        public Golem goRight() {
-            return new Golem(this.uniqueNum, curPos.addPos(new Pos(1, 1)), (this.directionIndex + 1) % 4);
-        }
-
-
-        public void applyToMainMatrix() {
-            mainMatrix[this.curPos.row][this.curPos.col] = this.uniqueNum;
-            for (Pos direction : directions) {
-                Pos movedPos = this.curPos.addPos(direction);
-                mainMatrix[movedPos.row][movedPos.col] = this.uniqueNum;
-            }
-
-            Pos jumpPos = this.curPos.addPos(directions[this.directionIndex]);
-            jumpMatrix[jumpPos.row][jumpPos.col] = 1;
-        }
+    
+    public static class Node {
+    	Pos pos;
+    	List<Pos> path;
+    	
+    	public Node(Pos pos, List<Pos> path) {
+    		this.pos = pos;
+    		this.path = path;
+    	}
     }
-
-    public static Golem fallGolem(GolemInitInfo golemInitInfo) {
-        Golem golem = new Golem(golemInitInfo.uniqueNum, new Pos(1, golemInitInfo.startCol), golemInitInfo.directionIndex);
-
-        while (true) {
-            if (golem.isMovePossible(underCheckPosList)) {
-                golem = golem.goDown();
-            }
-
-            else if (golem.isMovePossible(leftCheckPosList)) {
-                golem = golem.goLeft();
-            }
-
-            else if (golem.isMovePossible(rightCheckPosList)) {
-                golem = golem.goRight();
-            }
-
-            else {
-                break;
-            }
-        }
-
-        return golem;
-    }
-
+    
     public static void main(String[] args) throws Exception {
-        init();
-
-        int answer = 0;
-
-        for (GolemInitInfo golemInitInfo : golemInitInfoList) {
-            Golem golem = fallGolem(golemInitInfo);
-            golem.applyToMainMatrix();
-
-            if (golem.curPos.row <= 3) {
-                initMatrix();
-                continue;
-            }
-
-            int maxRow = bfs(golem.curPos);
-            answer += maxRow;
-        }
-
-        System.out.println(answer);
-
+    	init();
+    	
+    	
+    	for (int i = 0; i < K; i++) {
+	    	int numTower = countTower();
+	    	if (numTower == 1) { break; }
+	    	
+	    	Tower weakTower = findWeakTower();
+	    	Tower strongTower = findStrongTower();
+	    	mainMatrix[weakTower.curPos.row][weakTower.curPos.col].attackValue += (N + M);
+	    	mainMatrix[weakTower.curPos.row][weakTower.curPos.col].lastAttackedTime = i + 1;
+	    	
+	    	List<Pos> path = findPath(weakTower.curPos, strongTower.curPos);
+	    	if (path.size() != 0) {
+	    		lazerAttack(weakTower.curPos, strongTower.curPos, path);
+	    	}
+	    	else {
+	    		path = cannonAttack(weakTower.curPos, strongTower.curPos);
+	    	}
+	    	heal(weakTower.curPos, path);
+    	}
+    	
+    	
+    	int answer = 0;
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			answer = Math.max(answer, mainMatrix[i][j].attackValue);
+    		}
+    	}
+    	
+    	System.out.println(answer);
     }
-
-    public static int bfs(Pos startPos) {
-        int[][] visited = new int[R][C];
-
-        Deque<Pos> queue = new ArrayDeque<>();
-        queue.add(startPos);
-
-
-        int maxRow = startPos.row;
-        while (!queue.isEmpty()) {
-            Pos curPos = queue.pollFirst();
-            if (visited[curPos.row][curPos.col] == 1) { continue; }
-            visited[curPos.row][curPos.col] = 1;
-
-            maxRow = Math.max(maxRow, curPos.row);
-
-            for (Pos direction : directions) {
-                Pos movedPos = curPos.addPos(direction);
-                if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
-                if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
-
-                if (mainMatrix[curPos.row][curPos.col] == mainMatrix[movedPos.row][movedPos.col]) {
-                    queue.add(movedPos);
-                }
-                else if (jumpMatrix[curPos.row][curPos.col] == 1) {
-                    queue.add(movedPos);
-                }
-            }
-        }
-
-        return maxRow - 2;
+    
+    public static int countTower() {
+    	int numTower = 0;
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue > 0) {
+    				numTower += 1;
+    			}
+    		}
+    	}
+    	
+    	return numTower;
     }
-
-    public static void initMatrix() {
-        mainMatrix = new int[R][C];
-        jumpMatrix = new int[R][C];
+    
+    public static void heal(Pos startPos, List<Pos> attackedPosList) {
+    	Map<Pos, Integer> attackedMap = new HashMap<>();
+    	attackedMap.put(startPos, 1);
+    	for (Pos pos : attackedPosList) {
+    		attackedMap.put(pos, 1);
+    	}
+    	
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			if (attackedMap.get(new Pos(i, j)) != null) { continue; }
+    			
+    			mainMatrix[i][j].attackValue += 1;
+    		}
+    	}
     }
-
+    
+    public static List<Pos> findPath(Pos startPos, Pos destPos) {
+    	Deque<Node> queue = new ArrayDeque<>();
+    	
+    	queue.add(new Node(startPos, new ArrayList<>()));
+    	int[][] visited = new int[N][M];
+    	
+    	while (!queue.isEmpty()) {
+    		Node node = queue.pollFirst();
+    		if (visited[node.pos.row][node.pos.col] == 1) { continue; }
+    		visited[node.pos.row][node.pos.col] = 1;
+    		
+    		if (destPos.equals(node.pos)) {
+    			return node.path;
+    		}
+    		
+    		
+    		for (Pos direction : directions) {
+    			Pos movedPos = node.pos.addPos(direction);
+    			if (mainMatrix[movedPos.row][movedPos.col].attackValue <= 0) { continue; }
+    			if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+    			
+    			List<Pos> updatedPath = new ArrayList<>(node.path);
+    			updatedPath.add(movedPos);
+    			queue.add(new Node(movedPos, updatedPath));
+    		}
+    	}
+    	
+    	return new ArrayList<>();
+    	
+    }
+    
+    public static void lazerAttack(Pos startPos, Pos destPos, List<Pos> path) {
+    	int attackPower = mainMatrix[startPos.row][startPos.col].attackValue;
+    	
+    	for (Pos pos : path) {
+    		if (pos.equals(destPos)) { continue; }
+    		
+    		mainMatrix[pos.row][pos.col].attackValue -= (attackPower / 2);
+    	}
+    
+    	mainMatrix[destPos.row][destPos.col].attackValue -= attackPower;
+    	
+    }
+    
+    public static List<Pos> cannonAttack(Pos attackPos, Pos destPos) {
+    	List<Pos> attackedPosList = new ArrayList<>();
+    	
+    	int attackPower = mainMatrix[attackPos.row][attackPos.col].attackValue;
+    	for (int i = -1; i <= 1; i++) {
+    		for (int j = -1; j <= 1; j++) {
+    			if (i == 0 && j == 0) { continue;}
+    			Pos targetPos = destPos.addPos(new Pos(i, j));
+    			if (targetPos.equals(attackPos)) { continue; }
+    			if (mainMatrix[targetPos.row][targetPos.col].attackValue <= 0) { continue; }
+    			
+    			attackedPosList.add(targetPos);
+    			mainMatrix[targetPos.row][targetPos.col].attackValue -= (attackPower / 2);
+    		}
+    	}
+    	
+    	attackedPosList.add(destPos);
+    	mainMatrix[destPos.row][destPos.col].attackValue -= attackPower;
+    	
+    	return attackedPosList;
+    }
+    
+    public static Tower findWeakTower() {
+    	Tower weakTower = new Tower(new Pos(-1, -1), -1, Integer.MAX_VALUE / 2);
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			
+    			if (weakTower.compareTo(mainMatrix[i][j]) == 1) {
+    				weakTower = mainMatrix[i][j];
+    				
+    			}
+    		}
+    	}
+    	
+    	return weakTower;
+    }
+    
+    public static Tower findStrongTower() {
+    	Tower strongTower = new Tower(new Pos(N, N), Integer.MAX_VALUE / 2, -1);
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			
+    			if (strongTower.compareTo(mainMatrix[i][j]) == -1) {
+    				strongTower = mainMatrix[i][j];
+    			}
+    		}
+    	}
+    	
+    	return strongTower;
+    }
+    
     public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        R = Integer.parseInt(st.nextToken());
-        C = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
-
-        R += 3;
-        mainMatrix = new int[R][C];
-        jumpMatrix = new int[R][C];
-
-        golemInitInfoList = new GolemInitInfo[K];
-        for (int i = 0; i < K; i++) {
-            st = new StringTokenizer(br.readLine());
-            int col = Integer.parseInt(st.nextToken()) - 1;
-            int directionIndex = Integer.parseInt(st.nextToken());
-
-            golemInitInfoList[i] = new GolemInitInfo(i + 1, col, directionIndex);
-        }
-
+    	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    	StringTokenizer st = new StringTokenizer(br.readLine());
+    	
+    	N = Integer.parseInt(st.nextToken());
+    	M = Integer.parseInt(st.nextToken());
+    	K = Integer.parseInt(st.nextToken());
+    	
+    	mainMatrix = new Tower[N][M];
+    	for (int i = 0; i < N; i++) {
+    		st = new StringTokenizer(br.readLine());
+    		for (int j = 0; j < M; j++) {
+    			int attackValue = Integer.parseInt(st.nextToken());
+    			mainMatrix[i][j] = new Tower(new Pos(i, j), 0, attackValue);
+    		}
+    	}
+    	
+    	
     }
 }

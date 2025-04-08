@@ -6,213 +6,267 @@ import java.io.*;
 
 public class 포탑부수기 {
     static int N, M, K;
-    static Pos[][] posMatrix;
-    static Pos[] directions = {new Pos(0, 1, 0), new Pos(1, 0, 0),
-            new Pos(0, -1, 0), new Pos(-1, 0, 0)};
-    static Pos[] sidePosDirections = {new Pos(-1, -1, 0), new Pos(-1, 0,0), new Pos(-1, 1, 0),
-            new Pos(0, -1, 0), new Pos(0, 0, 0), new Pos(0, 1, 0),
-            new Pos(1, -1, 0), new Pos(1, 0, 0), new Pos(1, 1, 0)};
-
-    public static class Pos implements Comparable<Pos> {
-        int row;
-        int col;
-        int attackValue;
-        int lastAttacked;
-
-        public Pos(int row, int col, int attackValue) {
-            this.row = row;
-            this.col = col;
-            this.attackValue = attackValue;
-            this.lastAttacked = 0;
-        }
-
-        public Pos addPos(Pos anotherPos) {
-            return new Pos((this.row + anotherPos.row + N) % N, (this.col + anotherPos.col + M) % M, this.attackValue);
-        }
-
-        public int compareTo(Pos anotherPos) {
-            if (this.attackValue != anotherPos.attackValue) {
-                return Integer.compare(this.attackValue, anotherPos.attackValue);
-            }
-
-            if (this.lastAttacked != anotherPos.lastAttacked) {
-                return Integer.compare(-this.lastAttacked, -anotherPos.lastAttacked);
-            }
-
-            if ((this.row + this.col) != (anotherPos.row + anotherPos.col)) {
-                return Integer.compare(-(this.row + this.col), -(anotherPos.row + anotherPos.col));
-            }
-
-            return Integer.compare(-this.col, -anotherPos.col);
-        }
-
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-            return false;
-        }
-
-        public int hashCode() {
-            return Objects.hash(this.row, this.col);
-        }
+    static Tower[][] mainMatrix;
+    static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0, -1), new Pos(-1, 0)};
+    
+    public static class Pos {
+    	int row;
+    	int col;
+    	
+    	public Pos(int row, int col) {
+    		this.row = row;
+    		this.col = col;
+    	}
+    	
+    	public Pos addPos(Pos direction) {
+    		return new Pos((this.row + direction.row + N) % N, 
+    				(this.col + direction.col + M) % M);
+    	}
+    	
+    	
+    	@Override
+    	public boolean equals(Object obj) {
+    		if (this == obj) { return true; }
+    		if (obj == null || this.getClass() != obj.getClass()) { return false; }
+    		Pos anotherPos = (Pos) obj;
+    		
+    		if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+    		return false;
+    	}
+    	
+    	@Override
+    	public int hashCode() {
+    		return Objects.hash(this.row, this.col);
+    	}
     }
-
+    
+    
+    public static class Tower implements Comparable<Tower> {
+    	Pos curPos;
+    	int lastAttackedTime;
+    	int attackValue;
+    	
+    	public Tower(Pos pos, int lastAttackedTime, int attackValue) {
+    		this.curPos = pos;
+    		this.lastAttackedTime = lastAttackedTime;
+    		this.attackValue = attackValue;
+    	}
+    	
+ 
+    	@Override
+    	public int compareTo(Tower anotherTower) {
+//    		int attackValue = mainMatrix[curPos.row][curPos.col];
+//    		int anotherTowerAttackValue = mainMatrix[anotherTower.curPos.row][anotherTower.curPos.col];
+    		if (this.attackValue != anotherTower.attackValue) {
+    			return Integer.compare(attackValue, anotherTower.attackValue);
+    		}
+    		
+    		if (this.lastAttackedTime != anotherTower.lastAttackedTime) {
+    			return Integer.compare(-this.lastAttackedTime, -anotherTower.lastAttackedTime);
+    		}
+    		
+    		
+    		int sumValue = this.curPos.row + this.curPos.col;
+    		int anotherTowerSumValue = anotherTower.curPos.row + anotherTower.curPos.col;
+    		if (sumValue != anotherTowerSumValue) {
+    			return Integer.compare(-sumValue, -anotherTowerSumValue);
+    		}
+    		
+    		return Integer.compare(-this.curPos.col, -anotherTower.curPos.col);
+    	}
+    }
+    
     public static class Node {
-        Pos curPos;
-        List<Pos> path;
-
-        public Node(Pos curPos, List<Pos> path) {
-            this.curPos = curPos;
-            this.path = path;
-        }
+    	Pos pos;
+    	List<Pos> path;
+    	
+    	public Node(Pos pos, List<Pos> path) {
+    		this.pos = pos;
+    		this.path = path;
+    	}
     }
-
+    
     public static void main(String[] args) throws Exception {
-        init();
-
-        for (int k = 0; k < K; k++) {
-            if (getNumOfTower() <= 1) { break; }
-            Pos attakPos = findAttacker();
-            Pos defendPos = findDefender();
-            posMatrix[attakPos.row][attakPos.col].attackValue += (N + M);
-            List<Pos> path = findFastestPath(attakPos, defendPos);
-            if (path.size() == 0) {
-                for (Pos sidePosDirection : sidePosDirections) {
-                    Pos movedPos = defendPos.addPos(sidePosDirection);
-                    if (posMatrix[movedPos.row][movedPos.col].attackValue <= 0) {
-                        continue;
-                    }
-
-                    path.add(movedPos);
-                }
-            }
-
-            for (int i = 0; i < N; i++) {
-                for (int j = 0; j < M; j++) {
-                    Pos pos = posMatrix[i][j];
-                    if (pos.attackValue <= 0) {
-                        continue;
-                    }
-
-                    if (pos.equals(attakPos)) {
-                        pos.lastAttacked = k + 1;
-                    }
-                    else if (pos.equals(defendPos)) {
-                        pos.attackValue -= attakPos.attackValue;
-                    }
-                    else if (path.contains(pos)) {
-                        pos.attackValue -= (attakPos.attackValue / 2);
-                    }
-                    else {
-                        pos.attackValue += 1;
-                    }
-                }
-            }
-        }
-
-        int maxAttackValue = 0;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (posMatrix[i][j].attackValue > maxAttackValue) {
-                    maxAttackValue = posMatrix[i][j].attackValue;
-                }
-            }
-        }
-
-        System.out.println(maxAttackValue);
-
+    	init();
+    	
+    	
+    	for (int i = 0; i < K; i++) {
+	    	int numTower = countTower();
+	    	if (numTower == 1) { break; }
+	    	
+	    	Tower weakTower = findWeakTower();
+	    	Tower strongTower = findStrongTower();
+	    	mainMatrix[weakTower.curPos.row][weakTower.curPos.col].attackValue += (N + M);
+	    	mainMatrix[weakTower.curPos.row][weakTower.curPos.col].lastAttackedTime = i + 1;
+	    	
+	    	List<Pos> path = findPath(weakTower.curPos, strongTower.curPos);
+	    	if (path.size() != 0) {
+	    		lazerAttack(weakTower.curPos, strongTower.curPos, path);
+	    	}
+	    	else {
+	    		path = cannonAttack(weakTower.curPos, strongTower.curPos);
+	    	}
+	    	heal(weakTower.curPos, path);
+    	}
+    	
+    	
+    	int answer = 0;
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			answer = Math.max(answer, mainMatrix[i][j].attackValue);
+    		}
+    	}
+    	
+    	System.out.println(answer);
     }
-
-    public static int getNumOfTower() {
-        int numTower = 0;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (posMatrix[i][j].attackValue > 0) {
-                    numTower += 1;
-                }
-            }
-        }
-
-        return numTower;
+    
+    public static int countTower() {
+    	int numTower = 0;
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue > 0) {
+    				numTower += 1;
+    			}
+    		}
+    	}
+    	
+    	return numTower;
     }
-
-    public static List<Pos> findFastestPath(Pos attackPos, Pos defendPos) {
-        Deque<Node> queue = new ArrayDeque<>();
-
-        int[][] visited = new int[N][M];
-        queue.add(new Node(attackPos, new ArrayList<>()));
-
-        while (!queue.isEmpty()) {
-            Node node = queue.pollFirst();
-            if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
-            visited[node.curPos.row][node.curPos.col] = 1;
-
-            for (Pos direction : directions) {
-                Pos movedPos = node.curPos.addPos(direction);
-                if (posMatrix[movedPos.row][movedPos.col].attackValue <= 0) { continue; }
-                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-
-                List<Pos> copiedPath = new ArrayList<>(node.path);
-                copiedPath.add(movedPos);
-
-                if (movedPos.equals(defendPos)) {
-                    return copiedPath;
-                }
-
-                queue.addLast(new Node(movedPos, copiedPath));
-            }
-        }
-
-        return new ArrayList<>();
+    
+    public static void heal(Pos startPos, List<Pos> attackedPosList) {
+    	Map<Pos, Integer> attackedMap = new HashMap<>();
+    	attackedMap.put(startPos, 1);
+    	for (Pos pos : attackedPosList) {
+    		attackedMap.put(pos, 1);
+    	}
+    	
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			if (attackedMap.get(new Pos(i, j)) != null) { continue; }
+    			
+    			mainMatrix[i][j].attackValue += 1;
+    		}
+    	}
     }
-
-    public static Pos findAttacker() {
-        Pos smallestPos = new Pos(0, 0, Integer.MAX_VALUE);
-
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (posMatrix[i][j].attackValue <= 0) { continue; }
-                if (smallestPos.compareTo(posMatrix[i][j]) > 0) {
-                    smallestPos = posMatrix[i][j];
-                }
-            }
-        }
-
-        return smallestPos;
+    
+    public static List<Pos> findPath(Pos startPos, Pos destPos) {
+    	Deque<Node> queue = new ArrayDeque<>();
+    	
+    	queue.add(new Node(startPos, new ArrayList<>()));
+    	int[][] visited = new int[N][M];
+    	
+    	while (!queue.isEmpty()) {
+    		Node node = queue.pollFirst();
+    		if (visited[node.pos.row][node.pos.col] == 1) { continue; }
+    		visited[node.pos.row][node.pos.col] = 1;
+    		
+    		if (destPos.equals(node.pos)) {
+    			return node.path;
+    		}
+    		
+    		
+    		for (Pos direction : directions) {
+    			Pos movedPos = node.pos.addPos(direction);
+    			if (mainMatrix[movedPos.row][movedPos.col].attackValue <= 0) { continue; }
+    			if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+    			
+    			List<Pos> updatedPath = new ArrayList<>(node.path);
+    			updatedPath.add(movedPos);
+    			queue.add(new Node(movedPos, updatedPath));
+    		}
+    	}
+    	
+    	return new ArrayList<>();
+    	
     }
-
-    public static Pos findDefender() {
-        Pos biggestPos = new Pos(0, 0, Integer.MIN_VALUE);
-
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (posMatrix[i][j].attackValue <= 0) { continue; }
-                if (biggestPos.compareTo(posMatrix[i][j]) < 0) {
-                    biggestPos = posMatrix[i][j];
-                }
-            }
-        }
-
-        return biggestPos;
+    
+    public static void lazerAttack(Pos startPos, Pos destPos, List<Pos> path) {
+    	int attackPower = mainMatrix[startPos.row][startPos.col].attackValue;
+    	
+    	for (Pos pos : path) {
+    		if (pos.equals(destPos)) { continue; }
+    		
+    		mainMatrix[pos.row][pos.col].attackValue -= (attackPower / 2);
+    	}
+    
+    	mainMatrix[destPos.row][destPos.col].attackValue -= attackPower;
+    	
     }
-
+    
+    public static List<Pos> cannonAttack(Pos attackPos, Pos destPos) {
+    	List<Pos> attackedPosList = new ArrayList<>();
+    	
+    	int attackPower = mainMatrix[attackPos.row][attackPos.col].attackValue;
+    	for (int i = -1; i <= 1; i++) {
+    		for (int j = -1; j <= 1; j++) {
+    			if (i == 0 && j == 0) { continue;}
+    			Pos targetPos = destPos.addPos(new Pos(i, j));
+    			if (targetPos.equals(attackPos)) { continue; }
+    			if (mainMatrix[targetPos.row][targetPos.col].attackValue <= 0) { continue; }
+    			
+    			attackedPosList.add(targetPos);
+    			mainMatrix[targetPos.row][targetPos.col].attackValue -= (attackPower / 2);
+    		}
+    	}
+    	
+    	attackedPosList.add(destPos);
+    	mainMatrix[destPos.row][destPos.col].attackValue -= attackPower;
+    	
+    	return attackedPosList;
+    }
+    
+    public static Tower findWeakTower() {
+    	Tower weakTower = new Tower(new Pos(-1, -1), -1, Integer.MAX_VALUE / 2);
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			
+    			if (weakTower.compareTo(mainMatrix[i][j]) == 1) {
+    				weakTower = mainMatrix[i][j];
+    				
+    			}
+    		}
+    	}
+    	
+    	return weakTower;
+    }
+    
+    public static Tower findStrongTower() {
+    	Tower strongTower = new Tower(new Pos(N, N), Integer.MAX_VALUE / 2, -1);
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < M; j++) {
+    			if (mainMatrix[i][j].attackValue <= 0) { continue; }
+    			
+    			if (strongTower.compareTo(mainMatrix[i][j]) == -1) {
+    				strongTower = mainMatrix[i][j];
+    			}
+    		}
+    	}
+    	
+    	return strongTower;
+    }
+    
     public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
-
-        posMatrix = new Pos[N][M];
-        for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                int attackValue = Integer.parseInt(st.nextToken());
-                posMatrix[i][j] = new Pos(i, j, attackValue);
-            }
-        }
+    	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    	StringTokenizer st = new StringTokenizer(br.readLine());
+    	
+    	N = Integer.parseInt(st.nextToken());
+    	M = Integer.parseInt(st.nextToken());
+    	K = Integer.parseInt(st.nextToken());
+    	
+    	mainMatrix = new Tower[N][M];
+    	for (int i = 0; i < N; i++) {
+    		st = new StringTokenizer(br.readLine());
+    		for (int j = 0; j < M; j++) {
+    			int attackValue = Integer.parseInt(st.nextToken());
+    			mainMatrix[i][j] = new Tower(new Pos(i, j), 0, attackValue);
+    		}
+    	}
+    	
+    	
     }
 }
