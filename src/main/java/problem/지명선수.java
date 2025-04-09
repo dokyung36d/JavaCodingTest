@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 지명선수 {
 	static int T;
 	static int N;
 	static int[] aList, bList;
