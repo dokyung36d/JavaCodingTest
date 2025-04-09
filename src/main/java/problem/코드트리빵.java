@@ -5,206 +5,224 @@ import java.io.*;
 
 
 public class 코드트리빵 {
-    static int n, m;
-    static int[][] baseCampMatrix;
-    static int[][] prohibitedMatrix;
-    static Deque<Pos> storePosQueue;
-    static List<Person> playerInMatrixList;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, -1), new Pos(0, 1), new Pos(1, 0)};
-
-    public static class Pos implements Comparable<Pos> {
-        int row;
-        int col;
-
-        public Pos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public Pos addPos(Pos anotherPos) {
-            return new Pos(this.row + anotherPos.row, this.col + anotherPos.col);
-        }
-
-        public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= n || this.col < 0 || this.col >= n) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.row, this.col);
-        }
-
-        @Override
-        public int compareTo(Pos anotherPos) {
-            if (this.row != anotherPos.row) {
-                return Integer.compare(this.row, anotherPos.row);
-            }
-
-            return Integer.compare(this.col, anotherPos.col);
-        }
-    }
-
-    public static class Person {
-        Pos curPos;
-        Pos destPos;
-
-        public Person(Pos curPos, Pos destPos) {
-            this.curPos = curPos;
-            this.destPos = destPos;
-        }
-
-        public Pos getNextPos() {
-            List<Pos> path = getFastestPath(curPos, destPos);
-
-            return path.get(0);
-        }
-    }
-
-    public static class Node {
-        Pos pos;
-        List<Pos> path;
-
-        public Node(Pos pos, List<Pos> path) {
-            this.pos = pos;
-            this.path = path;
-        }
-    }
-
-    public static List<Pos> getFastestPath(Pos startPos, Pos destPos) {
-        Deque<Node> queue = new ArrayDeque<>();
-        queue.add(new Node(startPos, new ArrayList<>()));
-        int[][] visited = new int[n][n];
-
-        while (!queue.isEmpty()) {
-            Node node = queue.pollFirst();
-            if (visited[node.pos.row][node.pos.col] == 1) { continue; }
-            visited[node.pos.row][node.pos.col] = 1;
-
-            for (Pos direction : directions) {
-                Pos movedPos = node.pos.addPos(direction);
-                if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
-                if (prohibitedMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-                List<Pos> copiedPath = new ArrayList<>(node.path);
-                copiedPath.add(movedPos);
-                if (movedPos.equals(destPos)) {
-                    return copiedPath;
-                }
-
-                queue.add(new Node(movedPos, copiedPath));
-            }
-        }
-
-        return new ArrayList<>();
-    }
-
-    public static Pos getNearestBaseCamp(Pos destPos) {
-        int minDistance = Integer.MAX_VALUE;
-        Pos baseCampPos = new Pos(n - 1, n - 1);
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (baseCampMatrix[i][j] == 0) { continue; }
-
-                List<Pos> path = getFastestPath(new Pos(i, j), destPos);
-                if (path.size() == 0) { continue; }
-                if (path.size() < minDistance) {
-                    minDistance = path.size();
-                    baseCampPos = new Pos(i, j);
-                }
-                else if (path.size() == minDistance && new Pos(i, j).compareTo(baseCampPos) < 0) {
-                    baseCampPos = new Pos(i, j);
-                }
-            }
-        }
-
-        return baseCampPos;
-    }
-
+	static int N, M;
+	static int[][] mainMatrix;
+	static int[][] blocked;
+	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	static Pos[] storePosList;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, - 1), new Pos(0, 1), new Pos(1, 0)};
+	static List<User> userList;
+	static int numUserOuted;
+	
+	public static class Pos {
+		int row;
+		int col;
+		
+		public Pos(int row, int col) {
+			this.row = row;
+			this.col = col;
+		}
+		
+		public Pos addPos(Pos direction) {
+			return new Pos(this.row + direction.row, this.col + direction.col);
+		}
+		
+		public boolean isValidIndex() {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
+				return false;
+			}
+			
+			return true;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+			
+			Pos anotherPos = (Pos) obj;
+			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+			return false;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.row, this.col);
+		}
+	}
+	
+	public static class BaseCamp implements Comparable<BaseCamp> {
+		Pos baseCampPos;
+		Pos storePos;
+		List<Pos> path;
+		
+		
+		public BaseCamp(Pos baseCampPos, Pos storePos, List<Pos> path) {
+			this.baseCampPos = baseCampPos;
+			this.storePos = storePos;
+			this.path = path;
+		}
+		
+		@Override
+		public int compareTo(BaseCamp anotherBaseCamp) {
+			if (this.path.size() != anotherBaseCamp.path.size()) {
+				return Integer.compare(this.path.size(),anotherBaseCamp.path.size());
+			}
+			
+			if (this.baseCampPos.row != anotherBaseCamp.baseCampPos.row) {
+				return Integer.compare(this.baseCampPos.row, anotherBaseCamp.baseCampPos.row);
+			}
+			
+			return Integer.compare(this.baseCampPos.col, anotherBaseCamp.baseCampPos.col);
+		}
+	}
+	
+	public static class Node {
+		Pos curPos;
+		List<Pos> path;
+		
+		public Node(Pos curPos, List<Pos> path) {
+			this.curPos = curPos;
+			this.path = path;
+		}
+	}
+	
+	public static class User {
+		Pos curPos;
+		Pos storePos;
+		
+		public User(Pos curPos, Pos storePos) {
+			this.curPos = curPos;
+			this.storePos = storePos;
+		}
+		
+	}
+	
     public static void main(String[] args) throws Exception {
-        init();
-
-
-        for (int time = 1; time < Integer.MAX_VALUE; time++) {
-            allPlayerInMatrixMove();
-
-            if (!storePosQueue.isEmpty()) {
-                Pos storePos = storePosQueue.pollFirst();
-                Pos baseCampPos = getNearestBaseCamp(storePos);
-
-                playerInMatrixList.add(new Person(baseCampPos, storePos));
-                prohibitedMatrix[baseCampPos.row][baseCampPos.col] = 1;
-                baseCampMatrix[baseCampPos.row][baseCampPos.col] = 0;
-            }
-
-            if (playerInMatrixList.size() == 0) {
-                System.out.println(time);
-                return;
-            }
-        }
+    	init();
+    	int answer = solution();
+    	
+    	System.out.println(answer);
     }
-
-    public static void allPlayerInMatrixMove() {
-        List<Pos> prohibitedPosList = new ArrayList<>();
-        List<Person> updatedPlayerInMatrixList = new ArrayList<>();
-        for (Person person : playerInMatrixList) {
-            List<Pos> path = getFastestPath(person.curPos, person.destPos);
-            Pos nextPos = path.get(0);
-            if (nextPos.equals(person.destPos)) {
-                prohibitedPosList.add(nextPos);
-                continue;
-            }
-
-            Person movedPerson = new Person(nextPos, person.destPos);
-            updatedPlayerInMatrixList.add(movedPerson);
-        }
-
-
-        for (Pos prohibitedPlace : prohibitedPosList) {
-            prohibitedMatrix[prohibitedPlace.row][prohibitedPlace.col] = 1;
-        }
-
-        playerInMatrixList = updatedPlayerInMatrixList;
+    
+    public static int solution() {
+    	int time = 0;
+    	
+    	while (numUserOuted != M) {
+        	moveAllUsers();
+        	
+        	if (time < storePosList.length) {
+            	BaseCamp baseCamp  = getNearBaseCamp(storePosList[time]);
+            	userList.add(new User(baseCamp.baseCampPos, baseCamp.storePos));
+            	blocked[baseCamp.baseCampPos.row][baseCamp.baseCampPos.col] = 1;
+        	}
+        	
+        	time += 1;
+    	}
+    	
+    	return time;
     }
-
+    
+    public static void moveAllUsers() {
+    	List<User> updatedUserList = new ArrayList<>();
+    	List<Pos> blockedPosList = new ArrayList<>();
+    	for (int i = 0; i < userList.size(); i++) {
+    		User user = userList.get(i);
+    		BaseCamp baseCamp = getBaseCamp(user.curPos, user.storePos);
+    		Pos movedPos = baseCamp.path.get(0);
+    		
+    		if (movedPos.equals(user.storePos)) {
+    			blockedPosList.add(movedPos);
+    			numUserOuted += 1;
+    			continue;
+    		}
+    		
+    		updatedUserList.add(new User(movedPos, user.storePos));
+    	}
+    	
+    	
+    	for (Pos blockedPos : blockedPosList) {
+    		blocked[blockedPos.row][blockedPos.col] = 1;
+    	}
+    	userList = updatedUserList;
+    }
+    public static BaseCamp getNearBaseCamp(Pos storePos) {
+;    	BaseCamp nearBaseCamp = null;
+    	
+    	for (int i = 0; i < N; i++) {
+    		for (int j = 0; j < N; j++) {
+    			if (mainMatrix[i][j] == 0) { continue; }
+    			if (blocked[i][j] == 1) { continue; }
+    			
+    			BaseCamp baseCamp = getBaseCamp(new Pos(i, j), storePos);
+    			if (baseCamp == null) {continue; }
+    			if (nearBaseCamp == null) { nearBaseCamp = baseCamp; }
+    			else if (baseCamp.compareTo(nearBaseCamp) < 0) {
+    				nearBaseCamp = baseCamp;
+    			}
+    		}
+    	}
+    	
+    	return nearBaseCamp;
+    }
+    
+    public static BaseCamp getBaseCamp(Pos startPos, Pos destPos) {
+    	int[][] visited = new int[N][N];
+    	
+    	Deque<Node> queue = new ArrayDeque<>();
+    	queue.add(new Node(startPos, new ArrayList<>()));
+    	
+    	while (!queue.isEmpty()) {
+    		Node node = queue.pollFirst();
+    		if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
+    		visited[node.curPos.row][node.curPos.col] = 1;
+    		
+    		if (node.curPos.equals(destPos)) {
+    			return new BaseCamp(startPos, destPos, node.path);
+    		}
+    		
+    		for (Pos direction : directions) {
+    			Pos movedPos = node.curPos.addPos(direction);
+    			if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) {continue; }
+    			if (blocked[movedPos.row][movedPos.col] == 1) { continue; }
+    			
+    			List<Pos> updatedPath = new ArrayList<>(node.path);
+    			updatedPath.add(movedPos);
+    			
+    			queue.add(new Node(movedPos, updatedPath));
+    		}
+    	}
+    	
+    	return null;
+    }
+    
     public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        n = Integer.parseInt(st.nextToken());
-        m = Integer.parseInt(st.nextToken());
-
-        baseCampMatrix = new int[n][n];
-        prohibitedMatrix = new int[n][n];
-
-        for (int i = 0; i < n; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < n; j++) {
-                baseCampMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-
-        storePosQueue = new ArrayDeque<>();
-        for (int i = 0; i < m; i++) {
-            st = new StringTokenizer(br.readLine());
-            int row = Integer.parseInt(st.nextToken()) - 1;
-            int col = Integer.parseInt(st.nextToken()) - 1;
-
-            storePosQueue.add(new Pos(row, col));
-        }
-
-        playerInMatrixList = new ArrayList<>();
+    	StringTokenizer st = new StringTokenizer(br.readLine());
+    	
+    	numUserOuted = 0;
+    	
+    	N = Integer.parseInt(st.nextToken());
+    	M = Integer.parseInt(st.nextToken());
+    	
+    	mainMatrix = new int[N][N];
+    	blocked = new int[N][N];
+    	for (int i = 0; i < N; i++) {
+    		st = new StringTokenizer(br.readLine());
+    		for (int j = 0; j < N; j++) {
+    			mainMatrix[i][j] = Integer.parseInt(st.nextToken());
+    		}
+    	}
+    	
+    	
+    	storePosList = new Pos[M];
+    	for (int i = 0; i < M; i++) {
+    		st = new StringTokenizer(br.readLine());
+    		
+    		int row = Integer.parseInt(st.nextToken()) - 1;
+    		int col = Integer.parseInt(st.nextToken()) - 1;
+    		storePosList[i] = new Pos(row, col);
+    	}
+    	
+    	userList = new ArrayList<>();
     }
 }
