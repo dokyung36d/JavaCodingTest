@@ -5,16 +5,14 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static Pos homePos, parkPos;
-	static List<Pos> warriorPosList;
-	static Map<Pos, Integer> warriorPosMap;
-	static int[][] floorMatrix;
-	static Pos[] medusaDirections = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)};
-	static int numWarriorMoved, numWarriorRockedByMedusa, numWarriorAttackedMedusa;
-	static Pos[] firstDirections = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, -1), new Pos(0, 1)};
-	static Pos[] secondDirections = {new Pos(0, - 1), new Pos(0, 1), new Pos(-1, 0), new Pos(1, 0)};
+	static int N, M, F;
+	static int[][] floorMatrix, columnMatrix;
+	static Pos floorStartPos, floorDestPos;
+	static Pos columnStartPos, columnDestPos;
+	static List<TimeStrange> timeStrangeList;
+	static Pos[] directions = { new Pos(0, 1), new Pos(0, -1), new Pos(1, 0), new Pos(-1, 0)};
 	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	
 	
 	public static class Pos {
 		int row;
@@ -29,16 +27,37 @@ public class Main {
 			return new Pos(this.row + direction.row, this.col + direction.col);
 		}
 		
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
+		public Pos moveInColumn(Pos direction) {
+			Pos movedPos = this.addPos(direction);
+			if (!movedPos.isValidIndex(3 * M)) { return this; }
+			
+			if (movedPos.isInRectangle(new Pos(0, 0)) || movedPos.isInRectangle(new Pos(2 * M, 2 * M))) {
+				return new Pos(this.col, this.row);
+			}
+			
+			if (movedPos.isInRectangle(new Pos(2 * M, 0)) || movedPos.isInRectangle(new Pos(0, 2 * M))) {
+				return new Pos(3 * M - 1 - this.col, 3 * M - 1 - this.row);
+			}
+			
+			return movedPos;
+			
+		}
+		
+		public boolean isInRectangle(Pos topLeftPos) {
+			if (topLeftPos.row <= this.row && this.row < topLeftPos.row + M && 
+					topLeftPos.col <= this.col && this.col < topLeftPos.col + M) {
+				return true;
+			}
+			
+			return false;
+		}
+		
+		public boolean isValidIndex(int size) {
+			if (this.row < 0 || this.row >= size || this.col < 0 || this.col >= size) {
 				return false;
 			}
 			
 			return true;
-		}
-		
-		public int calcDistance(Pos anotherPos) {
-			return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
 		}
 		
 		@Override
@@ -56,419 +75,346 @@ public class Main {
 		}
 	}
 	
-	public static class Node {
+	public static class TimeStrange {
 		Pos curPos;
-		List<Pos> path;
+		int directionIndex;
+		int advanceValue;
+		int remainAdvanceTime;
 		
-		public Node(Pos curPos, List<Pos> path) {
+		public TimeStrange(Pos curPos, int directionIndex, int advanceValue, int remainAdvanceTime) {
 			this.curPos = curPos;
-			this.path = path;
+			this.directionIndex = directionIndex;
+			this.advanceValue = advanceValue;
+			this.remainAdvanceTime = remainAdvanceTime;
+		}
+		
+		public TimeStrange advance() {
+			if (remainAdvanceTime == 1) {
+				Pos movedPos = this.curPos.addPos(directions[directionIndex]);
+				return new TimeStrange(movedPos, directionIndex, this.advanceValue, this.advanceValue);
+			}
+			
+			return new TimeStrange(this.curPos, this.directionIndex, this.advanceValue, this.remainAdvanceTime - 1);
+			
 		}
 	}
 	
-	public static class SeeNode implements Comparable<SeeNode> {
-		int[][] seeMatrix;
-		int numRockedWarrior;
+	public static class Node {
+		Pos curPos;
+		int depth;
 		
-		public SeeNode(int[][] seeMatrix, int numRockedWarrior) {
-			this.seeMatrix = seeMatrix;
-			this.numRockedWarrior = numRockedWarrior;
-		}
-		
-		@Override
-		public int compareTo(SeeNode anotherSeeNode) {
-			return Integer.compare(this.numRockedWarrior, anotherSeeNode.numRockedWarrior);
+		public Node(Pos curPos, int depth) {
+			this.curPos = curPos;
+			this.depth = depth;
 		}
 	}
 	
 	public static void main(String[] args) throws Exception {
 		init();
 		solution();
-		
 	}
 	
 	public static void solution() {
-		List<Pos> path = getMedusaPath();
-		if (path.size() == 0) {
+		Pos curPos = new Pos(0, 5);
+		Pos movedPos = curPos.moveInColumn(new Pos(0, 1));
+		
+		int depthInColumn = bfsInColumn();
+		timeFlows();
+		if (depthInColumn == 0 || floorMatrix[floorStartPos.row][floorStartPos.col] != 0) {
 			System.out.println(-1);
 			return;
 		}
-		for (int i = 0; i < path.size() - 1; i++) {
-			numWarriorMoved = 0;
-			numWarriorRockedByMedusa = 0;
-			numWarriorAttackedMedusa = 0;
-			
-			updateWarriorPosMap();
-			SeeNode seeNode = getBestSeeNode(path.get(i));
-			moveWarriors(firstDirections, path.get(i), seeNode.seeMatrix);
-			moveWarriors(secondDirections, path.get(i), seeNode.seeMatrix);
-			
-			StringBuilder sb = new StringBuilder();
-			sb.append(numWarriorMoved + " ");
-			sb.append(seeNode.numRockedWarrior + " ");
-			sb.append(numWarriorAttackedMedusa);
-			
-			System.out.println(sb.toString());
+		
+		int depthInFloor = bfsInFloor();
+		if (depthInFloor == 0) {
+			System.out.println(-1);
+			return;
 		}
-	
-		System.out.println(0);
+		
+		
+		System.out.println(depthInColumn + 1 + depthInFloor);
 	}
 	
-	public static void moveWarriors(Pos[] directions, Pos medusaPos, int[][] seeMatrix) {
-		List<Pos> updatedUserPosList = new ArrayList<>();
-		for (Pos warriorPos : warriorPosList) {
-			if (warriorPos.equals(medusaPos)) {
-				continue;
-			}
-			
-			if (seeMatrix[warriorPos.row][warriorPos.col] == 1) {
-				updatedUserPosList.add(warriorPos);
-				continue;
-			}
-			
-			int flag = 0;
-			int prevDistance = warriorPos.calcDistance(medusaPos);
-			for (Pos direction : directions) {
-				Pos movedPos = warriorPos.addPos(direction);
-				if (!movedPos.isValidIndex() || seeMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-				int distance = movedPos.calcDistance(medusaPos);
-				if (distance >= prevDistance) { continue; }
-				
-				numWarriorMoved += 1;
-				flag = 1;
-				if (movedPos.equals(medusaPos)) {
-					numWarriorAttackedMedusa += 1;
-					break;
-				}
-				
-				updatedUserPosList.add(movedPos);
-				break;
-			}
-			
-			if (flag == 0) {
-				updatedUserPosList.add(warriorPos);
-			}
-		}
-		
-		warriorPosList = updatedUserPosList;
-	}
- 	
-	public static SeeNode getBestSeeNode(Pos medusaPos) {
-		SeeNode bestSeeNode = seeUp(medusaPos);
-		
-		SeeNode seeDownNode = seeDown(medusaPos);
-		if (seeDownNode.numRockedWarrior > bestSeeNode.numRockedWarrior) {
-			bestSeeNode = seeDownNode;
-		}
-		
-		SeeNode seeLeftNode = seeLeft(medusaPos);
-		if (seeLeftNode.numRockedWarrior > bestSeeNode.numRockedWarrior) {
-			bestSeeNode = seeLeftNode;
-		}
-		
-		SeeNode seeRightNode = seeRight(medusaPos);
-		if (seeRightNode.numRockedWarrior > bestSeeNode.numRockedWarrior) {
-			bestSeeNode = seeRightNode;
-		}
-		return bestSeeNode;
-	}
-	
-	public static SeeNode seeRight(Pos medusaPos) {
-		int[][] seeMatrix = new int[N][N];
-		for (int j = 1; medusaPos.col + j < N; j++) {
-			int upRow = Math.max(0, medusaPos.row - j);
-			int downRow = Math.min(N - 1, medusaPos.row + j);
-			
-			for (int i = upRow; i <= downRow; i++) {
-				Pos curPos = new Pos(i, medusaPos.col + j);
-				seeMatrix[curPos.row][curPos.col] = 1;
-			}
-		}
-		
-		
-		//Up
-		for (int j = 1; medusaPos.col + j < N - 1; j++) {
-			int upRow = Math.max(0,  medusaPos.row - j);
-			for (int i = upRow; i < medusaPos.row; i++) {
-				Pos curPos = new Pos(i, medusaPos.col + j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row][curPos.col + 1] = 0;
-					if (curPos.row >= 1) {
-						seeMatrix[curPos.row - 1][curPos.col + 1] = 0;
-					}
-				}
-			}
-		}
-		
-		
-		//Center
-		for (int j = 1; medusaPos.col + j < N - 1; j++) {
-			Pos curPos = new Pos(medusaPos.row, medusaPos.col + j);
-			if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-				seeMatrix[curPos.row][curPos.col + 1] = 0;
-			}
-		}
-		
-		
-		//Down
-		for (int j = 1; medusaPos.col + j < N - 1; j++) {
-			int downRow = Math.min(N - 1, medusaPos.row + j);
-			for (int i = medusaPos.row + 1; i <= downRow; i++) {
-				Pos curPos = new Pos(i, medusaPos.col + j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row][curPos.col + 1] = 0;
-					if (curPos.row < N - 1) {
-						seeMatrix[curPos.row + 1][curPos.col + 1] = 0;
-					}
-				}
-			}
-		}
-		
-		int numRockedWarrior = countRockedWarrior(seeMatrix);
-		return new SeeNode(seeMatrix, numRockedWarrior);
-	}
-	
-	public static SeeNode seeLeft(Pos medusaPos) {
-		int[][] seeMatrix = new int[N][N];
-		for (int j = 1; medusaPos.col - j >= 0; j++) {
-			int upRow = Math.max(0, medusaPos.row - j);
-			int downRow = Math.min(N - 1, medusaPos.row + j);
-			
-			for (int i = upRow; i <= downRow; i++) {
-				Pos curPos = new Pos(i, medusaPos.col - j);
-				seeMatrix[curPos.row][curPos.col] = 1;
-			}
-		}
-		
-		
-		//Up
-		for (int j = 1; medusaPos.col - j >= 1; j++) {
-			int upRow = Math.max(0, medusaPos.row - j);
-			for (int i = upRow; i <= medusaPos.row - 1; i++) {
-				Pos curPos = new Pos(i, medusaPos.col - j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row][curPos.col - 1] = 0;
-					if (curPos.row >= 1) {
-						seeMatrix[curPos.row - 1][curPos.col - 1] = 0;
-					}
-				}
-			}
-		}
-		
-		//Center
-		for (int j = 1; medusaPos.col - j >= 1; j++) {
-			Pos curPos = new Pos(medusaPos.row, medusaPos.col - j);
-			if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-				seeMatrix[curPos.row][curPos.col - 1] = 0;
-			}
-		}
-		
-		//Down
-		for (int j = 1; medusaPos.col - j >= 1; j++) {
-			int downRow = Math.min(N - 1, medusaPos.row + j);
-			for (int i = medusaPos.row + 1; i <= downRow; i++) {
-				Pos curPos = new Pos(i, medusaPos.col - j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row][curPos.col - 1] = 0;
-					if (curPos.row < N - 1) {
-						seeMatrix[curPos.row + 1][curPos.col - 1] = 0;
-					}
-				}
-			}
-		}
-		
-		int numRockedWarrior = countRockedWarrior(seeMatrix);
-		return new SeeNode(seeMatrix, numRockedWarrior);
-	}
-	
-	public static SeeNode seeUp(Pos medusaPos) {
-		int[][] seeMatrix = new int[N][N];
-		for (int i = 1; medusaPos.row - i >= 0; i++) {
-			int leftCol = Math.max(0, medusaPos.col - i);
-			int rightCol = Math.min(N - 1, medusaPos.col + i);
-			
-			for (int j = leftCol; j <= rightCol; j++) {
-				seeMatrix[medusaPos.row - i][j] = 1;
-			}
-		}
-		
-		//Left
-		for (int i = 1; medusaPos.row - i >= 1; i++) {
-			int leftCol = Math.max(0, medusaPos.col - i);
-			for (int j = leftCol; j < medusaPos.col; j++) {
-				Pos curPos = new Pos(medusaPos.row - i, j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row - 1][curPos.col] = 0;
-					if (curPos.col >= 1) {
-						seeMatrix[curPos.row - 1][curPos.col - 1] = 0;
-					}
-				}
-			}
-		}
-		
-		
-		//Center
-		for (int i = 1; medusaPos.row - i >= 1; i++) {
-			Pos curPos = new Pos(medusaPos.row - i, medusaPos.col);
-			if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-				seeMatrix[curPos.row - 1][curPos.col] = 0;
-			}
-		}
-		
-		//Right
-		for (int i = 1; medusaPos.row - i >= 1; i++) {
-			int rightCol = Math.min(N - 1, medusaPos.col + i);
-			for (int j = medusaPos.col + 1; j <= rightCol; j++) {
-				Pos curPos = new Pos(medusaPos.row - i, j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row - 1][curPos.col] = 0;
-					if (curPos.col < N - 1) {
-						seeMatrix[curPos.row - 1][curPos.col + 1] = 0;
-					}
-				}
-				
-			}
-		}
-		
-		int numRockedWarrior = countRockedWarrior(seeMatrix);
-		return new SeeNode(seeMatrix, numRockedWarrior);
-	}
-
-	
-	public static SeeNode seeDown(Pos medusaPos) {
-		int[][] seeMatrix = new int[N][N];
-		for (int i = 1; i + medusaPos.row < N; i++) {
-			int leftCol = Math.max(0, medusaPos.col - i);
-			int rightCol = Math.min(N - 1, medusaPos.col + i);
-			for (int j = leftCol; j <= rightCol; j++) {
-				seeMatrix[medusaPos.row + i][j] = 1;
-			}
-		}
-		
-		
-		//Left
-		for (int i = 1; i + medusaPos.row < N - 1; i++) {
-			int leftCol = Math.max(0, medusaPos.col - i);
-			for (int j = leftCol; j < medusaPos.col; j++) {
-				Pos curPos = new Pos(i + medusaPos.row, j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row + 1][curPos.col] = 0;
-					if (curPos.col >= 1) {
-						seeMatrix[curPos.row + 1][curPos.col - 1] = 0;
-					}
-				}
-			}
-		}
-		
-		
-		//Center
-		for (int i = 1; i + medusaPos.row < N - 1; i++) {
-			Pos curPos = new Pos(i + medusaPos.row, medusaPos.col);
-			if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-				seeMatrix[curPos.row + 1][curPos.col] = 0;
-			}
-		}
-		
-		
-		//Right
-		for (int i = 1; i + medusaPos.row < N - 1; i++) {
-			int rightCol = Math.min(N - 1, medusaPos.col + i);
-			for (int j = medusaPos.col + 1; j <= rightCol; j++) {
-				Pos curPos = new Pos(i + medusaPos.row, j);
-				if (seeMatrix[curPos.row][curPos.col] == 0 || warriorPosMap.get(curPos) != null) {
-					seeMatrix[curPos.row + 1][curPos.col] = 0;
-					if (curPos.col < N - 1) {
-						seeMatrix[curPos.row + 1][curPos.col + 1] = 0;
-					}
-				}
-			}
-		}
-		
-		int numRockedWarrior = countRockedWarrior(seeMatrix);
-		return new SeeNode(seeMatrix, numRockedWarrior);
-	}
-	
-	public static int countRockedWarrior(int[][] seeMatrix) {
-		int numRockedWarrior = 0;
-		for (Pos warriorPos : warriorPosList) {
-			if (seeMatrix[warriorPos.row][warriorPos.col] == 1) {
-				numRockedWarrior += 1;
-			}
-		}
-		
-		return numRockedWarrior;
-	}
-	
-	public static void updateWarriorPosMap() {
-		Map<Pos, Integer> updatedWarriorPosMap = new HashMap<>();
-		
-		for (Pos warriorPos : warriorPosList) {
-			updatedWarriorPosMap.put(warriorPos, 1);
-		}
-		
-		warriorPosMap = updatedWarriorPosMap;
-	}
-	
-	public static List<Pos> getMedusaPath() {
+	public static int bfsInFloor() {
 		int[][] visited = new int[N][N];
-		
 		Deque<Node> queue = new ArrayDeque<>();
-		queue.add(new Node(homePos, new ArrayList<>()));
+		queue.add(new Node(floorStartPos, 0));
 		
+		int maxDepth = 0;
+		while (!queue.isEmpty()) {
+			Node node = queue.pollFirst();
+			
+			if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
+			visited[node.curPos.row][node.curPos.col] = 1;
+			
+			if (node.depth > maxDepth) {
+				timeFlows();
+				maxDepth = node.depth;
+			}
+			
+			if (floorMatrix[node.curPos.row][node.curPos.col] != 0) { continue; }
+			
+			if (node.curPos.equals(floorDestPos)) {
+				return node.depth;
+			}
+			
+			for (Pos direction : directions) {
+				Pos movedPos = node.curPos.addPos(direction);
+				if (!movedPos.isValidIndex(N)) { continue; }
+				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+				if (floorMatrix[movedPos.row][movedPos.col] != 0) { continue; }
+				
+				queue.add(new Node(movedPos, node.depth + 1));
+				
+			}
+			
+		}
+		
+		return 0;
+	}
+	
+	public static int bfsInColumn() {
+		int[][] visited = new int[3 * M][3 * M];
+		Deque<Node> queue = new ArrayDeque<>();
+		queue.add(new Node(columnStartPos, 0));
+		
+		int maxDepth = 0;
 		while (!queue.isEmpty()) {
 			Node node = queue.pollFirst();
 			if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
 			visited[node.curPos.row][node.curPos.col] = 1;
 			
-			if (node.curPos.equals(parkPos)) { return node.path; }
+			if (node.depth > maxDepth) {
+				timeFlows();
+				maxDepth = node.depth;
+			}
 			
-			for (Pos direction : medusaDirections) {
-				Pos movedPos = node.curPos.addPos(direction);
-				if (!movedPos.isValidIndex() || visited[movedPos.row][movedPos.col] == 1) { continue; }
-				if (floorMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+			if (node.curPos.equals(columnDestPos)) {
+				return node.depth;
+			}
+			
+			for (Pos direction : directions) {
+				Pos movedPos = node.curPos.moveInColumn(direction);
+				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+				if (columnMatrix[movedPos.row][movedPos.col] == 1) { 
+					continue;
+				}
 				
-				List<Pos> updatedPath = new ArrayList<>(node.path);
-				updatedPath.add(movedPos);
-				
-				queue.add(new Node(movedPos, updatedPath));
+				queue.add(new Node(movedPos, node.depth + 1));
 			}
 		}
 		
-		return new ArrayList<>();
+		
+		return 0;
 	}
+	
+	public static void timeFlows() {
+		List<TimeStrange> updatedTimeStrangeList = new ArrayList<>();
+		for (TimeStrange timeStrange : timeStrangeList) {
+			TimeStrange flowedTimeStrange = timeStrange.advance();
+			
+			Pos curPos = flowedTimeStrange.curPos;
+			if (!curPos.isValidIndex(N)) { continue; }
+			if (floorMatrix[curPos.row][curPos.col] == 1) { continue; }
+			if (floorMatrix[curPos.row][curPos.col] == 3) { continue; }
+			if (curPos.equals(floorDestPos)) { continue; }
+			
+			floorMatrix[curPos.row][curPos.col] = 2;
+			updatedTimeStrangeList.add(flowedTimeStrange);
+		}
+		
+		timeStrangeList = updatedTimeStrangeList;
+	}
+	
+	public static int[][] rotateMatrix(int[][] matrix) {
+		int size = matrix.length;
+		int[][] rotatedMatrix = new int[size][size];
+		
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				rotatedMatrix[j][size - 1 - i] = matrix[i][j];
+			}
+		}
+		
+		return rotatedMatrix;
+	}
+	
+	public static int[][] rotateNtimes(int rotateNum, int[][] matrix) {
+		if (rotateNum == 0) {
+			return matrix;
+		}
+		
+		
+		for (int i = 0; i < rotateNum; i++) {
+			matrix = rotateMatrix(matrix);
+		}
+		
+		return matrix;
+	}
+	
+	public static int[][] applyPartMatrixToMatrix(int[][] matrix, int[][] partMatrix, Pos topLeftPos) {
+		int size = partMatrix.length;
+		
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				Pos curPos = topLeftPos.addPos(new Pos(i, j));
+				matrix[curPos.row][curPos.col] = partMatrix[i][j];
+			}
+		}
+		
+		return matrix;
+	}
+	
 	
 	public static void init() throws IOException {
 		StringTokenizer st = new StringTokenizer(br.readLine());
 		N = Integer.parseInt(st.nextToken());
 		M = Integer.parseInt(st.nextToken());
-		
-		st = new StringTokenizer(br.readLine());
-		int homeRow = Integer.parseInt(st.nextToken());
-		int homeCol = Integer.parseInt(st.nextToken());
-		homePos = new Pos(homeRow, homeCol);
-		
-		int parkRow = Integer.parseInt(st.nextToken());
-		int parkCol = Integer.parseInt(st.nextToken());
-		parkPos = new Pos(parkRow, parkCol);
-		
-		
-		warriorPosList = new ArrayList<>();
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < M; i++) {
-			int warriorRow = Integer.parseInt(st.nextToken());
-			int warriorCol = Integer.parseInt(st.nextToken());
-			
-			warriorPosList.add(new Pos(warriorRow, warriorCol));
-		}
-		
+		F = Integer.parseInt(st.nextToken());
 		
 		floorMatrix = new int[N][N];
+		columnMatrix = new int[3 * M][3 * M];
+		
+		int flag = 0;
+		Pos columnTopLeftPos = null;
 		for (int i = 0; i < N; i++) {
 			st = new StringTokenizer(br.readLine());
 			for (int j = 0; j < N; j++) {
 				floorMatrix[i][j] = Integer.parseInt(st.nextToken());
+				
+				if (floorMatrix[i][j] == 4) {
+					floorDestPos = new Pos(i, j);
+					floorMatrix[i][j] = 0;
+				}
+				if (floorMatrix[i][j] == 3 && flag == 0) {
+					columnTopLeftPos = new Pos(i, j);
+					flag = 1;
+				}
 			}
 		}
 		
+		
+		floorStartPos = null;
+		columnDestPos = null;
+		for (int i = 0; i < M; i++) {
+			//Up
+			Pos upPos = new Pos(columnTopLeftPos.row - 1, columnTopLeftPos.col + i);
+			if (floorMatrix[upPos.row][upPos.col] == 0) {
+				floorStartPos = upPos;
+				columnDestPos = new Pos(0, M + i);
+				break;
+			}
+			
+			//Down
+			
+			Pos downPos = new Pos(columnTopLeftPos.row + M, columnTopLeftPos.col + i);
+			if (floorMatrix[downPos.row][downPos.col] == 0) {
+				floorStartPos = downPos;
+				columnDestPos = new Pos(3 * M - 1, M + i);
+			}
+			
+			//Left
+			Pos leftPos = columnTopLeftPos.addPos(new Pos(i, -1));
+			if (floorMatrix[leftPos.row][leftPos.col] == 0) {
+				floorStartPos = leftPos;
+				columnDestPos = new Pos(M + i, 0);
+			}
+			
+			//Right
+			Pos rightPos = columnTopLeftPos.addPos(new Pos(i, M));
+			if (floorMatrix[rightPos.row][rightPos.col] == 0) {
+				floorStartPos = rightPos;
+				columnDestPos = new Pos(M + i, 3 * M - 1);
+			}
+		}
+		
+		
+		//East
+		int[][] eastMatrix = new int[M][M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < M; j++) {
+				eastMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+		
+		int[][] eastRotatedMatrix = rotateNtimes(3, eastMatrix);
+		Pos eastTopLeftPos = new Pos(M, 2 * M);
+		columnMatrix = applyPartMatrixToMatrix(columnMatrix, eastRotatedMatrix, eastTopLeftPos);
+		
+		
+		//West
+		int[][] westMatrix = new int[M][M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < M; j++) {
+				westMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+		
+		int[][] westRotatedMatrix = rotateNtimes(1, westMatrix);
+		Pos westTopLeftPos = new Pos(M ,0);
+		columnMatrix = applyPartMatrixToMatrix(columnMatrix, westRotatedMatrix, westTopLeftPos);
+	
+		
+		//South
+		int[][] southMatrix = new int[M][M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < M; j++) {
+				southMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+		
+		Pos southTopLeftPos = new Pos(2 * M, M);
+		columnMatrix = applyPartMatrixToMatrix(columnMatrix, southMatrix, southTopLeftPos);
+		
+		
+		//North
+		int[][] northMatrix = new int[M][M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < M; j++) {
+				northMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+		
+		
+		int[][] northRotatedMatrix = rotateNtimes(2, northMatrix);
+		Pos northTopLeftPos = new Pos(0, M);
+		columnMatrix = applyPartMatrixToMatrix(columnMatrix, northRotatedMatrix, northTopLeftPos);
+		
+		
+		//Center
+		int[][] centerMatrix = new int[M][M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < M; j++) {
+				centerMatrix[i][j] = Integer.parseInt(st.nextToken());
+				
+				if (centerMatrix[i][j] == 2) {
+					columnStartPos = new Pos(M + i, M + j);
+					centerMatrix[i][j] = 0;
+				}
+			}
+		}
+		
+		Pos centerTopLeftPos = new Pos(M, M);
+		columnMatrix = applyPartMatrixToMatrix(columnMatrix, centerMatrix, centerTopLeftPos);
+		
+			
+		
+		timeStrangeList = new ArrayList<>();
+		for (int i = 0; i < F; i++) {
+			st = new StringTokenizer(br.readLine());
+			
+			int row = Integer.parseInt(st.nextToken());
+			int col = Integer.parseInt(st.nextToken());
+			int directionIndex = Integer.parseInt(st.nextToken());
+			int advanceValue = Integer.parseInt(st.nextToken());
+			
+			floorMatrix[row][col] = 2;
+			timeStrangeList.add(new TimeStrange(new Pos(row, col), directionIndex, advanceValue, advanceValue));
+		}
 	}
 }
