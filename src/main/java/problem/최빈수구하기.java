@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 최빈수구하기 {
 	static int T;
 	static int testNum;
 	static int[] scoreList;
