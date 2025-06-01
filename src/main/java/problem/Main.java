@@ -5,50 +5,78 @@ import java.io.*;
 
 
 public class Main {
-	static int T;
-	static int testNum;
-	static int[] scoreList;
-	static Map<Integer, Integer> scoreMap;
-	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-	
+	public static int N;
+	public static int[] numList;
+
 	public static void main(String[] args) throws Exception {
-		StringTokenizer st = new StringTokenizer(br.readLine());
-		T = Integer.parseInt(st.nextToken());
-		
-		for (int i = 0; i < T; i++) {
-			init();
-			int answer = solution();
-			System.out.println("#" + testNum + " " + answer);
-		}
+		init();
+		solution();
+
 	}
-	
-	public static int solution() {
-		int answerScore = -1;
-		int maxNumAppeared = -1;
-		
-		for (int score : scoreMap.keySet()) {
-			int numAppeared = scoreMap.get(score);
-			if (numAppeared >= maxNumAppeared && score > answerScore) {
-				maxNumAppeared = numAppeared;
-				answerScore = score;
+
+	public static void solution() {
+		int minPair = 0;
+		int maxPair = 1;
+		int answerSumValue = Math.abs(numList[minPair] + numList[maxPair]);
+
+		for (int i = 0; i < N - 1; i++) {
+			int pairIndex = binarySearch(i);
+
+			int sumValue = Math.abs(numList[i] + numList[pairIndex]);
+			if (sumValue < answerSumValue) {
+				answerSumValue = sumValue;
+				minPair = i;
+				maxPair = pairIndex;
 			}
 		}
-		
-		return answerScore;
+
+		System.out.println(numList[minPair] + " " + numList[maxPair]);
 	}
-	
-	public static void init() throws IOException {
-		scoreList = new int[1000];
-		scoreMap = new HashMap<>();
-		StringTokenizer st = new StringTokenizer(br.readLine());
-		testNum = Integer.parseInt(st.nextToken());
-		
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < 1000; i++) {
-			int score = Integer.parseInt(st.nextToken());
-			
-			int numPrevAppeared = scoreMap.getOrDefault(score, 0);
-			scoreMap.put(score, numPrevAppeared + 1);
+
+	public static int binarySearch(int curIndex) {
+		int curNum = numList[curIndex];
+
+		int leftIndex = curIndex + 1;
+		int rightIndex = N - 1;
+
+		int answerIndex = curIndex;
+		int minSum = Integer.MAX_VALUE;
+
+		while (leftIndex <= rightIndex) {
+			int midIndex = (leftIndex + rightIndex) / 2;
+			int midValue = numList[midIndex];
+
+			int sumValue = curNum + midValue;
+			if (Math.abs(sumValue) < minSum) {
+				minSum = Math.abs(sumValue);
+				answerIndex = midIndex;
+			}
+
+
+			if (sumValue == 0) { return midIndex; }
+			if (sumValue < 0 ) {
+				leftIndex = midIndex + 1;
+			}
+			else {
+				rightIndex = midIndex - 1;
+			}
 		}
+
+		return answerIndex;
+	}
+
+	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+
+		N = Integer.parseInt(st.nextToken());
+		numList = new int[N];
+
+		st = new StringTokenizer(br.readLine());
+		for (int i = 0; i < N; i++) {
+			numList[i] = Integer.parseInt(st.nextToken());
+		}
+
+		Arrays.sort(numList);
 	}
 }
