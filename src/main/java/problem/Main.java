@@ -5,78 +5,83 @@ import java.io.*;
 
 
 public class Main {
-	public static int N;
-	public static int[] numList;
+	static int N, R, Q;
+	static Map<Integer, List<Integer>> treeMap;
+	static int[] queryList;
+	static int[] dpList, visited;
 
 	public static void main(String[] args) throws Exception {
 		init();
 		solution();
-
 	}
 
 	public static void solution() {
-		int minPair = 0;
-		int maxPair = 1;
-		int answerSumValue = Math.abs(numList[minPair] + numList[maxPair]);
+		dpList = new int[N];
+		visited = new int[N];
+		Arrays.fill(dpList, Integer.MAX_VALUE);
 
-		for (int i = 0; i < N - 1; i++) {
-			int pairIndex = binarySearch(i);
+		recursive(R);
 
-			int sumValue = Math.abs(numList[i] + numList[pairIndex]);
-			if (sumValue < answerSumValue) {
-				answerSumValue = sumValue;
-				minPair = i;
-				maxPair = pairIndex;
-			}
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < Q; i++) {
+			sb.append(dpList[queryList[i]]);
+			sb.append("\n");
 		}
 
-		System.out.println(numList[minPair] + " " + numList[maxPair]);
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
-	public static int binarySearch(int curIndex) {
-		int curNum = numList[curIndex];
+	public static int recursive(int curNode) {
+		if (dpList[curNode] != Integer.MAX_VALUE) { return dpList[curNode]; }
 
-		int leftIndex = curIndex + 1;
-		int rightIndex = N - 1;
+		visited[curNode] = 1;
 
-		int answerIndex = curIndex;
-		int minSum = Integer.MAX_VALUE;
-
-		while (leftIndex <= rightIndex) {
-			int midIndex = (leftIndex + rightIndex) / 2;
-			int midValue = numList[midIndex];
-
-			int sumValue = curNum + midValue;
-			if (Math.abs(sumValue) < minSum) {
-				minSum = Math.abs(sumValue);
-				answerIndex = midIndex;
+		int numLeafNode = 1;
+		int flag = 0;
+		for (int nearNode : treeMap.get(curNode)) {
+			if (dpList[nearNode] != Integer.MAX_VALUE) {
+				continue;
 			}
 
+			if (visited[nearNode] == 1) { continue; }
 
-			if (sumValue == 0) { return midIndex; }
-			if (sumValue < 0 ) {
-				leftIndex = midIndex + 1;
-			}
-			else {
-				rightIndex = midIndex - 1;
-			}
+			flag = 1;
+			numLeafNode += recursive(nearNode);
 		}
 
-		return answerIndex;
+		dpList[curNode] = numLeafNode;
+		return dpList[curNode];
 	}
+
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		numList = new int[N];
+		R = Integer.parseInt(st.nextToken()) - 1;
+		Q = Integer.parseInt(st.nextToken());
 
-		st = new StringTokenizer(br.readLine());
+		treeMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
-			numList[i] = Integer.parseInt(st.nextToken());
+			treeMap.put(i, new ArrayList<>());
 		}
 
-		Arrays.sort(numList);
+		for (int i = 0; i < N - 1; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int node1 = Integer.parseInt(st.nextToken()) - 1;
+			int node2 = Integer.parseInt(st.nextToken()) - 1;
+
+			treeMap.get(node1).add(node2);
+			treeMap.get(node2).add(node1);
+		}
+
+		queryList = new int[Q];
+		for (int i = 0;  i < Q; i++) {
+			st = new StringTokenizer(br.readLine());
+			queryList[i] = Integer.parseInt(st.nextToken()) - 1;
+		}
+
 	}
 }

@@ -6,38 +6,55 @@ import java.io.*;
 
 public class 트리와쿼리 {
     static int N, R, Q;
-    static Map<Integer, List<Integer>> graphMap;
-    static Map<Integer, Integer> answerMap;
-    static int[] visited;
-    static int[] qList;
+    static Map<Integer, List<Integer>> treeMap;
+    static int[] queryList;
+    static int[] dpList, visited;
 
     public static void main(String[] args) throws Exception {
         init();
-        int rootValue = recursive(R);
+        solution();
+    }
+
+    public static void solution() {
+        dpList = new int[N];
+        visited = new int[N];
+        Arrays.fill(dpList, Integer.MAX_VALUE);
+
+        recursive(R);
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < Q; i++) {
-            sb.append(answerMap.get(qList[i]) + "\n");
+            sb.append(dpList[queryList[i]]);
+            sb.append("\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int recursive(int num) {
-        int value = 1;
+    public static int recursive(int curNode) {
+        if (dpList[curNode] != Integer.MAX_VALUE) { return dpList[curNode]; }
 
-        visited[num] = 1;
-        for (int nearNum : graphMap.get(num)) {
-            if (visited[nearNum] == 1) { continue; }
-            value += recursive(nearNum);
+        visited[curNode] = 1;
+
+        int numLeafNode = 1;
+        int flag = 0;
+        for (int nearNode : treeMap.get(curNode)) {
+            if (dpList[nearNode] != Integer.MAX_VALUE) {
+                continue;
+            }
+
+            if (visited[nearNode] == 1) { continue; }
+
+            flag = 1;
+            numLeafNode += recursive(nearNode);
         }
 
-
-        answerMap.put(num + 1, value);
-        return value;
+        dpList[curNode] = numLeafNode;
+        return dpList[curNode];
     }
 
-    public static void init() throws Exception {
+
+    public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
@@ -45,27 +62,26 @@ public class 트리와쿼리 {
         R = Integer.parseInt(st.nextToken()) - 1;
         Q = Integer.parseInt(st.nextToken());
 
-        graphMap = new HashMap<>();
-        answerMap = new HashMap<>();
-
-        visited = new int[N];
+        treeMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
-            graphMap.put(i, new ArrayList<>());
+            treeMap.put(i, new ArrayList<>());
         }
 
         for (int i = 0; i < N - 1; i++) {
             st = new StringTokenizer(br.readLine());
-            int vertex1 = Integer.parseInt(st.nextToken()) - 1;
-            int vertex2 = Integer.parseInt(st.nextToken()) - 1;
 
-            graphMap.get(vertex1).add(vertex2);
-            graphMap.get(vertex2).add(vertex1);
+            int node1 = Integer.parseInt(st.nextToken()) - 1;
+            int node2 = Integer.parseInt(st.nextToken()) - 1;
+
+            treeMap.get(node1).add(node2);
+            treeMap.get(node2).add(node1);
         }
 
-        qList = new int[Q];
-        for (int i = 0; i < Q; i++) {
+        queryList = new int[Q];
+        for (int i = 0;  i < Q; i++) {
             st = new StringTokenizer(br.readLine());
-            qList[i] = Integer.parseInt(st.nextToken());
+            queryList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
+
     }
 }
