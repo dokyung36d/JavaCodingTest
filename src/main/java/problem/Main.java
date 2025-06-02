@@ -5,10 +5,27 @@ import java.io.*;
 
 
 public class Main {
-	static int N, R, Q;
-	static Map<Integer, List<Integer>> treeMap;
-	static int[] queryList;
-	static int[] dpList, visited;
+	static int V, E;
+	static int[] parentList;
+	static PriorityQueue<Edge> pq;
+
+	public static class Edge implements Comparable<Edge> {
+		int node1;
+		int node2;
+		int cost;
+
+		public Edge(int node1, int node2, int cost) {
+			this.node1 = node1;
+			this.node2 = node2;
+			this.cost = cost;
+		}
+
+		@Override
+		public int compareTo(Edge anotherEdge) {
+			return Integer.compare(this.cost, anotherEdge.cost);
+		}
+
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -16,72 +33,57 @@ public class Main {
 	}
 
 	public static void solution() {
-		dpList = new int[N];
-		visited = new int[N];
-		Arrays.fill(dpList, Integer.MAX_VALUE);
-
-		recursive(R);
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < Q; i++) {
-			sb.append(dpList[queryList[i]]);
-			sb.append("\n");
+		parentList = new int[V];
+		for (int i = 0; i < V; i++) {
+			parentList[i] = i;
 		}
 
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
-	}
+		int totalCost = 0;
 
-	public static int recursive(int curNode) {
-		if (dpList[curNode] != Integer.MAX_VALUE) { return dpList[curNode]; }
+		while (!pq.isEmpty()) {
+			Edge edge = pq.poll();
 
-		visited[curNode] = 1;
+			int node1Parent = findParent(edge.node1);
+			int node2Parent = findParent(edge.node2);
+			if (node1Parent == node2Parent) { continue; }
 
-		int numLeafNode = 1;
-		int flag = 0;
-		for (int nearNode : treeMap.get(curNode)) {
-			if (dpList[nearNode] != Integer.MAX_VALUE) {
-				continue;
-			}
-
-			if (visited[nearNode] == 1) { continue; }
-
-			flag = 1;
-			numLeafNode += recursive(nearNode);
+			union(edge.node1, edge.node2);
+			totalCost += edge.cost;
 		}
 
-		dpList[curNode] = numLeafNode;
-		return dpList[curNode];
+		System.out.println(totalCost);
 	}
 
+	public static void union(int node1, int node2) {
+		int node1Parent = findParent(node1);
+		int node2Parent = findParent(node2);
+
+		if (node1Parent == node2Parent) { return; }
+
+		parentList[Math.min(node1Parent, node2Parent)] = Math.max(node1Parent, node2Parent);
+	}
+
+	public static int findParent(int curNode) {
+		if (curNode == parentList[curNode]) { return curNode; }
+
+		return parentList[curNode] = findParent(parentList[curNode]);
+	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		N = Integer.parseInt(st.nextToken());
-		R = Integer.parseInt(st.nextToken()) - 1;
-		Q = Integer.parseInt(st.nextToken());
+		V = Integer.parseInt(st.nextToken());
+		E = Integer.parseInt(st.nextToken());
 
-		treeMap = new HashMap<>();
-		for (int i = 0; i < N; i++) {
-			treeMap.put(i, new ArrayList<>());
-		}
-
-		for (int i = 0; i < N - 1; i++) {
+		pq = new PriorityQueue<>();
+		for (int i = 0; i < E; i++) {
 			st = new StringTokenizer(br.readLine());
-
 			int node1 = Integer.parseInt(st.nextToken()) - 1;
 			int node2 = Integer.parseInt(st.nextToken()) - 1;
+			int cost = Integer.parseInt(st.nextToken());
 
-			treeMap.get(node1).add(node2);
-			treeMap.get(node2).add(node1);
+			pq.add(new Edge(node1, node2, cost));
 		}
-
-		queryList = new int[Q];
-		for (int i = 0;  i < Q; i++) {
-			st = new StringTokenizer(br.readLine());
-			queryList[i] = Integer.parseInt(st.nextToken()) - 1;
-		}
-
 	}
 }

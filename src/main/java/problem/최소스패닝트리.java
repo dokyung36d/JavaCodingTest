@@ -1,65 +1,72 @@
 package problem;
 
-import java.awt.*;
-import java.io.*;
-import java.nio.Buffer;
 import java.util.*;
-import java.util.List;
+import java.io.*;
+
 
 public class 최소스패닝트리 {
     static int V, E;
-    static Map<Integer, List<Node>> graphMap;
-    static int minCost;
-    static int[] minVertexes;
-    static int[] visited;
+    static int[] parentList;
+    static PriorityQueue<Edge> pq;
 
-    public static class Node implements Comparable<Node> {
-        int destVertex;
-        int edgeCost;
+    public static class Edge implements Comparable<Edge> {
+        int node1;
+        int node2;
+        int cost;
 
-        public Node(int destVertex, int edgeCost) {
-            this.destVertex = destVertex;
-            this.edgeCost = edgeCost;
+        public Edge(int node1, int node2, int cost) {
+            this.node1 = node1;
+            this.node2 = node2;
+            this.cost = cost;
         }
 
         @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.edgeCost, anotherNode.edgeCost);
+        public int compareTo(Edge anotherEdge) {
+            return Integer.compare(this.cost, anotherEdge.cost);
         }
 
     }
 
     public static void main(String[] args) throws Exception {
         init();
-        PriorityQueue<Node> queue = new PriorityQueue<>();
-        int answer = 0;
-        answer += minCost;
-        queue.addAll(graphMap.get(minVertexes[0]));
-        queue.addAll(graphMap.get(minVertexes[1]));
+        solution();
+    }
 
-        visited[minVertexes[0]] = 1;
-        visited[minVertexes[1]] = 1;
-
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
-            if (visited[node.destVertex] == 1) {
-                continue;
-            }
-            visited[node.destVertex] = 1;
-            answer += node.edgeCost;
-
-            for (int i = 0; i < graphMap.get(node.destVertex).size(); i++) {
-                int dest = graphMap.get(node.destVertex).get(i).destVertex;
-                if (visited[dest] == 1) {
-                    continue;
-                }
-                queue.add(graphMap.get(node.destVertex).get(i));
-            }
+    public static void solution() {
+        parentList = new int[V];
+        for (int i = 0; i < V; i++) {
+            parentList[i] = i;
         }
 
-        System.out.println(answer);
+        int totalCost = 0;
 
+        while (!pq.isEmpty()) {
+            Edge edge = pq.poll();
 
+            int node1Parent = findParent(edge.node1);
+            int node2Parent = findParent(edge.node2);
+            if (node1Parent == node2Parent) { continue; }
+
+            union(edge.node1, edge.node2);
+            totalCost += edge.cost;
+        }
+
+        System.out.println(totalCost);
+    }
+
+    public static void union(int node1, int node2) {
+        int node1Parent = findParent(node1);
+        int node2Parent = findParent(node2);
+
+        if (node1Parent == node2Parent) { return; }
+
+        parentList[Math.min(node1Parent, node2Parent)] = Math.max(node1Parent, node2Parent);
+    }
+
+    public static int findParent(int curNode) {
+        if (curNode == parentList[curNode]) { return curNode; }
+
+        return parentList[curNode] = findParent(parentList[curNode]);
     }
 
     public static void init() throws IOException {
@@ -69,31 +76,14 @@ public class 최소스패닝트리 {
         V = Integer.parseInt(st.nextToken());
         E = Integer.parseInt(st.nextToken());
 
-        graphMap = new HashMap<>();
-        for (int i = 0; i <= V; i++) {
-            graphMap.put(i + 1, new ArrayList<>());
-        }
-
-        visited = new int[V + 1];
-
-        minCost = 1000001;
-        minVertexes = new int[2];
-
+        pq = new PriorityQueue<>();
         for (int i = 0; i < E; i++) {
             st = new StringTokenizer(br.readLine());
-            int vertex1 = Integer.parseInt(st.nextToken());
-            int vertex2 = Integer.parseInt(st.nextToken());
-            int edgeCost = Integer.parseInt(st.nextToken());
+            int node1 = Integer.parseInt(st.nextToken()) - 1;
+            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int cost = Integer.parseInt(st.nextToken());
 
-            graphMap.get(vertex1).add(new Node(vertex2, edgeCost));
-            graphMap.get(vertex2).add(new Node(vertex1, edgeCost));
-
-            if (edgeCost < minCost) {
-                minCost = edgeCost;
-
-                minVertexes[0] = vertex1;
-                minVertexes[1] = vertex2;
-            }
+            pq.add(new Edge(node1, node2, cost));
         }
     }
 }
