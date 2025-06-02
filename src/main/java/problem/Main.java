@@ -5,9 +5,9 @@ import java.io.*;
 
 
 public class Main {
-	static int V, E;
-	static int[] parentList;
+	static int N, M;
 	static PriorityQueue<Edge> pq;
+	static int[] parentList;
 
 	public static class Edge implements Comparable<Edge> {
 		int node1;
@@ -24,7 +24,6 @@ public class Main {
 		public int compareTo(Edge anotherEdge) {
 			return Integer.compare(this.cost, anotherEdge.cost);
 		}
-
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -33,14 +32,15 @@ public class Main {
 	}
 
 	public static void solution() {
-		parentList = new int[V];
-		for (int i = 0; i < V; i++) {
+		parentList = new int[N];
+		for (int i = 0; i < N; i++) {
 			parentList[i] = i;
 		}
 
+		int numCluster = N;
 		int totalCost = 0;
 
-		while (!pq.isEmpty()) {
+		while (numCluster > 2) {
 			Edge edge = pq.poll();
 
 			int node1Parent = findParent(edge.node1);
@@ -48,6 +48,7 @@ public class Main {
 			if (node1Parent == node2Parent) { continue; }
 
 			union(edge.node1, edge.node2);
+			numCluster -= 1;
 			totalCost += edge.cost;
 		}
 
@@ -60,11 +61,11 @@ public class Main {
 
 		if (node1Parent == node2Parent) { return; }
 
-		parentList[Math.min(node1Parent, node2Parent)] = Math.max(node1Parent, node2Parent);
+		parentList[Math.max(node1Parent, node2Parent)] = Math.min(node1Parent,node2Parent);
 	}
 
 	public static int findParent(int curNode) {
-		if (curNode == parentList[curNode]) { return curNode; }
+		if (parentList[curNode] == curNode) { return curNode; }
 
 		return parentList[curNode] = findParent(parentList[curNode]);
 	}
@@ -73,12 +74,13 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		V = Integer.parseInt(st.nextToken());
-		E = Integer.parseInt(st.nextToken());
+		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
 
 		pq = new PriorityQueue<>();
-		for (int i = 0; i < E; i++) {
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
+
 			int node1 = Integer.parseInt(st.nextToken()) - 1;
 			int node2 = Integer.parseInt(st.nextToken()) - 1;
 			int cost = Integer.parseInt(st.nextToken());
