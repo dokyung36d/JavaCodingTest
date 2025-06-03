@@ -5,24 +5,27 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static PriorityQueue<Edge> pq;
-	static int[] parentList;
+	static String string1, string2;
+	static Pos upLeftDirection = new Pos(-1, -1);
+	static Pos upDirection = new Pos(-1, 0);
+	static Pos leftDirection = new Pos(0, -1);
+	static int[][] dpMatrix;
 
-	public static class Edge implements Comparable<Edge> {
-		int node1;
-		int node2;
-		int cost;
+	public static class Pos {
+		int row;
+		int col;
 
-		public Edge(int node1, int node2, int cost) {
-			this.node1 = node1;
-			this.node2 = node2;
-			this.cost = cost;
+		public Pos(int row, int col) {
+			this.row = row;
+			this.col = col;
 		}
 
-		@Override
-		public int compareTo(Edge anotherEdge) {
-			return Integer.compare(this.cost, anotherEdge.cost);
+		public Pos addPos(Pos direction) {
+			return new Pos(this.row + direction.row, this.col + direction.col);
+		}
+
+		public int getValue() {
+			return dpMatrix[this.row][this.col];
 		}
 	}
 
@@ -32,60 +35,100 @@ public class Main {
 	}
 
 	public static void solution() {
-		parentList = new int[N];
+		int M = string1.length();
+		int N = string2.length();
+		dpMatrix = new int[N][M];
+
+
+		int rowFlag = 0;
+		int colFlag = 0;
 		for (int i = 0; i < N; i++) {
-			parentList[i] = i;
+			if (string1.charAt(0) == string2.charAt(i)) {
+				rowFlag = 1;
+			}
+			if (rowFlag == 1) {
+				dpMatrix[i][0] = 1;
+			}
 		}
 
-		int numCluster = N;
-		int totalCost = 0;
-
-		while (numCluster > 2) {
-			Edge edge = pq.poll();
-
-			int node1Parent = findParent(edge.node1);
-			int node2Parent = findParent(edge.node2);
-			if (node1Parent == node2Parent) { continue; }
-
-			union(edge.node1, edge.node2);
-			numCluster -= 1;
-			totalCost += edge.cost;
+		for (int i = 0; i < M; i++) {
+			if (string1.charAt(i) == string2.charAt(0)) {
+				colFlag = 1;
+			}
+			if (colFlag == 1) {
+				dpMatrix[0][i] = 1;
+			}
 		}
 
-		System.out.println(totalCost);
-	}
 
-	public static void union(int node1, int node2) {
-		int node1Parent = findParent(node1);
-		int node2Parent = findParent(node2);
 
-		if (node1Parent == node2Parent) { return; }
+		for (int i = 1; i < N; i++) {
+			for (int j = 1; j < M; j++) {
+				if (string2.charAt(i) == string1.charAt(j)) {
+					dpMatrix[i][j] = dpMatrix[i - 1][j - 1] + 1;
+				}
 
-		parentList[Math.max(node1Parent, node2Parent)] = Math.min(node1Parent,node2Parent);
-	}
+				else {
+					dpMatrix[i][j] = Math.max(dpMatrix[i - 1][j],
+							dpMatrix[i][j - 1]);
+				}
+			}
+		}
 
-	public static int findParent(int curNode) {
-		if (parentList[curNode] == curNode) { return curNode; }
 
-		return parentList[curNode] = findParent(parentList[curNode]);
+		StringBuilder sb = new StringBuilder();
+		Pos curPos = new Pos(N - 1, M - 1);
+		while (curPos.row >= 1 && curPos.col >= 1) {
+			Pos upLeftPos = curPos.addPos(upLeftDirection);
+			Pos upPos = curPos.addPos(upDirection);
+			Pos leftPos = curPos.addPos(leftDirection);
+
+			if (curPos.getValue() == upLeftPos.getValue()) {
+				curPos = upLeftPos;
+				continue;
+			}
+
+			if (curPos.getValue() == leftPos.getValue()) {
+				curPos = leftPos;
+				continue;
+			}
+
+			if (curPos.getValue() == upPos.getValue()) {
+				curPos = upPos;
+				continue;
+			}
+
+			sb.append(string2.charAt(curPos.row));
+			curPos = upLeftPos;
+		}
+
+
+		if (curPos.getValue() == 0) {
+
+		}
+
+		else if (curPos.row == 0) {
+			sb.append(string2.charAt(0));
+		}
+		else {
+			sb.append(string1.charAt(0));
+		}
+
+		if (dpMatrix[N - 1][M - 1] == 0) {
+			System.out.println(0);
+			return;
+		}
+		System.out.println(dpMatrix[N - 1][M - 1]);
+		System.out.println(sb.reverse().toString());
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
 		StringTokenizer st = new StringTokenizer(br.readLine());
+		string1 = st.nextToken();
 
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
-
-		pq = new PriorityQueue<>();
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int node1 = Integer.parseInt(st.nextToken()) - 1;
-			int node2 = Integer.parseInt(st.nextToken()) - 1;
-			int cost = Integer.parseInt(st.nextToken());
-
-			pq.add(new Edge(node1, node2, cost));
-		}
+		st = new StringTokenizer(br.readLine());
+		string2 = st.nextToken();
 	}
 }
