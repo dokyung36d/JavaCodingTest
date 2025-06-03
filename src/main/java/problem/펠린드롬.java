@@ -8,7 +8,7 @@ public class 펠린드롬 {
     static int N;
     static int[] numList;
     static int M;
-    static Main.Query[] queryList;
+    static Query[] queryList;
 
     public static class Query {
         int from;
@@ -47,7 +47,7 @@ public class 펠린드롬 {
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < M; i++) {
-            Main.Query query = queryList[i];
+            Query query = queryList[i];
             sb.append(dpMatrix[query.from][query.to]);
             sb.append("\n");
         }
@@ -69,14 +69,14 @@ public class 펠린드롬 {
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
-        queryList = new Main.Query[M];
+        queryList = new Query[M];
 
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
             int from = Integer.parseInt(st.nextToken()) - 1;
             int to = Integer.parseInt(st.nextToken()) - 1;
-            queryList[i] = new Main.Query(from, to);
+            queryList[i] = new Query(from, to);
         }
     }
 }

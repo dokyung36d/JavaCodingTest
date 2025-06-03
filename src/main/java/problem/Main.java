@@ -1,82 +1,75 @@
 package problem;
 
+import java.nio.Buffer;
 import java.util.*;
 import java.io.*;
 
 
 public class Main {
 	static int N;
-	static int[] numList;
-	static int M;
-	static Query[] queryList;
+	static int[][] colorMatrix;
 
-	public static class Query {
-		int from;
-		int to;
-
-		public Query(int from, int to) {
-			this.from = from;
-			this.to = to;
-		}
-	}
 	public static void main(String[] args) throws Exception {
 		init();
 		solution();
 	}
 
 	public static void solution() {
-		int[][] dpMatrix = new int[N][N];
-		for (int i = 0; i < N; i++) {
-			dpMatrix[i][i] = 1;
+		int minCost = Integer.MAX_VALUE / 2;
+
+		for (int i = 0; i < 3; i++) {
+			minCost = Math.min(minCost, getDPResult(i));
 		}
+
+		System.out.println(minCost);
+	}
+
+	public static int getDPResult(int startIndex) {
+		int[][] dpMatrix = new int[N][3];
+
+		for (int i = 0; i < N; i++) {
+			Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+		}
+		dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
 
 		for (int i = 0; i < N - 1; i++) {
-			if (numList[i] == numList[i + 1]) {
-				dpMatrix[i][i + 1] = 1;
+			for (int j = 0; j < 3; j++) {
+				dpMatrix[i + 1][((j + 3) - 1) % 3] = Math.min(dpMatrix[i + 1][((j + 3) - 1) % 3],
+						dpMatrix[i][j] + colorMatrix[i + 1][((j + 3) - 1) % 3]);
+
+				dpMatrix[i + 1][(j + 1) % 3] = Math.min(dpMatrix[i + 1][(j + 1) % 3],
+						dpMatrix[i][j] + colorMatrix[i + 1][(j + 1) % 3]);
 			}
 		}
 
-		for (int gap = 2; gap <= N - 1; gap++) {
-			for (int start = 0; start + gap < N; start++) {
-				int end = start + gap;
-				if (numList[start] == numList[end] && dpMatrix[start + 1][end - 1] == 1) {
-					dpMatrix[start][end] = 1;
-				}
-			}
+		dpMatrix[N - 1][startIndex] = Integer.MAX_VALUE / 2;
+		int minValue = Integer.MAX_VALUE / 2;
+
+		for (int i = 0; i < 3; i++) {
+			minValue = Math.min(minValue, dpMatrix[N - 1][i]);
 		}
 
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < M; i++) {
-			Query query = queryList[i];
-			sb.append(dpMatrix[query.from][query.to]);
-			sb.append("\n");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		return minValue;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
+
 		N = Integer.parseInt(st.nextToken());
-		numList = new int[N];
+		colorMatrix = new int[N][3];
 
-		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			numList[i] = Integer.parseInt(st.nextToken());
-		}
-
-		st = new StringTokenizer(br.readLine());
-		M = Integer.parseInt(st.nextToken());
-		queryList = new Query[M];
-
-		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 
-			int from = Integer.parseInt(st.nextToken()) - 1;
-			int to = Integer.parseInt(st.nextToken()) - 1;
-			queryList[i] = new Query(from, to);
+			int redCost = Integer.parseInt(st.nextToken());
+			int greenCost = Integer.parseInt(st.nextToken());
+			int blueCost = Integer.parseInt(st.nextToken());
+
+			colorMatrix[i][0] = redCost;
+			colorMatrix[i][1] = greenCost;
+			colorMatrix[i][2] = blueCost;
 		}
 	}
+	
 }
