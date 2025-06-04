@@ -5,51 +5,100 @@ import java.io.*;
 
 
 public class Main {
-	static int N;
-	static int[] numList;
+	static int T, N, K;
+	static int[] timeList;
+	static int destBuilding;
+	static Map<Integer, List<Integer>> graphMap;
+	static int[] numPrevJobList;
+	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+	public static class Node implements Comparable<Node> {
+		int uniqueNum;
+		int endTime;
+
+		public Node(int uniqueNum, int endTime) {
+			this.uniqueNum = uniqueNum;
+			this.endTime = endTime;
+		}
+
+		@Override
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.endTime, anotherNode.endTime);
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
-		init();
-		solution();
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		T = Integer.parseInt(st.nextToken());
+
+		for (int i = 0; i < T; i++) {
+			init();
+			solution();
+		}
 	}
 
 	public static void solution() {
-		int[] indexList= new int[1000001];
-		int[] scoreList = new int[N];
-		Map<Integer, Integer> scoreMap = new HashMap<>();
-
+		PriorityQueue<Node> pq = new PriorityQueue<>();
 		for (int i = 0; i < N; i++) {
-			indexList[numList[i]] = i + 1;
+			if (numPrevJobList[i] != 0) { continue; }
+
+			if (i == destBuilding) {
+				System.out.println(timeList[i]);
+				return;
+			}
+
+			pq.add(new Node(i, timeList[i]));
 		}
 
-		for (int i = 0; i < N; i++) {
-			for (int curNum = numList[i] * 2; curNum < 1000001; curNum += numList[i]) {
-				if (indexList[curNum] == 0) { continue; }
+		int totalTime = 0;
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
 
-				scoreList[i] += 1;
-				scoreList[indexList[curNum] - 1] -= 1;
+			totalTime = Math.max(totalTime, node.endTime);
+			for (int nearNode : graphMap.get(node.uniqueNum)) {
+				numPrevJobList[nearNode] -= 1;
+
+				if (numPrevJobList[nearNode] == 0) {
+					pq.add(new Node(nearNode, node.endTime + timeList[nearNode]));
+
+					if (nearNode == destBuilding) {
+						System.out.println(node.endTime + timeList[nearNode]);
+						return;
+					}
+				}
 			}
 		}
 
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < N; i++) {
-			sb.append(scoreList[i]);
-			sb.append(" ");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		System.out.println(totalTime);
 	}
 
 	public static void init() throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		numList = new int[N];
+		K = Integer.parseInt(st.nextToken());
 
+		timeList = new int[N];
+		graphMap = new HashMap<>();
 		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			numList[i] = Integer.parseInt(st.nextToken());
+			timeList[i] = Integer.parseInt(st.nextToken());
+
+			graphMap.put(i, new ArrayList<>());
 		}
+
+		numPrevJobList = new int[N];
+		for (int i = 0; i < K; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int from = Integer.parseInt(st.nextToken()) - 1;
+			int to = Integer.parseInt(st.nextToken()) - 1;
+
+			graphMap.get(from).add(to);
+			numPrevJobList[to] += 1;
+		}
+
+		st = new StringTokenizer(br.readLine());
+		destBuilding = Integer.parseInt(st.nextToken()) - 1;
 	}
 }

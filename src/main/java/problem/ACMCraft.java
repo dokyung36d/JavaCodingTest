@@ -5,105 +5,100 @@ import java.io.*;
 
 
 public class ACMCraft {
-    static int N, K, W;
-    static long[] costList, reqyuredCost;
-    static int[] unstartableList;
-    static Map<Integer, List<Integer>> childMap;
-    static Map<Integer, Integer> numRestParentsMap;
+    static int T, N, K;
+    static int[] timeList;
+    static int destBuilding;
+    static Map<Integer, List<Integer>> graphMap;
+    static int[] numPrevJobList;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-
-    public static void main(String[] args) throws Exception {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        int T = Integer.parseInt(st.nextToken());
-
-        for (int i = 0; i < T; i++) {
-            init();
-            solution();
-
-        }
-    }
-
     public static class Node implements Comparable<Node> {
-        int curBuilding;
-        long cost;
+        int uniqueNum;
+        int endTime;
 
-        public Node(int curBuilding, long cost) {
-            this.curBuilding = curBuilding;
-            this.cost = cost;
+        public Node(int uniqueNum, int endTime) {
+            this.uniqueNum = uniqueNum;
+            this.endTime = endTime;
         }
 
         @Override
         public int compareTo(Node anotherNode) {
-            return Long.compare(this.cost, anotherNode.cost);
+            return Integer.compare(this.endTime, anotherNode.endTime);
         }
     }
 
-    public static void solution() throws Exception {
-        PriorityQueue<Node> queue = new PriorityQueue<>();
-        for (int i = 0; i < N; i++) {
-            if (unstartableList[i] == 0) {
-                queue.add(new Node(i, 0));
-            }
+    public static void main(String[] args) throws Exception {
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        T = Integer.parseInt(st.nextToken());
+
+        for (int i = 0; i < T; i++) {
+            init();
+            solution();
         }
+    }
 
+    public static void solution() {
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        for (int i = 0; i < N; i++) {
+            if (numPrevJobList[i] != 0) { continue; }
 
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
-            if (node.curBuilding == W) {
-                System.out.println(node.cost + costList[W]);
+            if (i == destBuilding) {
+                System.out.println(timeList[i]);
                 return;
             }
 
-            List<Integer> childs = childMap.get(node.curBuilding);
-            for (int child : childs) {
-                int numRestParents = numRestParentsMap.get(child) - 1;
-                if (numRestParents == 0) {
-                    queue.add(new Node(child, Math.max(node.cost + costList[node.curBuilding], reqyuredCost[child])));
-                }
+            pq.add(new Node(i, timeList[i]));
+        }
 
-                else {
-                    reqyuredCost[child] = Math.max(node.cost + costList[node.curBuilding], reqyuredCost[child]);
-                    numRestParentsMap.put(child, numRestParents);
+        int totalTime = 0;
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+            totalTime = Math.max(totalTime, node.endTime);
+            for (int nearNode : graphMap.get(node.uniqueNum)) {
+                numPrevJobList[nearNode] -= 1;
+
+                if (numPrevJobList[nearNode] == 0) {
+                    pq.add(new Node(nearNode, node.endTime + timeList[nearNode]));
+
+                    if (nearNode == destBuilding) {
+                        System.out.println(node.endTime + timeList[nearNode]);
+                        return;
+                    }
                 }
             }
         }
 
+        System.out.println(totalTime);
     }
 
     public static void init() throws IOException {
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        costList = new long[N];
-        unstartableList = new int[N];
-        reqyuredCost = new long[N];
-
-        childMap = new HashMap<>();
-        numRestParentsMap = new HashMap<>();
-
+        timeList = new int[N];
+        graphMap = new HashMap<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            costList[i] = Integer.parseInt(st.nextToken());
-            childMap.put(i, new ArrayList<>());
+            timeList[i] = Integer.parseInt(st.nextToken());
+
+            graphMap.put(i, new ArrayList<>());
         }
 
+        numPrevJobList = new int[N];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
-            int parent = Integer.parseInt(st.nextToken()) - 1;
-            int child = Integer.parseInt(st.nextToken()) - 1;
 
-            childMap.get(parent).add(child);
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
 
-            int numParents = numRestParentsMap.getOrDefault(child, 0);
-            numRestParentsMap.put(child, numParents + 1);
-
-            unstartableList[child] = 1;
+            graphMap.get(from).add(to);
+            numPrevJobList[to] += 1;
         }
 
         st = new StringTokenizer(br.readLine());
-        W = Integer.parseInt(st.nextToken()) - 1;
-
+        destBuilding = Integer.parseInt(st.nextToken()) - 1;
     }
 }
