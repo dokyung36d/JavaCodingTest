@@ -5,9 +5,37 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static int[] numPrevList;
-	static Map<Integer, List<Integer>> graphMap;
+	static List<Integer> commandList;
+
+	public static class State {
+		int left;
+		int right;
+
+		public State(int left, int right) {
+			this.left = left;
+			this.right = right;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.left, this.right);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+			State anotherState = (State) obj;
+
+			if (this.left == anotherState.left && this.right == anotherState.right) {
+				return true;
+			}
+
+			return false;
+		}
+
+
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,55 +43,63 @@ public class Main {
 	}
 
 	public static void solution() {
-		PriorityQueue<Integer> pq = new PriorityQueue<>();
-		for (int i = 0; i < N; i++) {
-			if (numPrevList[i] == 0) {
-				pq.add(i);
+		Map<State, Integer> dpMap = new HashMap<>();
+		dpMap.put(new State(0, 0), 0);
+
+		for (int command : commandList) {
+			dpMap = setUpdatedDpMap(command, dpMap);
+		}
+
+		int answer = Integer.MAX_VALUE / 2;
+		for (State state : dpMap.keySet()) {
+			answer = Math.min(answer, dpMap.get(state));
+		}
+
+		System.out.println(answer);
+	}
+
+	public static Map<State, Integer> setUpdatedDpMap(int command, Map<State, Integer> dpMap) {
+		Map<State, Integer> updatedDpMap = new HashMap<>();
+		for (State state : dpMap.keySet()) {
+			int prevCost = dpMap.getOrDefault(state, Integer.MAX_VALUE / 2);
+
+			if (state.left != command) {
+				int cost = getCost(state.right, command);
+				State updatedState = new State(state.left, command);
+
+				int totalCost = Math.min(prevCost + cost, updatedDpMap.getOrDefault(updatedState, Integer.MAX_VALUE / 2));
+				updatedDpMap.put(updatedState, totalCost);
+			}
+
+			if (state.right != command) {
+				int cost = getCost(state.left, command);
+				State updatedState = new State(command, state.right);
+
+				int totalCost = Math.min(prevCost + cost, updatedDpMap.getOrDefault(updatedState, Integer.MAX_VALUE / 2));
+				updatedDpMap.put(updatedState, totalCost);
 			}
 		}
 
-		StringBuilder sb = new StringBuilder();
-		while (!pq.isEmpty()) {
-			int curNum = pq.poll();
-			sb.append(curNum + 1);
-			sb.append(" ");
+		return updatedDpMap;
+	}
 
-			for (int nextNum : graphMap.get(curNum)) {
-				numPrevList[nextNum] -= 1;
-
-				if (numPrevList[nextNum] == 0) {
-					pq.add(nextNum);
-				}
-			}
-		}
-
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+	public static int getCost(int from, int to) {
+		if (from == 0) { return 2; }
+		if (from == to) { return 1; }
+		if (Math.abs(from - to) == 2) { return 4; }
+		return 3;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
+		commandList = new ArrayList<>();
+		while (true) {
+			int command = Integer.parseInt(st.nextToken());
+			if (command == 0) { break; }
 
-		numPrevList = new int[N];
-		graphMap = new HashMap<>();
-		for (int i = 0; i < N; i++) {
-			graphMap.put(i, new ArrayList<>());
-		}
-
-
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int from = Integer.parseInt(st.nextToken()) - 1;
-			int to = Integer.parseInt(st.nextToken()) - 1;
-
-			graphMap.get(from).add(to);
-			numPrevList[to] += 1;
+			commandList.add(command);
 		}
 	}
-
 }
