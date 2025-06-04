@@ -1,13 +1,12 @@
 package problem;
 
-import java.nio.Buffer;
 import java.util.*;
 import java.io.*;
 
 
 public class Main {
 	static int N;
-	static int[][] colorMatrix;
+	static int[] numList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,41 +14,30 @@ public class Main {
 	}
 
 	public static void solution() {
-		int minCost = Integer.MAX_VALUE / 2;
-
-		for (int i = 0; i < 3; i++) {
-			minCost = Math.min(minCost, getDPResult(i));
-		}
-
-		System.out.println(minCost);
-	}
-
-	public static int getDPResult(int startIndex) {
-		int[][] dpMatrix = new int[N][3];
+		int[] indexList= new int[1000001];
+		int[] scoreList = new int[N];
+		Map<Integer, Integer> scoreMap = new HashMap<>();
 
 		for (int i = 0; i < N; i++) {
-			Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+			indexList[numList[i]] = i + 1;
 		}
-		dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
 
-		for (int i = 0; i < N - 1; i++) {
-			for (int j = 0; j < 3; j++) {
-				dpMatrix[i + 1][((j + 3) - 1) % 3] = Math.min(dpMatrix[i + 1][((j + 3) - 1) % 3],
-						dpMatrix[i][j] + colorMatrix[i + 1][((j + 3) - 1) % 3]);
+		for (int i = 0; i < N; i++) {
+			for (int curNum = numList[i] * 2; curNum < 1000001; curNum += numList[i]) {
+				if (indexList[curNum] == 0) { continue; }
 
-				dpMatrix[i + 1][(j + 1) % 3] = Math.min(dpMatrix[i + 1][(j + 1) % 3],
-						dpMatrix[i][j] + colorMatrix[i + 1][(j + 1) % 3]);
+				scoreList[i] += 1;
+				scoreList[indexList[curNum] - 1] -= 1;
 			}
 		}
 
-		dpMatrix[N - 1][startIndex] = Integer.MAX_VALUE / 2;
-		int minValue = Integer.MAX_VALUE / 2;
-
-		for (int i = 0; i < 3; i++) {
-			minValue = Math.min(minValue, dpMatrix[N - 1][i]);
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < N; i++) {
+			sb.append(scoreList[i]);
+			sb.append(" ");
 		}
 
-		return minValue;
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
 	public static void init() throws IOException {
@@ -57,19 +45,11 @@ public class Main {
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		colorMatrix = new int[N][3];
+		numList = new int[N];
 
+		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int redCost = Integer.parseInt(st.nextToken());
-			int greenCost = Integer.parseInt(st.nextToken());
-			int blueCost = Integer.parseInt(st.nextToken());
-
-			colorMatrix[i][0] = redCost;
-			colorMatrix[i][1] = greenCost;
-			colorMatrix[i][2] = blueCost;
+			numList[i] = Integer.parseInt(st.nextToken());
 		}
 	}
-	
 }
