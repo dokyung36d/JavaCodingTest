@@ -3,38 +3,43 @@ package problem;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.BufferedWriter;
 import java.util.*;
 
 public class 줄세우기 {
-    static int N;
-    static int[] numList;
-    public static void main(String[] args) throws IOException {
+    static int N, M;
+    static int[] numPrevList;
+    static Map<Integer, List<Integer>> graphMap;
+
+    public static void main(String[] args) throws Exception {
         init();
-        List<Integer> dpList = new ArrayList<>();
-        Map<Integer, Integer> dpMap = new HashMap<>();
-        dpList.add(numList[0]);
+        solution();
+    }
 
-        int answer = 1;
-
-        for (int i = 1; i < N; i++) {
-            int curNum = numList[i];
-            int index = Collections.binarySearch(dpList, curNum);
-            if (index >= 0) {
-                continue;
-            }
-
-            if (curNum > dpList.get(dpList.size() - 1)) {
-                dpList.add(curNum);
-            }
-            else {
-                int insertIndex = -index - 1;
-                dpList.set(insertIndex, numList[i]);
+    public static void solution() {
+        PriorityQueue<Integer> pq = new PriorityQueue<>();
+        for (int i = 0; i < N; i++) {
+            if (numPrevList[i] == 0) {
+                pq.add(i);
             }
         }
 
-        System.out.println(N - dpList.size());
+        StringBuilder sb = new StringBuilder();
+        while (!pq.isEmpty()) {
+            int curNum = pq.poll();
+            sb.append(curNum + 1);
+            sb.append(" ");
+
+            for (int nextNum : graphMap.get(curNum)) {
+                numPrevList[nextNum] -= 1;
+
+                if (numPrevList[nextNum] == 0) {
+                    pq.add(nextNum);
+                }
+            }
+        }
+
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -42,11 +47,24 @@ public class 줄세우기 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
+        numPrevList = new int[N];
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
+
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
-            numList[i] = Integer.parseInt(st.nextToken());
+
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
+
+            graphMap.get(from).add(to);
+            numPrevList[to] += 1;
         }
     }
+
 }
