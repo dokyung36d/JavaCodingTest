@@ -5,100 +5,82 @@ import java.io.*;
 
 
 public class Main {
-	static int T, N, K;
-	static int[] timeList;
-	static int destBuilding;
-	static Map<Integer, List<Integer>> graphMap;
-	static int[] numPrevJobList;
-	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-	public static class Node implements Comparable<Node> {
-		int uniqueNum;
-		int endTime;
-
-		public Node(int uniqueNum, int endTime) {
-			this.uniqueNum = uniqueNum;
-			this.endTime = endTime;
-		}
-
-		@Override
-		public int compareTo(Node anotherNode) {
-			return Integer.compare(this.endTime, anotherNode.endTime);
-		}
-	}
+	static int N;
+	static List<Integer> primeNumList, cumulativeSum;
 
 	public static void main(String[] args) throws Exception {
-		StringTokenizer st = new StringTokenizer(br.readLine());
-		T = Integer.parseInt(st.nextToken());
-
-		for (int i = 0; i < T; i++) {
-			init();
-			solution();
-		}
+		init();
+		solution();
 	}
 
 	public static void solution() {
-		PriorityQueue<Node> pq = new PriorityQueue<>();
-		for (int i = 0; i < N; i++) {
-			if (numPrevJobList[i] != 0) { continue; }
+		setPrimeNumList();
+		setCumulativeSum();
 
-			if (i == destBuilding) {
-				System.out.println(timeList[i]);
-				return;
+		int left = 0;
+		int right = 1;
+
+		int answer = 0;
+		while (left <= right && right < cumulativeSum.size()) {
+			int sumValue = cumulativeSum.get(right) - cumulativeSum.get(left);
+
+			if (sumValue == N) {
+				answer += 1;
+				left += 1;
 			}
 
-			pq.add(new Node(i, timeList[i]));
-		}
+			else if (sumValue < N) {
+				right += 1;
+			}
 
-		int totalTime = 0;
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
-
-			totalTime = Math.max(totalTime, node.endTime);
-			for (int nearNode : graphMap.get(node.uniqueNum)) {
-				numPrevJobList[nearNode] -= 1;
-
-				if (numPrevJobList[nearNode] == 0) {
-					pq.add(new Node(nearNode, node.endTime + timeList[nearNode]));
-
-					if (nearNode == destBuilding) {
-						System.out.println(node.endTime + timeList[nearNode]);
-						return;
-					}
-				}
+			else if (sumValue > N) {
+				left += 1;
 			}
 		}
 
-		System.out.println(totalTime);
+		System.out.println(answer);
+	}
+
+	public static void setPrimeNumList() {
+		int[] isPrime = new int[N + 1];
+		Arrays.fill(isPrime, 1);
+
+		isPrime[0] = 0;
+		isPrime[1] = 0;
+
+		for (int num = 2; num < N + 1; num++) {
+			if (isPrime[num] == 0) {
+				continue;
+			}
+
+			for (int i = num * 2; i < N + 1; i += num) {
+				isPrime[i] = 0;
+			}
+		}
+
+		primeNumList = new ArrayList<>();
+		for (int i = 0; i < N + 1; i++) {
+			if (isPrime[i] == 1) {
+				primeNumList.add(i);
+			}
+		}
+	}
+
+	public static void setCumulativeSum() {
+		cumulativeSum = new ArrayList<>();
+		cumulativeSum.add(0);
+		for (int i = 0; i < primeNumList.size(); i++) {
+			cumulativeSum.add(cumulativeSum.get(cumulativeSum.size() - 1) + primeNumList.get(i));
+		}
+
+
 	}
 
 	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		K = Integer.parseInt(st.nextToken());
 
-		timeList = new int[N];
-		graphMap = new HashMap<>();
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			timeList[i] = Integer.parseInt(st.nextToken());
-
-			graphMap.put(i, new ArrayList<>());
-		}
-
-		numPrevJobList = new int[N];
-		for (int i = 0; i < K; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int from = Integer.parseInt(st.nextToken()) - 1;
-			int to = Integer.parseInt(st.nextToken()) - 1;
-
-			graphMap.get(from).add(to);
-			numPrevJobList[to] += 1;
-		}
-
-		st = new StringTokenizer(br.readLine());
-		destBuilding = Integer.parseInt(st.nextToken()) - 1;
 	}
 }
