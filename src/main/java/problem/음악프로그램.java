@@ -8,46 +8,45 @@ public class 음악프로그램 {
     static int N, M;
     static Map<Integer, List<Integer>> graphMap;
     static int[] numPointed;
+
     public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
 
-        Deque<Integer> queue = new ArrayDeque<>();
+    public static void solution() {
+        PriorityQueue<Integer> pq = new PriorityQueue<>();
         for (int i = 0; i < N; i++) {
             if (numPointed[i] == 0) {
-                queue.addLast(i);
+                pq.add(i);
             }
         }
 
-        List<Integer> answerList = new ArrayList<>();
-        while (!queue.isEmpty()) {
-            int curNode = queue.pollFirst();
-            answerList.add(curNode);
+        int numOut = 0;
 
-            for (int i = 0; i < graphMap.get(curNode).size(); i++) {
-                int destNode = graphMap.get(curNode).get(i);
+        StringBuilder sb = new StringBuilder();
+        while (!pq.isEmpty()) {
+            int curNum = pq.poll();
+            sb.append(curNum + 1);
+            sb.append("\n");
+            numOut += 1;
 
-                numPointed[destNode] -= 1;
-                if (numPointed[destNode] == 0) {
-                    queue.add(destNode);
+            for (int nearNum : graphMap.get(curNum)) {
+                numPointed[nearNum] -= 1;
+
+                if (numPointed[nearNum] == 0) {
+                    pq.add(nearNum);
                 }
             }
         }
 
-
-        if (answerList.size() != N) {
+        if (numOut != N) {
             System.out.println(0);
             return;
         }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < N; i++) {
-            sb.append(answerList.get(i) + 1);
-            sb.append("\n");
-        }
         System.out.println(sb.toString().substring(0, sb.length() - 1));
-
-
     }
+
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -66,16 +65,14 @@ public class 음악프로그램 {
             st = new StringTokenizer(br.readLine());
 
             int numOrder = Integer.parseInt(st.nextToken());
-            int[] orders = new int[numOrder];
-            for (int j = 0; j < numOrder; j++) {
-                orders[j] = Integer.parseInt(st.nextToken()) - 1;
+            int[] orderList = new int[numOrder];
+            for (int order = 0; order < numOrder; order++) {
+                orderList[order] = Integer.parseInt(st.nextToken()) - 1;
             }
 
-            for (int j = 0; j < numOrder; j++) {
-                for (int k = j + 1; k < numOrder; k++) {
-                    graphMap.get(orders[j]).add(orders[k]);
-                    numPointed[orders[k]] += 1;
-                }
+            for (int j = 0; j < numOrder - 1; j++) {
+                graphMap.get(orderList[j]).add(orderList[j + 1]);
+                numPointed[orderList[j + 1]] += 1;
             }
         }
     }

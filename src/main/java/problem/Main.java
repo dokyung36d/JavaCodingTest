@@ -1,27 +1,12 @@
 package problem;
-
 import java.util.*;
 import java.io.*;
 
 
 public class Main {
-	static int N;
-	static int[] numList;
-
-	public static class Node {
-		int leftIndex;
-		int midIndex;
-		int rightIndex;
-		long sumValue;
-
-		public Node(int leftIndex, int midIndex, int rightIndex) {
-			this.leftIndex = leftIndex;
-			this.midIndex = midIndex;
-			this.rightIndex = rightIndex;
-
-			this.sumValue = Math.abs((long) numList[leftIndex] + (long) numList[midIndex] + (long) numList[rightIndex]);
-		}
-	}
+	static int N, M;
+	static Map<Integer, List<Integer>> graphMap;
+	static int[] numPointed;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -29,71 +14,65 @@ public class Main {
 	}
 
 	public static void solution() {
-		Node bestNode = new Node(0, 1, 2);
-
-		for (int leftIndex = 0; leftIndex < N - 2; leftIndex++) {
-			Node node = getBestNode(leftIndex);
-
-			if (node.sumValue < bestNode.sumValue) {
-				bestNode = node;
+		PriorityQueue<Integer> pq = new PriorityQueue<>();
+		for (int i = 0; i < N; i++) {
+			if (numPointed[i] == 0) {
+				pq.add(i);
 			}
 		}
 
-		int[] answerList = new int[3];
-		answerList[0] = numList[bestNode.leftIndex];
-		answerList[1] = numList[bestNode.midIndex];
-		answerList[2] = numList[bestNode.rightIndex];
-		Arrays.sort(answerList);
+		int numOut = 0;
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(answerList[0]);
-		sb.append(" ");
-		sb.append(answerList[1]);
-		sb.append(" ");
-		sb.append(answerList[2]);
+		while (!pq.isEmpty()) {
+			int curNum = pq.poll();
+			sb.append(curNum + 1);
+			sb.append("\n");
+			numOut += 1;
 
-		System.out.println(sb.toString());
+			for (int nearNum : graphMap.get(curNum)) {
+				numPointed[nearNum] -= 1;
 
-	}
-
-	public static Node getBestNode(int leftIndex) {
-		long minSum = Long.MAX_VALUE;
-		Node bestNode = null;
-
-		int midIndex = leftIndex + 1;
-		int rightIndex = N - 1;
-		while (midIndex < rightIndex) {
-			long sumValue = (long) numList[leftIndex] + (long) numList[midIndex] + (long) numList[rightIndex];
-
-			if (Math.abs(sumValue) < minSum) {
-				minSum = Math.abs(sumValue);
-				bestNode = new Node(leftIndex, midIndex, rightIndex);
-			}
-
-			if (sumValue <= 0) {
-				midIndex += 1;
-			}
-
-			else {
-				rightIndex -= 1;
+				if (numPointed[nearNum] == 0) {
+					pq.add(nearNum);
+				}
 			}
 		}
 
-		return bestNode;
+		if (numOut != N) {
+			System.out.println(0);
+			return;
+		}
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
+
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		N = Integer.parseInt(st.nextToken());
 
-		numList = new int[N];
-		st = new StringTokenizer(br.readLine());
+		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
+
+		numPointed = new int[N];
+		graphMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
-			numList[i] = Integer.parseInt(st.nextToken());
+			graphMap.put(i, new ArrayList<>());
 		}
 
-		Arrays.sort(numList);
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int numOrder = Integer.parseInt(st.nextToken());
+			int[] orderList = new int[numOrder];
+			for (int order = 0; order < numOrder; order++) {
+				orderList[order] = Integer.parseInt(st.nextToken()) - 1;
+			}
+
+			for (int j = 0; j < numOrder - 1; j++) {
+				graphMap.get(orderList[j]).add(orderList[j + 1]);
+				numPointed[orderList[j + 1]] += 1;
+			}
+		}
 	}
 }
