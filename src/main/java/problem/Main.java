@@ -4,55 +4,63 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static int maxCost;
-	static int[] memorySizeList, costList;
+	static int T, n;
+	static int[] numList;
+	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 	public static void main(String[] args) throws Exception {
-		init();
-		solution();
+		StringTokenizer st = new StringTokenizer(br.readLine());
+
+		T = Integer.parseInt(st.nextToken());
+		for (int i = 0; i < T; i++) {
+			init();
+			solution();
+		}
 	}
 
 	public static void solution() {
-		int[][] dpMatrix = new int[N + 1][maxCost + 1];
+		int[] visited = new int[n];
 
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < maxCost + 1; j++) {
-				dpMatrix[i + 1][j] = dpMatrix[i][j];
-				if (costList[i] > j) { continue; }
+		int numPersonInCycle = 0;
 
-				dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j],
-						dpMatrix[i][j - costList[i]] + memorySizeList[i]);
+		for (int i = 0; i < n; i++) {
+			if (visited[i] == 1) { continue; }
+
+			Map<Integer, Integer> visitOrderMap = new HashMap<>();
+			int visitOrder = 1;
+			visitOrderMap.put(i, 1);
+
+			int curPerson = i;
+			visited[curPerson] = 1;
+			while (true) {
+				int nextPerson = numList[curPerson];
+				if (visitOrderMap.get(nextPerson) != null) { // When Cycle is established
+					numPersonInCycle += visitOrder - visitOrderMap.get(nextPerson) + 1;
+					break;
+				}
+
+				if (visited[nextPerson] == 1) {
+					break;
+				}
+
+				visited[nextPerson] = 1;
+				visitOrder += 1;
+				visitOrderMap.put(nextPerson, visitOrder);
+				curPerson = nextPerson;
 			}
 		}
 
-		for (int i = 0; i < maxCost + 1; i++) {
-			if (dpMatrix[N][i] >= M) {
-				System.out.println(i);
-				return;
-			}
-		}
+		System.out.println(n - numPersonInCycle);
 	}
 
 	public static void init() throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
+		n = Integer.parseInt(st.nextToken());
 
-		memorySizeList = new int[N];
-		costList = new int[N];
-
+		numList = new int[n];
 		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			memorySizeList[i] = Integer.parseInt(st.nextToken());
-		}
-
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			costList[i] = Integer.parseInt(st.nextToken());
-			maxCost += costList[i];
+		for (int i = 0; i < n; i++) {
+			numList[i] = Integer.parseInt(st.nextToken()) - 1;
 		}
 	}
 	
