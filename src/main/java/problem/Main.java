@@ -5,36 +5,22 @@ import java.io.*;
 
 
 public class Main {
-	static List<Integer> commandList;
+	static int N;
+	static int[] numList;
 
-	public static class State {
-		int left;
-		int right;
+	public static class Node {
+		int leftIndex;
+		int midIndex;
+		int rightIndex;
+		long sumValue;
 
-		public State(int left, int right) {
-			this.left = left;
-			this.right = right;
+		public Node(int leftIndex, int midIndex, int rightIndex) {
+			this.leftIndex = leftIndex;
+			this.midIndex = midIndex;
+			this.rightIndex = rightIndex;
+
+			this.sumValue = Math.abs((long) numList[leftIndex] + (long) numList[midIndex] + (long) numList[rightIndex]);
 		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.left, this.right);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) { return true; }
-			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-			State anotherState = (State) obj;
-
-			if (this.left == anotherState.left && this.right == anotherState.right) {
-				return true;
-			}
-
-			return false;
-		}
-
-
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -43,63 +29,71 @@ public class Main {
 	}
 
 	public static void solution() {
-		Map<State, Integer> dpMap = new HashMap<>();
-		dpMap.put(new State(0, 0), 0);
+		Node bestNode = new Node(0, 1, 2);
 
-		for (int command : commandList) {
-			dpMap = setUpdatedDpMap(command, dpMap);
-		}
+		for (int leftIndex = 0; leftIndex < N - 2; leftIndex++) {
+			Node node = getBestNode(leftIndex);
 
-		int answer = Integer.MAX_VALUE / 2;
-		for (State state : dpMap.keySet()) {
-			answer = Math.min(answer, dpMap.get(state));
-		}
-
-		System.out.println(answer);
-	}
-
-	public static Map<State, Integer> setUpdatedDpMap(int command, Map<State, Integer> dpMap) {
-		Map<State, Integer> updatedDpMap = new HashMap<>();
-		for (State state : dpMap.keySet()) {
-			int prevCost = dpMap.getOrDefault(state, Integer.MAX_VALUE / 2);
-
-			if (state.left != command) {
-				int cost = getCost(state.right, command);
-				State updatedState = new State(state.left, command);
-
-				int totalCost = Math.min(prevCost + cost, updatedDpMap.getOrDefault(updatedState, Integer.MAX_VALUE / 2));
-				updatedDpMap.put(updatedState, totalCost);
-			}
-
-			if (state.right != command) {
-				int cost = getCost(state.left, command);
-				State updatedState = new State(command, state.right);
-
-				int totalCost = Math.min(prevCost + cost, updatedDpMap.getOrDefault(updatedState, Integer.MAX_VALUE / 2));
-				updatedDpMap.put(updatedState, totalCost);
+			if (node.sumValue < bestNode.sumValue) {
+				bestNode = node;
 			}
 		}
 
-		return updatedDpMap;
+		int[] answerList = new int[3];
+		answerList[0] = numList[bestNode.leftIndex];
+		answerList[1] = numList[bestNode.midIndex];
+		answerList[2] = numList[bestNode.rightIndex];
+		Arrays.sort(answerList);
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(answerList[0]);
+		sb.append(" ");
+		sb.append(answerList[1]);
+		sb.append(" ");
+		sb.append(answerList[2]);
+
+		System.out.println(sb.toString());
+
 	}
 
-	public static int getCost(int from, int to) {
-		if (from == 0) { return 2; }
-		if (from == to) { return 1; }
-		if (Math.abs(from - to) == 2) { return 4; }
-		return 3;
+	public static Node getBestNode(int leftIndex) {
+		long minSum = Long.MAX_VALUE;
+		Node bestNode = null;
+
+		int midIndex = leftIndex + 1;
+		int rightIndex = N - 1;
+		while (midIndex < rightIndex) {
+			long sumValue = (long) numList[leftIndex] + (long) numList[midIndex] + (long) numList[rightIndex];
+
+			if (Math.abs(sumValue) < minSum) {
+				minSum = Math.abs(sumValue);
+				bestNode = new Node(leftIndex, midIndex, rightIndex);
+			}
+
+			if (sumValue <= 0) {
+				midIndex += 1;
+			}
+
+			else {
+				rightIndex -= 1;
+			}
+		}
+
+		return bestNode;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
 		StringTokenizer st = new StringTokenizer(br.readLine());
+		N = Integer.parseInt(st.nextToken());
 
-		commandList = new ArrayList<>();
-		while (true) {
-			int command = Integer.parseInt(st.nextToken());
-			if (command == 0) { break; }
-
-			commandList.add(command);
+		numList = new int[N];
+		st = new StringTokenizer(br.readLine());
+		for (int i = 0; i < N; i++) {
+			numList[i] = Integer.parseInt(st.nextToken());
 		}
+
+		Arrays.sort(numList);
 	}
 }
