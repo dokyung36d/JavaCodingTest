@@ -3,89 +3,58 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
 public class 앱 {
     static int N, M;
-    static List<Integer> byteList = new ArrayList<>();
-    static List<Integer> costList = new ArrayList<>();
     static int maxCost;
-
-    public static class Node implements Comparable<Node> {
-        int byteRequired;
-        int cost;
-
-        public Node(int byteRequired, int cost) {
-            this.byteRequired = byteRequired;
-            this.cost = cost;
-        }
-
-        public Node addNode(Node anotherNode) {
-            return new Node(this.byteRequired + anotherNode.byteRequired, this.cost + anotherNode.cost);
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.byteRequired, anotherNode.byteRequired);
-        }
-    }
+    static int[] memorySizeList, costList;
 
     public static void main(String[] args) throws Exception {
         init();
-        if (M <= 0) {
-            System.out.println(0);
-            return;
-        }
+        solution();
+    }
 
-        int[][] dpMatrix = new int[byteList.size() + 1][maxCost + 1];
-        for (int i = 1; i < byteList.size() + 1; i++) {
-            int byteRequired = byteList.get(i - 1);
-            int cost = costList.get(i - 1);
+    public static void solution() {
+        int[][] dpMatrix = new int[N + 1][maxCost + 1];
 
-            for (int j = 1; j < maxCost + 1; j++) {
-                if (j < cost) {
-                    dpMatrix[i][j] = dpMatrix[i - 1][j];
-                    continue;
-                }
-                dpMatrix[i][j] = Math.max(dpMatrix[i - 1][j], dpMatrix[i - 1][j - cost] + byteRequired);
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < maxCost + 1; j++) {
+                dpMatrix[i + 1][j] = dpMatrix[i][j];
+                if (costList[i] > j) { continue; }
+
+                dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j],
+                        dpMatrix[i][j - costList[i]] + memorySizeList[i]);
             }
         }
 
-
         for (int i = 0; i < maxCost + 1; i++) {
-            if (dpMatrix[byteList.size()][i] >= M) {
+            if (dpMatrix[N][i] >= M) {
                 System.out.println(i);
                 return;
             }
         }
     }
 
-
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
+        StringTokenizer st = new StringTokenizer(br.readLine());
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-        st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < N;  i++) {
-            byteList.add(Integer.parseInt(st.nextToken()));
-        }
+        memorySizeList = new int[N];
+        costList = new int[N];
 
-        maxCost = 0;
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            costList.add(Integer.parseInt(st.nextToken()));
-            maxCost += costList.get(costList.size() - 1);
+            memorySizeList[i] = Integer.parseInt(st.nextToken());
         }
 
-        for (int i = N - 1; i >= 0; i--) {
-            if (costList.get(i) == 0) {
-                M -= byteList.get(i);
-
-                byteList.remove(i);
-                costList.remove(i);
-            }
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            costList[i] = Integer.parseInt(st.nextToken());
+            maxCost += costList[i];
         }
-
     }
+
 }
