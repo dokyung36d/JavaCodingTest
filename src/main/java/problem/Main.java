@@ -1,67 +1,66 @@
 package problem;
+
 import java.util.*;
 import java.io.*;
 
 
 public class Main {
-	static int T, n;
-	static int[] numList;
-	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	static int N;
+	static Matrix[] matrixList;
+
+	public static class Matrix {
+		int row;
+		int col;
+
+		public Matrix(int row, int col) {
+			this.row = row;
+			this.col = col;
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
-		StringTokenizer st = new StringTokenizer(br.readLine());
-
-		T = Integer.parseInt(st.nextToken());
-		for (int i = 0; i < T; i++) {
-			init();
-			solution();
-		}
+		init();
+		solution();
 	}
 
 	public static void solution() {
-		int[] visited = new int[n];
+		int[][] dpMatrix = new int[N][N];
+		for (int i = 0; i < N; i++) {
+			Arrays.fill(dpMatrix[i], Integer.MAX_VALUE);
+			dpMatrix[i][i] = 0;
+		}
 
-		int numPersonInCycle = 0;
+		for (int gap = 1; gap < N; gap++) {
+			for (int start = 0; start + gap < N; start++) {
+				for (int mid = 0; mid < gap; mid++) {
+					int numOperation = dpMatrix[start][start + mid] + dpMatrix[start + mid + 1][start + gap]
+							+ matrixList[start].row * matrixList[start + mid].col * matrixList[start + gap].col;
 
-		for (int i = 0; i < n; i++) {
-			if (visited[i] == 1) { continue; }
-
-			Map<Integer, Integer> visitOrderMap = new HashMap<>();
-			int visitOrder = 1;
-			visitOrderMap.put(i, 1);
-
-			int curPerson = i;
-			visited[curPerson] = 1;
-			while (true) {
-				int nextPerson = numList[curPerson];
-				if (visitOrderMap.get(nextPerson) != null) { // When Cycle is established
-					numPersonInCycle += visitOrder - visitOrderMap.get(nextPerson) + 1;
-					break;
+					dpMatrix[start][start + gap] = Math.min(dpMatrix[start][start + gap], numOperation);
 				}
-
-				if (visited[nextPerson] == 1) {
-					break;
-				}
-
-				visited[nextPerson] = 1;
-				visitOrder += 1;
-				visitOrderMap.put(nextPerson, visitOrder);
-				curPerson = nextPerson;
 			}
 		}
 
-		System.out.println(n - numPersonInCycle);
+		System.out.println(dpMatrix[0][N - 1]);
 	}
 
 	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		n = Integer.parseInt(st.nextToken());
 
-		numList = new int[n];
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < n; i++) {
-			numList[i] = Integer.parseInt(st.nextToken()) - 1;
+		N = Integer.parseInt(st.nextToken());
+		matrixList = new Matrix[N];
+
+		for (int i = 0; i < N; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int row = Integer.parseInt(st.nextToken());
+			int col = Integer.parseInt(st.nextToken());
+
+			matrixList[i] = new Matrix(row, col);
 		}
 	}
-	
+
+
+
 }
