@@ -4,61 +4,56 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 
+import java.util.*;
+import java.io.*;
+
+
 public class One의개수세기 {
-    static BigInteger A, B;
-    static List<BigInteger> numOneInGapList = new ArrayList<>();
-    static List<BigInteger> numOneTotalList = new ArrayList<>();
-    static BigInteger base = new BigInteger("2");
+    static long A, B;
+    static List<Long> dpList;
 
     public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
 
-        numOneInGapList.add(new BigInteger("0"));
-        numOneTotalList.add(new BigInteger("0"));
+    public static void solution() {
+        dpList = new ArrayList<>();
+        dpList.add((long) 1);
 
-        numOneInGapList.add(new BigInteger("1"));
-        numOneTotalList.add(new BigInteger("1"));
-
-        while (base.pow(numOneTotalList.size()).compareTo(B) != 1) {
-            BigInteger numOneInGap = numOneTotalList.get(numOneTotalList.size() - 1).add(base.pow(numOneTotalList.size() - 1));
-            BigInteger numOneTotal = numOneInGap.add(numOneTotalList.get(numOneTotalList.size() - 1));
-
-            numOneInGapList.add(numOneInGap);
-            numOneTotalList.add(numOneTotal);
+        while (Math.pow(2, dpList.size()) < B) {
+            dpList.add(dpList.get(dpList.size() - 1) * 2 + (long) Math.pow(2, dpList.size()));
         }
 
-        BigInteger biggerValue = getNumOne(B);
-        BigInteger smallerValue = getNumOne(A.subtract(new BigInteger("1")));
-        System.out.println(biggerValue.subtract(smallerValue));
+        long bNumOne = getNumOne(B);
+        long aNumOne = getNumOne(A - 1);
+
+        System.out.println(bNumOne - aNumOne);
     }
 
-    public static BigInteger getNumOne(BigInteger num) {
-        BigInteger answer = new BigInteger("0");
+    public static long getNumOne(long num) {
+        int numBit = (int) (Math.log(num) / Math.log(2)) + 1;
 
-        while (num.compareTo(new BigInteger("0")) == 1) {
-            int logValue = getLogValue(num);
-            BigInteger numExponential = base.pow(logValue);
 
-            answer = answer.add(numOneTotalList.get(logValue));
-            answer = answer.add(num.subtract(numExponential));
-            answer = answer.add(new BigInteger("1"));
+        long numOne = 0;
+        for (int i = numBit - 1; i >= 1; i--) {
+            if ((num & (long) 1 << i) == (long) 0) { continue; }
 
-            num = num.subtract(numExponential);
+            numOne += dpList.get(i - 1);
+            num -= (long) 1 << i;
+            numOne += (num + 1);
         }
 
-        return answer;
-    }
 
-    public static int getLogValue(BigInteger num) {
-        return num.bitLength() - 1;
-    }
 
+        return numOne + num;
+    }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
-        A = new BigInteger(st.nextToken());
-        B = new BigInteger(st.nextToken());
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        A = Long.parseLong(st.nextToken());
+        B = Long.parseLong(st.nextToken());
     }
 }
