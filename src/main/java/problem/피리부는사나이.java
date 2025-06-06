@@ -5,15 +5,18 @@ import java.io.*;
 
 
 public class 피리부는사나이 {
-    public static int N, M;
-    static Pos[][] nextPosMatrix;
+    static int N, M;
+    static int[][] directionIndexMatrix;
     static Pos[][] parentMatrix;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1),
+            new Pos(1, 0), new Pos(0, -1)};
 
-    public static class Pos {
+
+    public static class Pos implements Comparable<Pos> {
         int row;
         int col;
 
-        public Pos(int row, int col) {
+        public Pos (int row, int col) {
             this.row = row;
             this.col = col;
         }
@@ -31,124 +34,118 @@ public class 피리부는사나이 {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || obj.getClass() != this.getClass()) { return false; }
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-            return false;
+        public int compareTo(Pos anotherPos) {
+            if (this.row == anotherPos.row) {
+                return Integer.compare(this.col, anotherPos.col);
+            }
+
+            return Integer.compare(this.row, anotherPos.row);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(this.row, this.col);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Pos anotherPos = (Pos) obj;
+            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+
+            return false;
+        }
     }
 
     public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
 
-        int[][] visited = new int[N][M];
+    public static void solution() {
+        parentMatrix = new Pos[N][M];
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                parentMatrix[i][j] = new Pos(i, j);
+            }
+        }
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < M; j++) {
-                if (visited[i][j] == 1) {
-                    continue;
-                }
-                visited[i][j] = 1;
                 Pos curPos = new Pos(i, j);
+                Pos nextPos = curPos.addPos(directions[directionIndexMatrix[i][j]]);
+                if (!nextPos.isValidIndex()) { continue; }
 
-                while (true) {
-                    Pos nextPos = nextPosMatrix[curPos.row][curPos.col];
-                    if (nextPos == null) { break; }
-
-                    visited[nextPos.row][nextPos.col] = 1;
-                    Pos curPosParent = findParent(curPos);
-                    Pos nextPosParent = findParent(nextPos);
-                    if (curPosParent.equals(nextPosParent)) { break; }
-
-                    union(curPosParent, nextPosParent);
-                    curPos = nextPos;
-                }
+                union(curPos, nextPos);
             }
         }
 
         Map<Pos, Integer> parentMap = new HashMap<>();
-        int answer = 0;
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < M; j++) {
-                Pos parent = findParent(parentMatrix[i][j]);
-                if (parentMap.get(parent) == null) {
-                    answer += 1;
-                    parentMap.put(parent, 1);
-                }
+                Pos parentPos = findParent(new Pos(i, j));
+                parentMap.put(parentPos, 1);
             }
         }
 
-        System.out.println(answer);
+        System.out.println(parentMap.keySet().size());
     }
 
-    public static Pos findParent(Pos pos) {
-        if (parentMatrix[pos.row][pos.col].equals(pos)) {
-            return pos;
-        }
+    public static Pos findParent(Pos curPos) {
+        if (curPos.equals(parentMatrix[curPos.row][curPos.col])) { return curPos; }
 
-        return parentMatrix[pos.row][pos.col] = findParent(parentMatrix[pos.row][pos.col]);
+        Pos parentPos = parentMatrix[curPos.row][curPos.col];
+        return parentMatrix[parentPos.row][parentPos.col] = findParent(parentPos);
     }
 
     public static void union(Pos pos1, Pos pos2) {
         Pos pos1Parent = findParent(pos1);
         Pos pos2Parent = findParent(pos2);
 
-        if (!pos1Parent.equals(pos2Parent)) {
+        if (pos1Parent.equals(pos2Parent)) { return; }
+
+        if (pos1Parent.compareTo(pos2Parent) < 0) {
+            parentMatrix[pos1Parent.row][pos1Parent.col] = pos2Parent;
+        }
+        else {
             parentMatrix[pos2Parent.row][pos2Parent.col] = pos1Parent;
         }
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
+        StringTokenizer st = new StringTokenizer(br.readLine());
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-        nextPosMatrix = new Pos[N][M];
-        parentMatrix = new Pos[N][M];
+        directionIndexMatrix = new int[N][M];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
-
-            String commands = st.nextToken();
+            String directions = st.nextToken();
             for (int j = 0; j < M; j++) {
-                Pos curPos = new Pos(i, j);
-                parentMatrix[i][j] = curPos;
-                char command = commands.charAt(j);
-
-                Pos direction;
-                if (command == 'D') {
-                    direction = new Pos(1, 0);
+                char direction = directions.charAt(j);
+                int directionIndex;
+                if (direction == 'U') {
+                    directionIndex = 0;
                 }
-
-                else if (command == 'U') {
-                    direction = new Pos(-1, 0);
-
+                else if (direction == 'R') {
+                    directionIndex = 1;
                 }
-                else if (command == 'L') {
-                    direction = new Pos(0, -1);
+                else if (direction == 'D') {
+                    directionIndex = 2;
                 }
                 else {
-                    direction = new Pos(0, 1);
+                    directionIndex = 3;
                 }
 
-
-                Pos movedPos = curPos.addPos(direction);
-                if (!movedPos.isValidIndex()) {
-                    nextPosMatrix[curPos.row][curPos.col] = null;
-                }
-                else {
-                    nextPosMatrix[curPos.row][curPos.col] = movedPos;
-                }
-
+                directionIndexMatrix[i][j] = directionIndex;
             }
         }
     }
+
+
+
 }
