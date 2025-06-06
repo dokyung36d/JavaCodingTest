@@ -1,71 +1,69 @@
 package problem;
 
-import java.io.*;
 import java.util.*;
+import java.io.*;
 
-class 보석도둑
-{
-    public static int N;
-    public static int K;
-    public static Queue<Gift> giftQueue;
-    public static int[] bagList;
-    public static Queue<AvailableGift> giftAvailableQueue;
 
-    public static class Gift implements Comparable<Gift> {
-        int M;
-        int V;
+public class 보석도둑 {
+    static int N, K;
+    static PriorityQueue<Gem> gemPq;
+    static PriorityQueue<PolledGem> polledGemPq;
+    static int[] bagList;
 
-        public Gift(int M, int V) {
-            this.M = M;
-            this.V = V;
+    public static class Gem implements Comparable<Gem> {
+        int weight;
+        int value;
+
+        public Gem(int weight, int value) {
+            this.weight = weight;
+            this.value = value;
         }
 
         @Override
-        public int compareTo(Gift anotherGift) {
-            return Integer.compare(this.M, anotherGift.M);
+        public int compareTo(Gem anotherGem) {
+            return Integer.compare(this.weight, anotherGem.weight);
         }
     }
 
-    public static class AvailableGift implements Comparable<AvailableGift> {
-        int M;
-        int V;
+    public static class PolledGem implements Comparable<PolledGem> {
+        int weight;
+        int value;
 
-        public AvailableGift(Gift gift) {
-            this.M = gift.M;
-            this.V = gift.V;
+        public PolledGem(int weight, int value) {
+            this.weight = weight;
+            this.value = value;
         }
 
         @Override
-        public int compareTo(AvailableGift anotherAvailableGift) {
-            return Integer.compare(-this.V, -anotherAvailableGift.V);
+        public int compareTo(PolledGem anotherPolledGem) {
+            return Integer.compare(-this.value, -anotherPolledGem.value);
         }
     }
 
-    public static void main(String args[]) throws IOException
-    {
+    public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
+
+    public static void solution() {
         long answer = 0;
 
-        for (int i = 0; i < K; i++) {
-            int bagSize = bagList[i];
-
-            while (!giftQueue.isEmpty()) {
-                Gift polledGift = giftQueue.poll();
-                if (polledGift.M > bagSize) {
-                    giftQueue.add(polledGift);
+        for (int bag : bagList) {
+            while (!gemPq.isEmpty()) {
+                Gem gem = gemPq.poll();
+                if (gem.weight > bag) {
+                    gemPq.add(gem);
                     break;
                 }
 
-                giftAvailableQueue.add(new AvailableGift(polledGift));
+                polledGemPq.add(new PolledGem(gem.weight, gem.value));
             }
 
-            if (giftAvailableQueue.isEmpty()) {
+            if (polledGemPq.isEmpty()) {
                 continue;
             }
 
-
-            AvailableGift polledAvailableGift = giftAvailableQueue.poll();
-            answer += (long) polledAvailableGift.V;
+            answer += polledGemPq.poll().value;
         }
 
         System.out.println(answer);
@@ -78,24 +76,25 @@ class 보석도둑
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        giftQueue = new PriorityQueue<>();
-        bagList = new int[K];
-
+        gemPq = new PriorityQueue<>();
+        polledGemPq = new PriorityQueue<>();
 
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
-            int giftM = Integer.parseInt(st.nextToken());
-            int giftV = Integer.parseInt(st.nextToken());
 
-            giftQueue.add(new Gift(giftM, giftV));
+            int weight = Integer.parseInt(st.nextToken());
+            int value = Integer.parseInt(st.nextToken());
+
+            gemPq.add(new Gem(weight, value));
         }
 
+
+        bagList = new int[K];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
             bagList[i] = Integer.parseInt(st.nextToken());
         }
-        Arrays.sort(bagList);
 
-        giftAvailableQueue = new PriorityQueue<>();
+        Arrays.sort(bagList);
     }
 }

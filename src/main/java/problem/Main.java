@@ -5,57 +5,38 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static int[][] directionIndexMatrix;
-	static Pos[][] parentMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1),
-	new Pos(1, 0), new Pos(0, -1)};
+	static int N, K;
+	static PriorityQueue<Gem> gemPq;
+	static PriorityQueue<PolledGem> polledGemPq;
+	static int[] bagList;
 
+	public static class Gem implements Comparable<Gem> {
+		int weight;
+		int value;
 
-	public static class Pos implements Comparable<Pos> {
-		int row;
-		int col;
-
-		public Pos (int row, int col) {
-			this.row = row;
-			this.col = col;
-		}
-
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-				return false;
-			}
-
-			return true;
-		}
-
-		public Pos addPos(Pos direction) {
-			return new Pos(this.row + direction.row, this.col + direction.col);
+		public Gem(int weight, int value) {
+			this.weight = weight;
+			this.value = value;
 		}
 
 		@Override
-		public int compareTo(Pos anotherPos) {
-			if (this.row == anotherPos.row) {
-				return Integer.compare(this.col, anotherPos.col);
-			}
+		public int compareTo(Gem anotherGem) {
+			return Integer.compare(this.weight, anotherGem.weight);
+		}
+	}
 
-			return Integer.compare(this.row, anotherPos.row);
+	public static class PolledGem implements Comparable<PolledGem> {
+		int weight;
+		int value;
+
+		public PolledGem(int weight, int value) {
+			this.weight = weight;
+			this.value = value;
 		}
 
 		@Override
-		public int hashCode() {
-			return Objects.hash(this.row, this.col);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) { return true; }
-			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-			Pos anotherPos = (Pos) obj;
-			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-
-			return false;
+		public int compareTo(PolledGem anotherPolledGem) {
+			return Integer.compare(-this.value, -anotherPolledGem.value);
 		}
 	}
 
@@ -65,87 +46,55 @@ public class Main {
 	}
 
 	public static void solution() {
-		parentMatrix = new Pos[N][M];
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				parentMatrix[i][j] = new Pos(i, j);
+		long answer = 0;
+
+		for (int bag : bagList) {
+			while (!gemPq.isEmpty()) {
+				Gem gem = gemPq.poll();
+				if (gem.weight > bag) {
+					gemPq.add(gem);
+					break;
+				}
+
+				polledGemPq.add(new PolledGem(gem.weight, gem.value));
 			}
-		}
 
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				Pos curPos = new Pos(i, j);
-				Pos nextPos = curPos.addPos(directions[directionIndexMatrix[i][j]]);
-				if (!nextPos.isValidIndex()) { continue; }
-
-				union(curPos, nextPos);
+			if (polledGemPq.isEmpty()) {
+				continue;
 			}
+
+			answer += polledGemPq.poll().value;
 		}
 
-		Map<Pos, Integer> parentMap = new HashMap<>();
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				Pos parentPos = findParent(new Pos(i, j));
-				parentMap.put(parentPos, 1);
-			}
-		}
-
-		System.out.println(parentMap.keySet().size());
-	}
-
-	public static Pos findParent(Pos curPos) {
-		if (curPos.equals(parentMatrix[curPos.row][curPos.col])) { return curPos; }
-
-		Pos parentPos = parentMatrix[curPos.row][curPos.col];
-		return parentMatrix[parentPos.row][parentPos.col] = findParent(parentPos);
-	}
-
-	public static void union(Pos pos1, Pos pos2) {
-		Pos pos1Parent = findParent(pos1);
-		Pos pos2Parent = findParent(pos2);
-
-		if (pos1Parent.equals(pos2Parent)) { return; }
-
-		if (pos1Parent.compareTo(pos2Parent) < 0) {
-			parentMatrix[pos1Parent.row][pos1Parent.col] = pos2Parent;
-		}
-		else {
-			parentMatrix[pos2Parent.row][pos2Parent.col] = pos1Parent;
-		}
+		System.out.println(answer);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
 
-		directionIndexMatrix = new int[N][M];
+		N = Integer.parseInt(st.nextToken());
+		K = Integer.parseInt(st.nextToken());
+
+		gemPq = new PriorityQueue<>();
+		polledGemPq = new PriorityQueue<>();
+
 		for (int i = 0; i < N; i++) {
 			st = new StringTokenizer(br.readLine());
-			String directions = st.nextToken();
-			for (int j = 0; j < M; j++) {
-				char direction = directions.charAt(j);
-				int directionIndex;
-				if (direction == 'U') {
-					directionIndex = 0;
-				}
-				else if (direction == 'R') {
-					directionIndex = 1;
-				}
-				else if (direction == 'D') {
-					directionIndex = 2;
-				}
-				else {
-					directionIndex = 3;
-				}
 
-				directionIndexMatrix[i][j] = directionIndex;
-			}
+			int weight = Integer.parseInt(st.nextToken());
+			int value = Integer.parseInt(st.nextToken());
+
+			gemPq.add(new Gem(weight, value));
 		}
+
+
+		bagList = new int[K];
+		for (int i = 0; i < K; i++) {
+			st = new StringTokenizer(br.readLine());
+			bagList[i] = Integer.parseInt(st.nextToken());
+		}
+
+		Arrays.sort(bagList);
 	}
-
-
-
 }
