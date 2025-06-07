@@ -5,47 +5,69 @@ import java.io.*;
 
 
 public class 할로윈의양아치 {
-    static int N, M, K;
-    static int[] kidsCandyList;
+    static int N, M ,K;
+    static int[] candyList;
+    static Edge[] edgeList;
     static int[] parentList;
-    static Map<Integer, List<Integer>> graphMap;
+
+    public static class Edge {
+        int num1;
+        int num2;
+
+        public Edge(int num1, int num2) {
+            this.num1 = num1;
+            this.num2 = num2;
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
 
-        Map<Integer, Integer> groupNumMemberMap = new HashMap<>();
-        Map<Integer, Integer> groupCandyMap = new HashMap<>();
+    public static void solution() {
+        parentList = new int[N];
         for (int i = 0; i < N; i++) {
-            int prevGroupCandyNum = groupCandyMap.getOrDefault(parentList[i], 0);
-            groupCandyMap.put(parentList[i], prevGroupCandyNum + kidsCandyList[i]);
-
-            int prevGroupNumMember = groupNumMemberMap.getOrDefault(parentList[i], 0);
-            groupNumMemberMap.put(parentList[i], prevGroupNumMember + 1);
+            parentList[i] = i;
         }
 
-        List<Integer> groupParentList = new ArrayList<>(groupCandyMap.keySet());
-        long[][] dpMatrix = new long[groupParentList.size() + 1][K];
-        for (int i = 1; i < groupCandyMap.keySet().size() + 1; i++) {
+        for (Edge edge : edgeList) {
+            int num1Parent = findParent(edge.num1);
+            int num2Parent = findParent(edge.num2);
+
+            if (num1Parent == num2Parent) { continue; }
+            union(num1Parent, num2Parent);
+        }
+
+        Map<Integer, Integer> groupSizeMap = new HashMap<>();
+        Map<Integer, Integer> groupValueMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            int parent = findParent(i);
+
+            groupSizeMap.put(parent, groupSizeMap.getOrDefault(parent, 0) + 1);
+            groupValueMap.put(parent, groupValueMap.getOrDefault(parent, 0) + candyList[i]);
+        }
+
+
+        List<Integer> parentList = new ArrayList<>(groupSizeMap.keySet());
+        int[][] dpMatrix = new int[parentList.size() + 1][K];
+
+        for (int i = 0; i < parentList.size(); i++) {
+            int groupSize = groupSizeMap.get(parentList.get(i));
+            int groupValue = groupValueMap.get(parentList.get(i));
             for (int j = 0; j < K; j++) {
-                dpMatrix[i][j] = dpMatrix[i - 1][j];
+                dpMatrix[i + 1][j] = dpMatrix[i][j];
+                if (groupSize > j) { continue; }
 
-                int groupParent = groupParentList.get(i - 1);
-                int numGroupMember = groupNumMemberMap.get(groupParent);
-                int numGroupCandy = groupCandyMap.get(groupParent);
-                if (numGroupMember > j) { continue; }
-
-                dpMatrix[i][j] = Math.max(dpMatrix[i][j], dpMatrix[i - 1][j - numGroupMember] + numGroupCandy);
+                dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j], dpMatrix[i][j - groupSize] + groupValue);
             }
         }
 
-        System.out.println(dpMatrix[groupParentList.size()][K - 1]);
-
+        System.out.println(dpMatrix[parentList.size()][K - 1]);
     }
 
     public static int findParent(int num) {
-        if (parentList[num] == num) {
-            return num;
-        }
+        if (num == parentList[num]) { return num; }
 
         return parentList[num] = findParent(parentList[num]);
     }
@@ -54,9 +76,9 @@ public class 할로윈의양아치 {
         int num1Parent = findParent(num1);
         int num2Parent = findParent(num2);
 
-        if (num1Parent != num2Parent) {
-            parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
-        }
+        if (num1Parent == num2Parent) { return; }
+
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -67,29 +89,21 @@ public class 할로윈의양아치 {
         M = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        kidsCandyList = new int[N];
-        parentList = new int[N];
-
-        graphMap = new HashMap<>();
+        candyList = new int[N];
+        edgeList = new Edge[M];
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            kidsCandyList[i] = Integer.parseInt(st.nextToken());
-            graphMap.put(i, new ArrayList<>());
-            parentList[i] = i;
+            candyList[i] = Integer.parseInt(st.nextToken());
         }
 
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
-            int vertex1 = Integer.parseInt(st.nextToken()) - 1;
-            int vertex2 = Integer.parseInt(st.nextToken()) - 1;
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
 
-            union(vertex1, vertex2);
-            graphMap.get(vertex1).add(vertex2);
-            graphMap.get(vertex2).add(vertex1);
+            edgeList[i] = new Edge(num1, num2);
         }
 
-        for (int i = 0; i < N; i++) {
-            findParent(i);
-        }
     }
+
 }

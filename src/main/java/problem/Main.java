@@ -5,31 +5,18 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static int[][] mainMatrix, groupMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1),
-	new Pos(1, 0), new Pos(0, -1)};
-	static Map<Integer, Integer> groupSizeMap;
+	static int N, M ,K;
+	static int[] candyList;
+	static Edge[] edgeList;
+	static int[] parentList;
 
-	public static class Pos {
-		int row;
-		int col;
+	public static class Edge {
+		int num1;
+		int num2;
 
-		public Pos(int row, int col) {
-			this.row = row;
-			this.col = col;
-		}
-
-		public Pos addPos(Pos direction) {
-			return new Pos(this.row + direction.row, this.col + direction.col);
-		}
-
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-				return false;
-			}
-
-			return true;
+		public Edge(int num1, int num2) {
+			this.num1 = num1;
+			this.num2 = num2;
 		}
 	}
 
@@ -39,81 +26,59 @@ public class Main {
 	}
 
 	public static void solution() {
-		groupMatrix = new int[N][M];
-		int uniqueNum = 2;
-
+		parentList = new int[N];
 		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] == 1) { continue; }
+			parentList[i] = i;
+		}
 
-				fillGroupMatrix(new Pos(i, j), uniqueNum);
-				uniqueNum += 1;
+		for (Edge edge : edgeList) {
+			int num1Parent = findParent(edge.num1);
+			int num2Parent = findParent(edge.num2);
+
+			if (num1Parent == num2Parent) { continue; }
+			union(num1Parent, num2Parent);
+		}
+
+		Map<Integer, Integer> groupSizeMap = new HashMap<>();
+		Map<Integer, Integer> groupValueMap = new HashMap<>();
+		for (int i = 0; i < N; i++) {
+			int parent = findParent(i);
+
+			groupSizeMap.put(parent, groupSizeMap.getOrDefault(parent, 0) + 1);
+			groupValueMap.put(parent, groupValueMap.getOrDefault(parent, 0) + candyList[i]);
+		}
+
+
+		List<Integer> parentList = new ArrayList<>(groupSizeMap.keySet());
+		int[][] dpMatrix = new int[parentList.size() + 1][K];
+
+		for (int i = 0; i < parentList.size(); i++) {
+			int groupSize = groupSizeMap.get(parentList.get(i));
+			int groupValue = groupValueMap.get(parentList.get(i));
+			for (int j = 0; j < K; j++) {
+				dpMatrix[i + 1][j] = dpMatrix[i][j];
+				if (groupSize > j) { continue; }
+
+				dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j], dpMatrix[i][j - groupSize] + groupValue);
 			}
 		}
 
-		int[][] answerMatrix = new int[N][M];
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] != 1) { continue; }
-
-				answerMatrix[i][j] = (getNumMovePossible(new Pos(i, j)) + 1) % 10;
-			}
-		}
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				sb.append(answerMatrix[i][j]);
-			}
-			sb.append("\n");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		System.out.println(dpMatrix[parentList.size()][K - 1]);
 	}
 
-	public static int getNumMovePossible(Pos pos) {
-		Map<Integer, Integer> nearGroupMap = new HashMap<>();
+	public static int findParent(int num) {
+		if (num == parentList[num]) { return num; }
 
-//		if (mainMatrix[pos.row][pos.col] == 1) {
-//			return -1;
-//		}
-		for (Pos direction : directions) {
-			Pos movedPos = pos.addPos(direction);
-			if (!movedPos.isValidIndex()) { continue; }
-			if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-			nearGroupMap.put(mainMatrix[movedPos.row][movedPos.col], 1);
-		}
-
-		int answer = 0;
-		for (int groupUniqueNum : nearGroupMap.keySet()) {
-			answer += groupSizeMap.get(groupUniqueNum);
-		}
-
-		return answer;
+		return parentList[num] = findParent(parentList[num]);
 	}
 
-	public static void fillGroupMatrix(Pos startPos, int uniqueNum) {
-		Deque<Pos> queue = new ArrayDeque<>();
-		queue.add(startPos);
+	public static void union(int num1, int num2) {
+		int num1Parent = findParent(num1);
+		int num2Parent = findParent(num2);
 
-		int size = 0;
-		while (!queue.isEmpty()) {
-			Pos curPos = queue.pollFirst();
-			if (mainMatrix[curPos.row][curPos.col] != 0) { continue; }
-			mainMatrix[curPos.row][curPos.col] = uniqueNum;
-			size += 1;
+		if (num1Parent == num2Parent) { return; }
 
-			for (Pos direction : directions) {
-				Pos movedPos = curPos.addPos(direction);
-				if (!movedPos.isValidIndex()) { continue; }
-				if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-				queue.add(movedPos);
-			}
-		}
-
-		groupSizeMap.put(uniqueNum, size);
+		parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
 	}
 
 	public static void init() throws IOException {
@@ -122,16 +87,23 @@ public class Main {
 
 		N = Integer.parseInt(st.nextToken());
 		M = Integer.parseInt(st.nextToken());
+		K = Integer.parseInt(st.nextToken());
 
-		mainMatrix = new int[N][M];
+		candyList = new int[N];
+		edgeList = new Edge[M];
+		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			st = new StringTokenizer(br.readLine());
-			String string = st.nextToken();
-			for (int j = 0; j < M; j++) {
-				mainMatrix[i][j] = string.charAt(j) - '0';
-			}
+			candyList[i] = Integer.parseInt(st.nextToken());
 		}
 
-		groupSizeMap = new HashMap<>();
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+			int num1 = Integer.parseInt(st.nextToken()) - 1;
+			int num2 = Integer.parseInt(st.nextToken()) - 1;
+
+			edgeList[i] = new Edge(num1, num2);
+		}
+
 	}
+
 }
