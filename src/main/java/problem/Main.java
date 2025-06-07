@@ -5,8 +5,9 @@ import java.io.*;
 
 
 public class Main {
-	static long A, B;
-	static List<Long> dpList;
+	static int G, P;
+	static int[] planeList;
+	static int[] parentList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -14,42 +15,52 @@ public class Main {
 	}
 
 	public static void solution() {
-		dpList = new ArrayList<>();
-		dpList.add((long) 1);
-
-		while (Math.pow(2, dpList.size()) < B) {
-			dpList.add(dpList.get(dpList.size() - 1) * 2 + (long) Math.pow(2, dpList.size()));
+		parentList = new int[G + 1];
+		for (int i = 0; i < G + 1; i++) {
+			parentList[i] = i;
 		}
 
-		long bNumOne = getNumOne(B);
-		long aNumOne = getNumOne(A - 1);
 
-		System.out.println(bNumOne - aNumOne);
+		int answer = 0;
+		for (int i = 0; i < P; i++) {
+			int curMaxGate = findParent(planeList[i]);
+			if (curMaxGate == 0) { break; }
+
+			answer += 1;
+			union(curMaxGate, curMaxGate - 1);
+		}
+
+		System.out.println(answer);
 	}
 
-	public static long getNumOne(long num) {
-		int numBit = (int) (Math.log(num) / Math.log(2)) + 1;
+	public static int findParent(int curNum) {
+		if (curNum == parentList[curNum]) { return curNum; }
 
+		return parentList[curNum] = findParent(parentList[curNum]);
+	}
 
-		long numOne = 0;
-		for (int i = numBit - 1; i >= 1; i--) {
-			if ((num & (long) 1 << i) == (long) 0) { continue; }
+	public static void union(int num1, int num2) {
+		int num1Parent = findParent(num1);
+		int num2Parent = findParent(num2);
 
-			numOne += dpList.get(i - 1);
-			num -= (long) 1 << i;
-			numOne += (num + 1);
-		}
+		if (num1Parent == num2Parent) { return; }
 
-
-
-		return numOne + num;
+		parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		A = Long.parseLong(st.nextToken());
-		B = Long.parseLong(st.nextToken());
+		G = Integer.parseInt(st.nextToken());
+
+		st = new StringTokenizer(br.readLine());
+		P = Integer.parseInt(st.nextToken());
+
+		planeList = new int[P];
+		for (int i = 0; i < P; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			planeList[i] = Integer.parseInt(st.nextToken());
+		}
 	}
 }
