@@ -6,24 +6,8 @@ import java.io.*;
 
 public class Main {
 	static int N;
-	static int[][] adjacencyMatrix;
-
-	public static class Node implements Comparable<Node> {
-		int curNum;
-		int visited;
-		int cost;
-
-		public Node(int curNum, int visited, int cost) {
-			this.curNum = curNum;
-			this.visited = visited;
-			this.cost = cost;
-		}
-
-		@Override
-		public int compareTo(Node anotherNode) {
-			return Integer.compare(this.cost, anotherNode.cost);
-		}
-	}
+	static List<Integer> origianlInOrderList, originalPostOrderList;
+	static StringBuilder sb;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -31,52 +15,47 @@ public class Main {
 	}
 
 	public static void solution() {
-		PriorityQueue<Node> pq = new PriorityQueue<>();
-		for (int i = 1; i < N; i++) {
-			if (adjacencyMatrix[0][i] != 0) {
-				int visited = 1 | (1 << i);
-				pq.add(new Node(i, visited, adjacencyMatrix[0][i]));
-			}
+		sb = new StringBuilder();
+
+		recursive(origianlInOrderList, originalPostOrderList);
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
+	}
+
+	public static void recursive(List<Integer> inOrderList, List<Integer> postOrderList) {
+		if (inOrderList.size() == 1) {
+			sb.append(inOrderList.get(0) + " ");
+			return;
+		}
+		else if (inOrderList.size() == 0) {
+			return;
 		}
 
-		int answer = Integer.MAX_VALUE / 2;
-		int fullyVisited = (int) Math.pow(2, N) - 1;
-		int[][] visitedMatrix = new int[N][(int) Math.pow(2, N)];
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
 
-			if (visitedMatrix[node.curNum][node.visited] == 1) { continue; }
-			visitedMatrix[node.curNum][node.visited] = 1;
+		int operator = postOrderList.get(postOrderList.size() - 1);
+		sb.append(operator + " ");
+		int operatoIndex = inOrderList.indexOf(operator);
 
-			if (node.visited == fullyVisited && adjacencyMatrix[node.curNum][0] != 0) {
-				answer = Math.min(answer, node.cost + adjacencyMatrix[node.curNum][0]);
-			}
-
-			for (int i = 0; i < N; i++) {
-				if ((node.visited & (1 << i)) != 0) { continue; }
-				if (adjacencyMatrix[node.curNum][i] == 0) { continue; }
-
-				int updatedVisited = node.visited | (1 << i);
-				if (visitedMatrix[i][updatedVisited] == 1) { continue; }
-
-				pq.add(new Node(i, updatedVisited, node.cost + adjacencyMatrix[node.curNum][i]));
-			}
-		}
-
-		System.out.println(answer);
+		recursive(inOrderList.subList(0, operatoIndex), postOrderList.subList(0, operatoIndex));
+		recursive(inOrderList.subList(operatoIndex + 1, inOrderList.size()),
+				postOrderList.subList(operatoIndex, postOrderList.size() - 1));
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
+
 		N = Integer.parseInt(st.nextToken());
 
-		adjacencyMatrix = new int[N][N];
+		origianlInOrderList = new ArrayList<>();
+		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			st = new StringTokenizer(br.readLine());
-			for (int j = 0; j < N; j++) {
-				adjacencyMatrix[i][j] = Integer.parseInt(st.nextToken());
-			}
+			origianlInOrderList.add(Integer.parseInt(st.nextToken()));
+		}
+
+		originalPostOrderList = new ArrayList<>();
+		st = new StringTokenizer(br.readLine());
+		for (int i = 0; i < N; i++) {
+			originalPostOrderList.add(Integer.parseInt(st.nextToken()));
 		}
 	}
 }

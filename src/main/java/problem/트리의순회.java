@@ -6,46 +6,38 @@ import java.io.*;
 
 public class 트리의순회 {
     static int N;
-    static List<Integer> inOrderList;
-    static List<Integer> postOrderList;
+    static List<Integer> origianlInOrderList, originalPostOrderList;
     static StringBuilder sb;
 
     public static void main(String[] args) throws Exception {
         init();
-        sb = new StringBuilder();
-        solution(inOrderList, postOrderList);
+        solution();
+    }
 
+    public static void solution() {
+        sb = new StringBuilder();
+
+        recursive(origianlInOrderList, originalPostOrderList);
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-
-    public static void solution(List<Integer> inOrderNums, List<Integer> postOrderNums) throws Exception {
-        List<Integer> preOrderNums = new ArrayList<>();
-
-        if (inOrderNums.size() == 0) {
+    public static void recursive(List<Integer> inOrderList, List<Integer> postOrderList) {
+        if (inOrderList.size() == 1) {
+            sb.append(inOrderList.get(0) + " ");
+            return;
+        }
+        else if (inOrderList.size() == 0) {
             return;
         }
 
-        if (inOrderNums.size() == 1) {
-            sb.append(inOrderNums.get(0) + " ");
-            return;
-        }
 
-        int rootValue = postOrderNums.get(postOrderNums.size() - 1);
+        int operator = postOrderList.get(postOrderList.size() - 1);
+        sb.append(operator + " ");
+        int operatoIndex = inOrderList.indexOf(operator);
 
-        int leftChildLength = inOrderNums.indexOf(rootValue);
-        int rightChildLength = inOrderNums.size() - leftChildLength - 1;
-
-        sb.append(rootValue + " ");
-        solution(inOrderNums.subList(0, leftChildLength),
-                postOrderNums.subList(0, leftChildLength));
-
-        solution(inOrderNums.subList(leftChildLength + 1, inOrderNums.size()),
-                postOrderNums.subList(leftChildLength, inOrderNums.size() - 1));
-
-
-
-        return;
+        recursive(inOrderList.subList(0, operatoIndex), postOrderList.subList(0, operatoIndex));
+        recursive(inOrderList.subList(operatoIndex + 1, inOrderList.size()),
+                postOrderList.subList(operatoIndex, postOrderList.size() - 1));
     }
 
     public static void init() throws IOException {
@@ -53,17 +45,17 @@ public class 트리의순회 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        inOrderList = new ArrayList<>();
-        postOrderList = new ArrayList<>();
 
+        origianlInOrderList = new ArrayList<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            inOrderList.add(Integer.parseInt(st.nextToken()));
+            origianlInOrderList.add(Integer.parseInt(st.nextToken()));
         }
 
+        originalPostOrderList = new ArrayList<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            postOrderList.add(Integer.parseInt(st.nextToken()));
+            originalPostOrderList.add(Integer.parseInt(st.nextToken()));
         }
     }
 }
