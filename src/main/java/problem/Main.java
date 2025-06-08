@@ -1,13 +1,12 @@
 package problem;
 
-import java.nio.Buffer;
 import java.util.*;
 import java.io.*;
 
 
 public class Main {
-	static String mainString;
 	static int N;
+	static final int DIVISOR = 1000000000;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,51 +14,50 @@ public class Main {
 	}
 
 	public static void solution() {
-		int[][] dpMatrix = new int[N][N];
-		for (int i = 0; i < N; i++) {
-			dpMatrix[i][i] = 1;
+		int[][][] dpTensor = new int[N + 1][10][1024];
+		for (int i = 1; i < 10; i++) {
+			dpTensor[0][i][1 << i] = 1;
 		}
 
-		for (int i = 0; i < N - 1; i++) {
-			if (mainString.charAt(i) == mainString.charAt(i + 1)) {
-				dpMatrix[i][i + 1] = 1;
-			}
-		}
+		for (int row = 0; row < N; row++) {
+			for (int lastNum = 0; lastNum < 10; lastNum++) {
+				for (int bit = 0; bit < 1024; bit++) {
+					if (lastNum == 0) {
+						dpTensor[row + 1][1][bit | (1 << 1)] += dpTensor[row][0][bit];
+						dpTensor[row + 1][1][bit | (1 << 1)] %= DIVISOR;
+						continue;
+					}
 
-		for (int gap = 2; gap < N; gap++) {
-			for (int startIndex = 0; startIndex + gap < N; startIndex++) {
-				int endIndex = startIndex + gap;
+					if (lastNum == 9) {
+						dpTensor[row + 1][8][bit | (1 << 8)] += dpTensor[row][9][bit];
+						dpTensor[row + 1][8][bit | (1 << 8)] %= DIVISOR;
+						continue;
+					}
 
-				if (mainString.charAt(startIndex) == mainString.charAt(endIndex) && dpMatrix[startIndex + 1][endIndex - 1] == 1) {
-					dpMatrix[startIndex][endIndex] = 1;
-				}
-			}
-		}
+					dpTensor[row + 1][lastNum - 1][bit | (1 << lastNum - 1)] += dpTensor[row][lastNum][bit];
+					dpTensor[row + 1][lastNum - 1][bit | (1 << lastNum - 1)] %= DIVISOR;
 
-		int[] dpList = new int[N + 1];
-		for (int i = 0; i < N + 1; i++) {
-			dpList[i] = i;
-		}
-		for (int i = 1; i < N + 1; i++) {
-			for (int j = 1; j <= i; j++) {
-				int startIndex = j - 1;
-				int endIndex = i - 1;
-
-				if (dpMatrix[startIndex][endIndex] == 1) {
-					dpList[i] = Math.min(dpList[i], dpList[j - 1] + 1);
+					dpTensor[row + 1][lastNum + 1][bit | (1 << lastNum + 1)] += dpTensor[row][lastNum][bit];
+					dpTensor[row + 1][lastNum + 1][bit | (1 << lastNum + 1)] %= DIVISOR;
 				}
 
 			}
 		}
-		System.out.println(dpList[N]);
+
+		int answer = 0;
+		for (int i = 0; i < 10; i++) {
+			answer += dpTensor[N - 1][i][1023];
+			answer %= DIVISOR;
+		}
+
+		System.out.println(answer);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		mainString = st.nextToken();
-		N = mainString.length();
+		N = Integer.parseInt(st.nextToken());
 	}
 
 }
