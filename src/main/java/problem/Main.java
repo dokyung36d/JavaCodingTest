@@ -6,7 +6,24 @@ import java.io.*;
 
 public class Main {
 	static int N;
-	static final int DIVISOR = 1000000000;
+	static int[][] adjacencyMatrix;
+
+	public static class Node implements Comparable<Node> {
+		int curNum;
+		int visited;
+		int cost;
+
+		public Node(int curNum, int visited, int cost) {
+			this.curNum = curNum;
+			this.visited = visited;
+			this.cost = cost;
+		}
+
+		@Override
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.cost, anotherNode.cost);
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -14,40 +31,36 @@ public class Main {
 	}
 
 	public static void solution() {
-		int[][][] dpTensor = new int[N + 1][10][1024];
-		for (int i = 1; i < 10; i++) {
-			dpTensor[0][i][1 << i] = 1;
-		}
-
-		for (int row = 0; row < N; row++) {
-			for (int lastNum = 0; lastNum < 10; lastNum++) {
-				for (int bit = 0; bit < 1024; bit++) {
-					if (lastNum == 0) {
-						dpTensor[row + 1][1][bit | (1 << 1)] += dpTensor[row][0][bit];
-						dpTensor[row + 1][1][bit | (1 << 1)] %= DIVISOR;
-						continue;
-					}
-
-					if (lastNum == 9) {
-						dpTensor[row + 1][8][bit | (1 << 8)] += dpTensor[row][9][bit];
-						dpTensor[row + 1][8][bit | (1 << 8)] %= DIVISOR;
-						continue;
-					}
-
-					dpTensor[row + 1][lastNum - 1][bit | (1 << lastNum - 1)] += dpTensor[row][lastNum][bit];
-					dpTensor[row + 1][lastNum - 1][bit | (1 << lastNum - 1)] %= DIVISOR;
-
-					dpTensor[row + 1][lastNum + 1][bit | (1 << lastNum + 1)] += dpTensor[row][lastNum][bit];
-					dpTensor[row + 1][lastNum + 1][bit | (1 << lastNum + 1)] %= DIVISOR;
-				}
-
+		PriorityQueue<Node> pq = new PriorityQueue<>();
+		for (int i = 1; i < N; i++) {
+			if (adjacencyMatrix[0][i] != 0) {
+				int visited = 1 | (1 << i);
+				pq.add(new Node(i, visited, adjacencyMatrix[0][i]));
 			}
 		}
 
-		int answer = 0;
-		for (int i = 0; i < 10; i++) {
-			answer += dpTensor[N - 1][i][1023];
-			answer %= DIVISOR;
+		int answer = Integer.MAX_VALUE / 2;
+		int fullyVisited = (int) Math.pow(2, N) - 1;
+		int[][] visitedMatrix = new int[N][(int) Math.pow(2, N)];
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
+
+			if (visitedMatrix[node.curNum][node.visited] == 1) { continue; }
+			visitedMatrix[node.curNum][node.visited] = 1;
+
+			if (node.visited == fullyVisited && adjacencyMatrix[node.curNum][0] != 0) {
+				answer = Math.min(answer, node.cost + adjacencyMatrix[node.curNum][0]);
+			}
+
+			for (int i = 0; i < N; i++) {
+				if ((node.visited & (1 << i)) != 0) { continue; }
+				if (adjacencyMatrix[node.curNum][i] == 0) { continue; }
+
+				int updatedVisited = node.visited | (1 << i);
+				if (visitedMatrix[i][updatedVisited] == 1) { continue; }
+
+				pq.add(new Node(i, updatedVisited, node.cost + adjacencyMatrix[node.curNum][i]));
+			}
 		}
 
 		System.out.println(answer);
@@ -56,8 +69,14 @@ public class Main {
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
-
 		N = Integer.parseInt(st.nextToken());
-	}
 
+		adjacencyMatrix = new int[N][N];
+		for (int i = 0; i < N; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < N; j++) {
+				adjacencyMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+	}
 }
