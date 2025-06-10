@@ -5,9 +5,36 @@ import java.io.*;
 
 
 public class Main {
-	static int N;
-	static List<Integer> origianlInOrderList, originalPostOrderList;
-	static StringBuilder sb;
+	static int N, M;
+	static List<Integer> originalList;
+	static Command[] commandList;
+
+	public static class Command {
+		int firstIndex;
+		int secondIndex;
+		int cost;
+
+		public Command(int firstIndex, int secondIndex, int cost) {
+			this.firstIndex = firstIndex;
+			this.secondIndex = secondIndex;
+			this.cost = cost;
+		}
+	}
+
+	public static class Node implements Comparable<Node> {
+		List<Integer> numList;
+		int cost;
+
+		public Node(List<Integer> numList, int cost) {
+			this.numList = numList;
+			this.cost = cost;
+		}
+
+		@Override
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.cost, anotherNode.cost);
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,29 +42,54 @@ public class Main {
 	}
 
 	public static void solution() {
-		sb = new StringBuilder();
+		Map<String, Integer> stringMap = new HashMap<>();
 
-		recursive(origianlInOrderList, originalPostOrderList);
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		PriorityQueue<Node> pq = new PriorityQueue<>();
+		pq.add(new Node(originalList, 0));
+
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
+
+			String stringValue = node.numList.toString().intern();
+			if (stringMap.get(stringValue) != null) { continue; }
+			stringMap.put(stringValue, 1);
+
+			if (isListAscending(node.numList)) {
+				System.out.println(node.cost);
+				return;
+			}
+
+			for (Command command : commandList) {
+				List<Integer> swappedNumList = swapList(node.numList, command);
+
+				if (stringMap.get(swappedNumList.toString().intern()) != null) { continue; }
+				pq.add(new Node(swappedNumList, node.cost + command.cost));
+			}
+		}
+
+		System.out.println(-1);
 	}
 
-	public static void recursive(List<Integer> inOrderList, List<Integer> postOrderList) {
-		if (inOrderList.size() == 1) {
-			sb.append(inOrderList.get(0) + " ");
-			return;
+	public static List<Integer> swapList(List<Integer> numList, Command command) {
+		List<Integer> copiedList = new ArrayList<>(numList);
+
+		int firstValue = numList.get(command.firstIndex);
+		int secondValue = numList.get(command.secondIndex);
+
+		copiedList.set(command.firstIndex, secondValue);
+		copiedList.set(command.secondIndex, firstValue);
+
+		return copiedList;
+	}
+
+	public static boolean isListAscending(List<Integer> numList) {
+		for (int i = 0; i < numList.size() - 1; i++) {
+			if (numList.get(i) > numList.get(i + 1)) {
+				return false;
+			}
 		}
-		else if (inOrderList.size() == 0) {
-			return;
-		}
 
-
-		int operator = postOrderList.get(postOrderList.size() - 1);
-		sb.append(operator + " ");
-		int operatoIndex = inOrderList.indexOf(operator);
-
-		recursive(inOrderList.subList(0, operatoIndex), postOrderList.subList(0, operatoIndex));
-		recursive(inOrderList.subList(operatoIndex + 1, inOrderList.size()),
-				postOrderList.subList(operatoIndex, postOrderList.size() - 1));
+		return true;
 	}
 
 	public static void init() throws IOException {
@@ -46,16 +98,26 @@ public class Main {
 
 		N = Integer.parseInt(st.nextToken());
 
-		origianlInOrderList = new ArrayList<>();
+		originalList = new ArrayList<>();
 		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			origianlInOrderList.add(Integer.parseInt(st.nextToken()));
+			originalList.add(Integer.parseInt(st.nextToken()));
 		}
 
-		originalPostOrderList = new ArrayList<>();
 		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			originalPostOrderList.add(Integer.parseInt(st.nextToken()));
+		M = Integer.parseInt(st.nextToken());
+
+		commandList = new Command[M];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int firstIndex = Integer.parseInt(st.nextToken()) - 1;
+			int secondIndex = Integer.parseInt(st.nextToken()) - 1;
+			int cost = Integer.parseInt(st.nextToken());
+
+			commandList[i] = new Command(firstIndex, secondIndex, cost);
 		}
 	}
+
+
 }

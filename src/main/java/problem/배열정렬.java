@@ -6,82 +6,85 @@ import java.io.*;
 
 public class 배열정렬 {
     static int N, M;
-    static List<Integer> numList;
+    static List<Integer> originalList;
     static Command[] commandList;
-    static HashMap<List<Integer>, Integer> map = new HashMap<>();
-    static HashMap<List<Integer>, Integer> confirmed = new HashMap<>();
 
     public static class Command {
-        int smallIndex;
-        int bigIndex;
+        int firstIndex;
+        int secondIndex;
         int cost;
 
-        public Command(int index1, int index2, int cost) {
-            this.smallIndex = index1;
-            this.bigIndex = index2;
+        public Command(int firstIndex, int secondIndex, int cost) {
+            this.firstIndex = firstIndex;
+            this.secondIndex = secondIndex;
             this.cost = cost;
         }
     }
 
     public static class Node implements Comparable<Node> {
-        List<Integer> array;
-        int totalCost;
+        List<Integer> numList;
+        int cost;
 
-        public Node(List<Integer> array, int totalCost) {
-            this.array = array;
-            this.totalCost = totalCost;
+        public Node(List<Integer> numList, int cost) {
+            this.numList = numList;
+            this.cost = cost;
         }
 
         @Override
         public int compareTo(Node anotherNode) {
-            return Integer.compare(this.totalCost, anotherNode.totalCost);
+            return Integer.compare(this.cost, anotherNode.cost);
         }
     }
 
     public static void main(String[] args) throws Exception {
         init();
-        PriorityQueue<Node> queue = new PriorityQueue<>();
-        queue.add(new Node(numList, 0));
-        map.put(numList, 0);
+        solution();
+    }
 
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
-            if (isSorted(node.array)) {
-                System.out.println(node.totalCost);
+    public static void solution() {
+        Map<String, Integer> stringMap = new HashMap<>();
+
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(originalList, 0));
+
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+            String stringValue = node.numList.toString().intern();
+            if (stringMap.get(stringValue) != null) { continue; }
+            stringMap.put(stringValue, 1);
+
+            if (isListAscending(node.numList)) {
+                System.out.println(node.cost);
                 return;
             }
 
-            if (confirmed.get(node.array) == null) {
-                confirmed.put(node.array, 1);
-            }
-            else {
-                continue;
-            }
+            for (Command command : commandList) {
+                List<Integer> swappedNumList = swapList(node.numList, command);
 
-            for (int i = 0; i < M; i++) {
-                Command command = commandList[i];
-
-                List<Integer> swappedArray = swap(node.array, command.smallIndex, command.bigIndex);
-                if (confirmed.get(swappedArray) != null) {
-                    continue;
-                }
-
-                if (map.get(swappedArray) != null && map.get(swappedArray) <= node.totalCost + command.cost) {
-                    continue;
-                }
-                map.put(swappedArray, node.totalCost + command.cost);
-                queue.add(new Node(swappedArray, node.totalCost + command.cost));
+                if (stringMap.get(swappedNumList.toString().intern()) != null) { continue; }
+                pq.add(new Node(swappedNumList, node.cost + command.cost));
             }
         }
 
         System.out.println(-1);
-        return;
-
     }
 
-    public static boolean isSorted(List<Integer> array) {
-        for (int i = 0; i < array.size() - 1; i++) {
-            if (array.get(i) > array.get(i + 1)) {
+    public static List<Integer> swapList(List<Integer> numList, Command command) {
+        List<Integer> copiedList = new ArrayList<>(numList);
+
+        int firstValue = numList.get(command.firstIndex);
+        int secondValue = numList.get(command.secondIndex);
+
+        copiedList.set(command.firstIndex, secondValue);
+        copiedList.set(command.secondIndex, firstValue);
+
+        return copiedList;
+    }
+
+    public static boolean isListAscending(List<Integer> numList) {
+        for (int i = 0; i < numList.size() - 1; i++) {
+            if (numList.get(i) > numList.get(i + 1)) {
                 return false;
             }
         }
@@ -89,38 +92,32 @@ public class 배열정렬 {
         return true;
     }
 
-    public static List<Integer> swap(List<Integer> array, int index1, int index2) {
-        List<Integer> copiedArray = new ArrayList<>(array);
-
-        copiedArray.set(index1, array.get(index2));
-        copiedArray.set(index2, array.get(index1));
-
-        return copiedArray;
-    }
-
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
-        N = Integer.parseInt(st.nextToken());
-        numList = new ArrayList<>();
 
+        N = Integer.parseInt(st.nextToken());
+
+        originalList = new ArrayList<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            numList.add(Integer.parseInt(st.nextToken()));
+            originalList.add(Integer.parseInt(st.nextToken()));
         }
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
-        commandList = new Command[M];
 
+        commandList = new Command[M];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
-            int index1 = Integer.parseInt(st.nextToken()) - 1;
-            int index2 = Integer.parseInt(st.nextToken()) - 1;
+
+            int firstIndex = Integer.parseInt(st.nextToken()) - 1;
+            int secondIndex = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            commandList[i] =  new Command(index1, index2, cost);
+            commandList[i] = new Command(firstIndex, secondIndex, cost);
         }
-
     }
+
+
 }
