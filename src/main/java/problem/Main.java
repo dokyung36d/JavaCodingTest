@@ -5,34 +5,16 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static List<Integer> originalList;
-	static Command[] commandList;
+	static int C, N;
+	static City[] cityList;
 
-	public static class Command {
-		int firstIndex;
-		int secondIndex;
+	public static class City {
 		int cost;
+		int numPeople;
 
-		public Command(int firstIndex, int secondIndex, int cost) {
-			this.firstIndex = firstIndex;
-			this.secondIndex = secondIndex;
+		public City(int cost, int numPeople) {
 			this.cost = cost;
-		}
-	}
-
-	public static class Node implements Comparable<Node> {
-		List<Integer> numList;
-		int cost;
-
-		public Node(List<Integer> numList, int cost) {
-			this.numList = numList;
-			this.cost = cost;
-		}
-
-		@Override
-		public int compareTo(Node anotherNode) {
-			return Integer.compare(this.cost, anotherNode.cost);
+			this.numPeople = numPeople;
 		}
 	}
 
@@ -42,82 +24,49 @@ public class Main {
 	}
 
 	public static void solution() {
-		Map<String, Integer> stringMap = new HashMap<>();
+		int[][] dpMatrix = new int[N + 1][C + 1];
+		for (int i = 0; i < N + 1; i++) {
+			Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+			dpMatrix[i][0] = 0;
+		}
 
-		PriorityQueue<Node> pq = new PriorityQueue<>();
-		pq.add(new Node(originalList, 0));
+		for (int i = 0; i < N; i++) {
+			for (int j = 1; j < C + 1; j++) {
+				City city = cityList[i];
 
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
+				int maxMultiplyNum;
+				if (j % city.numPeople == 0) {
+					maxMultiplyNum = j / city.numPeople;
+				}
+				else {
+					maxMultiplyNum = (j / city.numPeople) + 1;
+				}
 
-			String stringValue = node.numList.toString().intern();
-			if (stringMap.get(stringValue) != null) { continue; }
-			stringMap.put(stringValue, 1);
+				for (int multiplyNum = 0; multiplyNum <= maxMultiplyNum; multiplyNum++) {
+					dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
+							dpMatrix[i][Math.max(0, j - (city.numPeople * multiplyNum))] + city.cost * multiplyNum);
+				}
 
-			if (isListAscending(node.numList)) {
-				System.out.println(node.cost);
-				return;
-			}
-
-			for (Command command : commandList) {
-				List<Integer> swappedNumList = swapList(node.numList, command);
-
-				if (stringMap.get(swappedNumList.toString().intern()) != null) { continue; }
-				pq.add(new Node(swappedNumList, node.cost + command.cost));
 			}
 		}
 
-		System.out.println(-1);
-	}
-
-	public static List<Integer> swapList(List<Integer> numList, Command command) {
-		List<Integer> copiedList = new ArrayList<>(numList);
-
-		int firstValue = numList.get(command.firstIndex);
-		int secondValue = numList.get(command.secondIndex);
-
-		copiedList.set(command.firstIndex, secondValue);
-		copiedList.set(command.secondIndex, firstValue);
-
-		return copiedList;
-	}
-
-	public static boolean isListAscending(List<Integer> numList) {
-		for (int i = 0; i < numList.size() - 1; i++) {
-			if (numList.get(i) > numList.get(i + 1)) {
-				return false;
-			}
-		}
-
-		return true;
+		System.out.println(dpMatrix[N][C]);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
+		C = Integer.parseInt(st.nextToken());
 		N = Integer.parseInt(st.nextToken());
 
-		originalList = new ArrayList<>();
-		st = new StringTokenizer(br.readLine());
+		cityList = new City[N];
 		for (int i = 0; i < N; i++) {
-			originalList.add(Integer.parseInt(st.nextToken()));
-		}
-
-		st = new StringTokenizer(br.readLine());
-		M = Integer.parseInt(st.nextToken());
-
-		commandList = new Command[M];
-		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 
-			int firstIndex = Integer.parseInt(st.nextToken()) - 1;
-			int secondIndex = Integer.parseInt(st.nextToken()) - 1;
 			int cost = Integer.parseInt(st.nextToken());
-
-			commandList[i] = new Command(firstIndex, secondIndex, cost);
+			int numPeople = Integer.parseInt(st.nextToken());
+			cityList[i] = new City(cost, numPeople);
 		}
 	}
-
-
 }
