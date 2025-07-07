@@ -5,34 +5,35 @@ import java.io.*;
 
 
 public class Main {
-	static int N;
-	static char[][] mainMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-	static List<Pos> teacherPosList;
+	static int V, E, K;
+	static Map<Integer,List<Edge>> graphMap;
+	static long[] costList;
 
-	public static class Pos {
-		int row;
-		int col;
+	public static class Edge {
+		int from;
+		int to;
+		int cost;
 
-		public Pos(int row, int col) {
-			this.row = row;
-			this.col = col;
+		public Edge(int from, int to, int cost) {
+			this.from = from;
+			this.to = to;
+			this.cost = cost;
 		}
 
-		public Pos addPos(Pos direction) {
-			 return new Pos(this.row + direction.row, this.col + direction.col);
+	}
+
+
+	public static class Node implements Comparable<Node> {
+		int curNode;
+		long totalCost;
+
+		public Node(int curNode, long totalCost) {
+			this.curNode = curNode;
+			this.totalCost = totalCost;
 		}
 
-		public Pos multiplyPos(int numMultiply) {
-			return new Pos(this.row * numMultiply, this.col * numMultiply);
-		}
-
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
-				return false;
-			}
-
-			return true;
+		public int compareTo(Node anotherNode) {
+			return Long.compare(this.totalCost, anotherNode.totalCost);
 		}
 	}
 
@@ -40,92 +41,67 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		init();
 		solution();
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < V; i++) {
+			if (costList[i] == Long.MAX_VALUE) {
+				sb.append("INF");
+			}
+			else {
+				sb.append(costList[i]);
+			}
+
+			sb.append("\n");
+		}
+
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
 	public static void solution() {
-		boolean result = recursive(3, mainMatrix);
+		PriorityQueue<Node> pq = new PriorityQueue<>();
+		pq.add(new Node(K, (long) 0));
+		int[] visited = new int[V];
 
-		if (result == true) {
-			System.out.println("YES");
-		}
-		else {
-			System.out.println("NO");
-		}
-	}
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
 
-	public static boolean recursive(int numRemainWall, char[][] matrix) {
-		if (numRemainWall == 0) {
-			if (checkHideFromTeachers(matrix)) {
-				return true;
-			}
+			if (visited[node.curNode] == 1) { continue; }
+			visited[node.curNode] = 1;
+			costList[node.curNode] = node.totalCost;
 
-			return false;
-		}
+			for (Edge edge : graphMap.get(node.curNode)) {
+				if (visited[edge.to] == 1) { continue; }
 
-
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < N; j++) {
-				if (matrix[i][j] != 'X') { continue; }
-
-				matrix[i][j] = 'O';
-				boolean result = recursive(numRemainWall - 1, matrix);
-				matrix[i][j] = 'X';
-
-				if (result == true) {
-					return true;
-				}
+				pq.add(new Node(edge.to, node.totalCost + (long) edge.cost));
 			}
 		}
-
-		return false;
-	}
-
-	public static boolean checkHideFromTeachers(char[][] matrix) {
-		for (Pos teacherPos : teacherPosList) {
-			if (checkHideFromTeacher(matrix, teacherPos) == false) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	public static boolean checkHideFromTeacher(char[][] matrix, Pos teacherPos) {
-		for (Pos direction : directions) {
-			int multiplyNum = 1;
-
-			while (true) {
-				Pos seePos = teacherPos.addPos(direction.multiplyPos(multiplyNum));
-				if (!seePos.isValidIndex()) { break; }
-				if (matrix[seePos.row][seePos.col] == 'O') { break; }
-				if (matrix[seePos.row][seePos.col] == 'T') { break; }
-
-				if (matrix[seePos.row][seePos.col] == 'S') { return false; }
-
-				multiplyNum += 1;
- 			}
-		}
-
-		return true;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		N = Integer.parseInt(st.nextToken());
-		mainMatrix = new char[N][N];
+		V = Integer.parseInt(st.nextToken());
+		E = Integer.parseInt(st.nextToken());
 
-		teacherPosList = new ArrayList<>();
-		for (int i = 0; i < N; i++) {
+		costList = new long[V];
+		Arrays.fill(costList, Long.MAX_VALUE);
+		graphMap = new HashMap<>();
+		for (int i = 0; i < V; i++) {
+			graphMap.put(i, new ArrayList<>());
+		}
+
+		st = new StringTokenizer(br.readLine());
+		K = Integer.parseInt(st.nextToken()) - 1;
+
+		for (int i = 0; i < E; i++) {
 			st = new StringTokenizer(br.readLine());
-			for (int j = 0; j < N; j++) {
-				mainMatrix[i][j] = st.nextToken().charAt(0);
 
-				if (mainMatrix[i][j] == 'T') {
-					teacherPosList.add(new Pos(i, j));
-				}
-			}
+			int from = Integer.parseInt(st.nextToken()) - 1;
+			int to = Integer.parseInt(st.nextToken()) - 1;
+			int cost = Integer.parseInt(st.nextToken());
+
+			graphMap.get(from).add(new Edge(from, to, cost));
 		}
 	}
 }
