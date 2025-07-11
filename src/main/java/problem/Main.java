@@ -5,90 +5,112 @@ import java.io.*;
 
 
 public class Main {
-	static int numPizzaOrder;
-	static int N, M;
-	static int[] nPizzaSizeList, mPizzaSizeList;
-	static int[] nCumulativeSumList, mCumulativeSumList;
-	static Map<Integer, Integer> mPizzaSizeMap, nPizzaSizeMap;
+	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	static int N;
+	static int[] mainPreOrderList, mainInOrderList;
 
 	public static void main(String[] args) throws Exception {
-		init();
-		solution();
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int T = Integer.parseInt(st.nextToken());
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < T; i++) {
+			init();
+			String answer = solution();
+			sb.append(answer);
+			sb.append("\n");
+		}
+
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
-	public static void solution() {
-		for (int i = 0; i < M; i++) {
-			for (int gap = 1; gap < M; gap++) {
-				int sumValue = mCumulativeSumList[i + gap] - mCumulativeSumList[i];
-				mPizzaSizeMap.put(sumValue, mPizzaSizeMap.getOrDefault(sumValue, 0) + 1);
+	public static String solution() {
+		return recursive(mainPreOrderList, mainInOrderList);
+	}
+
+	public static String recursive(int[] preOrderList, int[] inOrderList) {
+		if (preOrderList.length == 0) {
+			return "";
+		}
+
+		if (preOrderList.length == 1) {
+			return String.valueOf(preOrderList[0]);
+		}
+
+//		if (preOrderList.length == 2) {
+//			StringBuilder sb = new StringBuilder();
+//			sb.append(inOrderList[0]);
+//			sb.append(inOrderList[1]);
+//
+//			return sb.toString();
+//		}
+
+		int parentNode = preOrderList[0];
+		int leftTreeLength = getIndexOfValue(inOrderList, parentNode);
+		int rightTreeLength = preOrderList.length - leftTreeLength - 1;
+
+		StringBuilder sb = new StringBuilder();
+
+		int[] leftTreePreOrderList = getPartList(preOrderList, 1, leftTreeLength + 1);
+		int[] leftTreeInOrderList = getPartList(inOrderList, 0, leftTreeLength);
+
+
+		int[] rightTreePreOrderList = getPartList(preOrderList, leftTreeLength + 1, preOrderList.length);
+		int[] rightTreeInOrderList = getPartList(inOrderList, leftTreeLength + 1, preOrderList.length);
+
+		String leftTreeString = recursive(leftTreePreOrderList, leftTreeInOrderList);
+		String rightTreeString = recursive(rightTreePreOrderList, rightTreeInOrderList);
+
+		sb.append(leftTreeString);
+		if (!leftTreeString.equals("")) {
+			sb.append(" ");
+		}
+		sb.append(rightTreeString);
+		if (!rightTreeString.equals("")) {
+			sb.append(" ");
+		}
+		sb.append(parentNode);
+
+		return sb.toString();
+	}
+
+
+	public static int[] getPartList(int[] numList, int startIndex, int endIndex) {
+		int[] partNumList = new int[endIndex - startIndex];
+		for (int i = startIndex; i < endIndex; i++) {
+			partNumList[i - startIndex] = numList[i];
+		}
+
+
+		return partNumList;
+	}
+
+	public static int getIndexOfValue(int[] numList, int value) {
+		for (int i = 0; i < numList.length; i++) {
+			if (numList[i] == value) {
+				return i;
 			}
 		}
-		mPizzaSizeMap.put(0, 1);
-		mPizzaSizeMap.put(mCumulativeSumList[M], 1);
 
-
-		for (int i = 0; i < N; i++) {
-			for (int gap = 1; gap < N; gap++) {
-				int sumValue = nCumulativeSumList[i + gap] - nCumulativeSumList[i];
-				nPizzaSizeMap.put(sumValue, nPizzaSizeMap.getOrDefault(sumValue, 0) + 1);
-			}
-		}
-		nPizzaSizeMap.put(0, 1);
-		nPizzaSizeMap.put(nCumulativeSumList[N], 1);
-
-
-		int answer = 0;
-		for (int mSumValue : mPizzaSizeMap.keySet()) {
-			int restSumValue = numPizzaOrder - mSumValue;
-			if (nPizzaSizeMap.get(restSumValue) == null) { continue; }
-
-			answer += mPizzaSizeMap.get(mSumValue) * nPizzaSizeMap.get(restSumValue);
-		}
-
-		System.out.println(answer);
+		return -1;
 	}
 
 	public static void init() throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		numPizzaOrder = Integer.parseInt(st.nextToken());
-
-		st = new StringTokenizer(br.readLine());
-		M = Integer.parseInt(st.nextToken());
 		N = Integer.parseInt(st.nextToken());
 
-		mPizzaSizeList = new int[2 * M];
-		nPizzaSizeList = new int[2 * N];
+		mainPreOrderList = new int[N];
+		mainInOrderList = new int[N];
 
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			mPizzaSizeList[i] = Integer.parseInt(st.nextToken());
-			mPizzaSizeList[i + M] = mPizzaSizeList[i];
-		}
-
+		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			nPizzaSizeList[i] = Integer.parseInt(st.nextToken());
-			nPizzaSizeList[i + N] = nPizzaSizeList[i];
+			mainPreOrderList[i] = Integer.parseInt(st.nextToken());
 		}
 
-
-		mCumulativeSumList = new int[2 * M + 1];
-		nCumulativeSumList = new int[2 * N + 1];
-		for (int i = 0; i < 2 * M; i++) {
-			mCumulativeSumList[i + 1] = mCumulativeSumList[i] + mPizzaSizeList[i];
+		st = new StringTokenizer(br.readLine());
+		for (int i = 0; i < N; i++) {
+			mainInOrderList[i] = Integer.parseInt(st.nextToken());
 		}
-
-		for (int i = 0; i < 2 * N; i++) {
-			nCumulativeSumList[i + 1] = nCumulativeSumList[i] + nPizzaSizeList[i];
-		}
-
-
-		nPizzaSizeMap = new HashMap<>();
-		mPizzaSizeMap = new HashMap<>();
-
 
 	}
 }
