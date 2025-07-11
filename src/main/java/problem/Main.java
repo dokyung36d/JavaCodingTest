@@ -5,112 +5,141 @@ import java.io.*;
 
 
 public class Main {
-	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-	static int N;
-	static int[] mainPreOrderList, mainInOrderList;
+	static int N, M;
+	static int numCheese;
+	static int[][] mainMatrix;
+	static int[][] externalMatrix;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+
+	public static class Pos {
+		int row;
+		int col;
+
+		public Pos(int row, int col) {
+			this.row = row;
+			this.col = col;
+		}
+
+		public Pos addPos(Pos direction) {
+			return new Pos(this.row + direction.row, this.col + direction.col);
+		}
+
+		public boolean isValidIndex() {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
+				return false;
+			}
+
+			return true;
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
-		StringTokenizer st = new StringTokenizer(br.readLine());
-		int T = Integer.parseInt(st.nextToken());
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < T; i++) {
-			init();
-			String answer = solution();
-			sb.append(answer);
-			sb.append("\n");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		init();
+		solution();
 	}
 
-	public static String solution() {
-		return recursive(mainPreOrderList, mainInOrderList);
-	}
+	public static void solution() {
+		int time = 0;
 
-	public static String recursive(int[] preOrderList, int[] inOrderList) {
-		if (preOrderList.length == 0) {
-			return "";
-		}
+		while (true) {
+			if (numCheese == 0) {
+				break;
+			}
 
-		if (preOrderList.length == 1) {
-			return String.valueOf(preOrderList[0]);
-		}
+			time += 1;
 
-//		if (preOrderList.length == 2) {
-//			StringBuilder sb = new StringBuilder();
-//			sb.append(inOrderList[0]);
-//			sb.append(inOrderList[1]);
-//
-//			return sb.toString();
-//		}
-
-		int parentNode = preOrderList[0];
-		int leftTreeLength = getIndexOfValue(inOrderList, parentNode);
-		int rightTreeLength = preOrderList.length - leftTreeLength - 1;
-
-		StringBuilder sb = new StringBuilder();
-
-		int[] leftTreePreOrderList = getPartList(preOrderList, 1, leftTreeLength + 1);
-		int[] leftTreeInOrderList = getPartList(inOrderList, 0, leftTreeLength);
-
-
-		int[] rightTreePreOrderList = getPartList(preOrderList, leftTreeLength + 1, preOrderList.length);
-		int[] rightTreeInOrderList = getPartList(inOrderList, leftTreeLength + 1, preOrderList.length);
-
-		String leftTreeString = recursive(leftTreePreOrderList, leftTreeInOrderList);
-		String rightTreeString = recursive(rightTreePreOrderList, rightTreeInOrderList);
-
-		sb.append(leftTreeString);
-		if (!leftTreeString.equals("")) {
-			sb.append(" ");
-		}
-		sb.append(rightTreeString);
-		if (!rightTreeString.equals("")) {
-			sb.append(" ");
-		}
-		sb.append(parentNode);
-
-		return sb.toString();
-	}
-
-
-	public static int[] getPartList(int[] numList, int startIndex, int endIndex) {
-		int[] partNumList = new int[endIndex - startIndex];
-		for (int i = startIndex; i < endIndex; i++) {
-			partNumList[i - startIndex] = numList[i];
-		}
-
-
-		return partNumList;
-	}
-
-	public static int getIndexOfValue(int[] numList, int value) {
-		for (int i = 0; i < numList.length; i++) {
-			if (numList[i] == value) {
-				return i;
+			setExternalMatrix();
+			List<Pos> deleteCheeseList = getDeleteCheese();
+			for (Pos deleteCheesePos : deleteCheeseList) {
+				mainMatrix[deleteCheesePos.row][deleteCheesePos.col] = 0;
+				numCheese -= 1;
 			}
 		}
 
-		return -1;
+
+		System.out.println(time);
+	}
+
+	public static List<Pos> getDeleteCheese() {
+		List<Pos> deleteCheeseList = new ArrayList<>();
+
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				if (!checkCheeseDelete(new Pos(i, j))) { continue; }
+
+				deleteCheeseList.add(new Pos(i, j));
+			}
+		}
+
+		return deleteCheeseList;
+	}
+
+	public static boolean checkCheeseDelete(Pos cheesPos) {
+		int numAttach = 0;
+
+		for (Pos direction : directions) {
+			Pos nearPos = cheesPos.addPos(direction);
+			if (!nearPos.isValidIndex()) { continue; }
+			if (externalMatrix[nearPos.row][nearPos.col] == 1) {
+				numAttach += 1;
+			}
+		}
+
+
+		if (numAttach >= 2) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static void setExternalMatrix() {
+		externalMatrix = new int[N][M];
+		int[][] visited = new int[N][M];
+		Deque<Pos> queue = new ArrayDeque<>();
+
+		queue.add(new Pos(0, 0));
+		queue.add(new Pos(0, M - 1));
+		queue.add(new Pos(N -1, 0));
+		queue.add(new Pos(N -1, M - 1));
+
+		while (!queue.isEmpty()) {
+			Pos curPos = queue.pollFirst();
+			if (visited[curPos.row][curPos.col] == 1) { continue; }
+			visited[curPos.row][curPos.col] = 1;
+
+			externalMatrix[curPos.row][curPos.col] = 1;
+			for (Pos direction : directions) {
+				Pos movedPos = curPos.addPos(direction);
+				if (!movedPos.isValidIndex()) { continue; }
+				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+				if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+
+				queue.add(movedPos);
+			}
+		}
 	}
 
 	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
+
 		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
+		numCheese = 0;
 
-		mainPreOrderList = new int[N];
-		mainInOrderList = new int[N];
-
-		st = new StringTokenizer(br.readLine());
+		mainMatrix = new int[N][M];
 		for (int i = 0; i < N; i++) {
-			mainPreOrderList[i] = Integer.parseInt(st.nextToken());
-		}
+			st = new StringTokenizer(br.readLine());
 
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			mainInOrderList[i] = Integer.parseInt(st.nextToken());
-		}
+			for (int j = 0; j < M; j++) {
+				mainMatrix[i][j] = Integer.parseInt(st.nextToken());
 
+				if (mainMatrix[i][j] == 1) {
+					numCheese += 1;
+				}
+			}
+		}
 	}
 }
