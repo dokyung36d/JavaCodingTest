@@ -5,103 +5,90 @@ import java.io.*;
 
 
 public class Main {
-	static int V, E, K;
-	static Map<Integer,List<Edge>> graphMap;
-	static long[] costList;
-
-	public static class Edge {
-		int from;
-		int to;
-		int cost;
-
-		public Edge(int from, int to, int cost) {
-			this.from = from;
-			this.to = to;
-			this.cost = cost;
-		}
-
-	}
-
-
-	public static class Node implements Comparable<Node> {
-		int curNode;
-		long totalCost;
-
-		public Node(int curNode, long totalCost) {
-			this.curNode = curNode;
-			this.totalCost = totalCost;
-		}
-
-		public int compareTo(Node anotherNode) {
-			return Long.compare(this.totalCost, anotherNode.totalCost);
-		}
-	}
-
+	static int numPizzaOrder;
+	static int N, M;
+	static int[] nPizzaSizeList, mPizzaSizeList;
+	static int[] nCumulativeSumList, mCumulativeSumList;
+	static Map<Integer, Integer> mPizzaSizeMap, nPizzaSizeMap;
 
 	public static void main(String[] args) throws Exception {
 		init();
 		solution();
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < V; i++) {
-			if (costList[i] == Long.MAX_VALUE) {
-				sb.append("INF");
-			}
-			else {
-				sb.append(costList[i]);
-			}
-
-			sb.append("\n");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
 	public static void solution() {
-		PriorityQueue<Node> pq = new PriorityQueue<>();
-		pq.add(new Node(K, (long) 0));
-		int[] visited = new int[V];
-
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
-
-			if (visited[node.curNode] == 1) { continue; }
-			visited[node.curNode] = 1;
-			costList[node.curNode] = node.totalCost;
-
-			for (Edge edge : graphMap.get(node.curNode)) {
-				if (visited[edge.to] == 1) { continue; }
-
-				pq.add(new Node(edge.to, node.totalCost + (long) edge.cost));
+		for (int i = 0; i < M; i++) {
+			for (int gap = 1; gap < M; gap++) {
+				int sumValue = mCumulativeSumList[i + gap] - mCumulativeSumList[i];
+				mPizzaSizeMap.put(sumValue, mPizzaSizeMap.getOrDefault(sumValue, 0) + 1);
 			}
 		}
+		mPizzaSizeMap.put(0, 1);
+		mPizzaSizeMap.put(mCumulativeSumList[M], 1);
+
+
+		for (int i = 0; i < N; i++) {
+			for (int gap = 1; gap < N; gap++) {
+				int sumValue = nCumulativeSumList[i + gap] - nCumulativeSumList[i];
+				nPizzaSizeMap.put(sumValue, nPizzaSizeMap.getOrDefault(sumValue, 0) + 1);
+			}
+		}
+		nPizzaSizeMap.put(0, 1);
+		nPizzaSizeMap.put(nCumulativeSumList[N], 1);
+
+
+		int answer = 0;
+		for (int mSumValue : mPizzaSizeMap.keySet()) {
+			int restSumValue = numPizzaOrder - mSumValue;
+			if (nPizzaSizeMap.get(restSumValue) == null) { continue; }
+
+			answer += mPizzaSizeMap.get(mSumValue) * nPizzaSizeMap.get(restSumValue);
+		}
+
+		System.out.println(answer);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
-
-		V = Integer.parseInt(st.nextToken());
-		E = Integer.parseInt(st.nextToken());
-
-		costList = new long[V];
-		Arrays.fill(costList, Long.MAX_VALUE);
-		graphMap = new HashMap<>();
-		for (int i = 0; i < V; i++) {
-			graphMap.put(i, new ArrayList<>());
-		}
+		numPizzaOrder = Integer.parseInt(st.nextToken());
 
 		st = new StringTokenizer(br.readLine());
-		K = Integer.parseInt(st.nextToken()) - 1;
+		M = Integer.parseInt(st.nextToken());
+		N = Integer.parseInt(st.nextToken());
 
-		for (int i = 0; i < E; i++) {
+		mPizzaSizeList = new int[2 * M];
+		nPizzaSizeList = new int[2 * N];
+
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 
-			int from = Integer.parseInt(st.nextToken()) - 1;
-			int to = Integer.parseInt(st.nextToken()) - 1;
-			int cost = Integer.parseInt(st.nextToken());
-
-			graphMap.get(from).add(new Edge(from, to, cost));
+			mPizzaSizeList[i] = Integer.parseInt(st.nextToken());
+			mPizzaSizeList[i + M] = mPizzaSizeList[i];
 		}
+
+		for (int i = 0; i < N; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			nPizzaSizeList[i] = Integer.parseInt(st.nextToken());
+			nPizzaSizeList[i + N] = nPizzaSizeList[i];
+		}
+
+
+		mCumulativeSumList = new int[2 * M + 1];
+		nCumulativeSumList = new int[2 * N + 1];
+		for (int i = 0; i < 2 * M; i++) {
+			mCumulativeSumList[i + 1] = mCumulativeSumList[i] + mPizzaSizeList[i];
+		}
+
+		for (int i = 0; i < 2 * N; i++) {
+			nCumulativeSumList[i + 1] = nCumulativeSumList[i] + nPizzaSizeList[i];
+		}
+
+
+		nPizzaSizeMap = new HashMap<>();
+		mPizzaSizeMap = new HashMap<>();
+
+
 	}
 }
