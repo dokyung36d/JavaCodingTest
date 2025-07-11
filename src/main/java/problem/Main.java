@@ -6,10 +6,8 @@ import java.io.*;
 
 public class Main {
 	static int N, M;
-	static int numCheese;
-	static int[][] mainMatrix;
-	static int[][] externalMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, - 1)};
+	static Map<Pos, List<Pos>> switchMap;
 
 	public static class Pos {
 		int row;
@@ -25,11 +23,27 @@ public class Main {
 		}
 
 		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
 				return false;
 			}
 
 			return true;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+			Pos anotherPos = (Pos) obj;
+			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.row, this.col);
 		}
 	}
 
@@ -39,86 +53,55 @@ public class Main {
 	}
 
 	public static void solution() {
-		int time = 0;
+		int[][] visited = new int[N][N];
 
-		while (true) {
-			if (numCheese == 0) {
-				break;
-			}
+		int[][] visitableMatrix = new int[N][N];
+		int[][] switchOnMatrix = new int[N][N];
+		switchOnMatrix[0][0] = 1;
 
-			time += 1;
-
-			setExternalMatrix();
-			List<Pos> deleteCheeseList = getDeleteCheese();
-			for (Pos deleteCheesePos : deleteCheeseList) {
-				mainMatrix[deleteCheesePos.row][deleteCheesePos.col] = 0;
-				numCheese -= 1;
-			}
-		}
-
-
-		System.out.println(time);
-	}
-
-	public static List<Pos> getDeleteCheese() {
-		List<Pos> deleteCheeseList = new ArrayList<>();
-
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] == 0) { continue; }
-				if (!checkCheeseDelete(new Pos(i, j))) { continue; }
-
-				deleteCheeseList.add(new Pos(i, j));
-			}
-		}
-
-		return deleteCheeseList;
-	}
-
-	public static boolean checkCheeseDelete(Pos cheesPos) {
-		int numAttach = 0;
-
-		for (Pos direction : directions) {
-			Pos nearPos = cheesPos.addPos(direction);
-			if (!nearPos.isValidIndex()) { continue; }
-			if (externalMatrix[nearPos.row][nearPos.col] == 1) {
-				numAttach += 1;
-			}
-		}
-
-
-		if (numAttach >= 2) {
-			return true;
-		}
-
-		return false;
-	}
-
-	public static void setExternalMatrix() {
-		externalMatrix = new int[N][M];
-		int[][] visited = new int[N][M];
 		Deque<Pos> queue = new ArrayDeque<>();
-
 		queue.add(new Pos(0, 0));
-		queue.add(new Pos(0, M - 1));
-		queue.add(new Pos(N -1, 0));
-		queue.add(new Pos(N -1, M - 1));
 
 		while (!queue.isEmpty()) {
 			Pos curPos = queue.pollFirst();
 			if (visited[curPos.row][curPos.col] == 1) { continue; }
+
 			visited[curPos.row][curPos.col] = 1;
 
-			externalMatrix[curPos.row][curPos.col] = 1;
 			for (Pos direction : directions) {
 				Pos movedPos = curPos.addPos(direction);
 				if (!movedPos.isValidIndex()) { continue; }
 				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-				if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
 
-				queue.add(movedPos);
+				visitableMatrix[movedPos.row][movedPos.col] = 1;
+				if (switchOnMatrix[movedPos.row][movedPos.col] == 1) {
+					queue.add(movedPos);
+				}
+			}
+
+
+			for (Pos switchPos : switchMap.get(curPos)) {
+				switchOnMatrix[switchPos.row][switchPos.col] = 1;
+				if (visited[switchPos.row][switchPos.col] == 1) { continue; }
+
+				if (visitableMatrix[switchPos.row][switchPos.col] == 1) {
+					queue.add(switchPos);
+				}
+			}
+
+		}
+
+
+		int numSwitchOn = 0;
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < N; j++) {
+				if (switchOnMatrix[i][j] == 1) {
+					numSwitchOn += 1;
+				}
 			}
 		}
+
+		System.out.println(numSwitchOn);
 	}
 
 	public static void init() throws IOException {
@@ -127,19 +110,24 @@ public class Main {
 
 		N = Integer.parseInt(st.nextToken());
 		M = Integer.parseInt(st.nextToken());
-		numCheese = 0;
 
-		mainMatrix = new int[N][M];
+		switchMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < N; j++) {
+				switchMap.put(new Pos(i, j), new ArrayList<>());
+			}
+		}
+
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 
-			for (int j = 0; j < M; j++) {
-				mainMatrix[i][j] = Integer.parseInt(st.nextToken());
+			int fromRow = Integer.parseInt(st.nextToken()) - 1;
+			int fromCol = Integer.parseInt(st.nextToken()) - 1;
 
-				if (mainMatrix[i][j] == 1) {
-					numCheese += 1;
-				}
-			}
+			int toRow = Integer.parseInt(st.nextToken()) - 1;
+			int toCol = Integer.parseInt(st.nextToken()) - 1;
+
+			switchMap.get(new Pos(fromRow, fromCol)).add(new Pos(toRow, toCol));
 		}
 	}
 }
