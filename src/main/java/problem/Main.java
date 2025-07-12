@@ -5,9 +5,14 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, - 1)};
-	static Map<Pos, List<Pos>> switchMap;
+	static int R, C;
+	static char[][] mainMatrix;
+	static int[] commandList;
+	static Pos mainRobotPos;
+	static Map<Pos, Integer> crazyRobotPosMap;
+	static Pos[] directions = {new Pos(1, -1), new Pos(1, 0), new Pos(1, 1),
+								new Pos(0, -1), new Pos(0, 0), new Pos(0, 1),
+								new Pos(-1, -1), new Pos(-1, 0), new Pos(-1, 1)};
 
 	public static class Pos {
 		int row;
@@ -23,21 +28,24 @@ public class Main {
 		}
 
 		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
+			if (this.row < 0 || this.row >= R || this.col < 0 || this.col >= C) {
 				return false;
 			}
 
 			return true;
 		}
 
+		public int calcDistance(Pos anotherPos) {
+			return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
+		}
+
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) { return true; }
 			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
 			Pos anotherPos = (Pos) obj;
-			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
 
+			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
 			return false;
 		}
 
@@ -53,81 +61,113 @@ public class Main {
 	}
 
 	public static void solution() {
-		int[][] visited = new int[N][N];
+		for (int i = 0; i < commandList.length; i++) {
+			Pos mainRobotMovedPos = mainRobotPos.addPos(directions[commandList[i]]);
+			if (crazyRobotPosMap.get(mainRobotMovedPos) != null) {
+				System.out.println("kraj " + (i + 1));
+				return;
+			}
+			mainRobotPos = mainRobotMovedPos;
 
-		int[][] visitableMatrix = new int[N][N];
-		int[][] switchOnMatrix = new int[N][N];
-		switchOnMatrix[0][0] = 1;
+			Map<Pos, Integer> updatedCrazyRobotPosMap = new HashMap<>();
+			for (Pos crazyRobotPos : crazyRobotPosMap.keySet()) {
+				Pos crazyRobotMovedPos = moveCrazyRobot(crazyRobotPos);
+				if (crazyRobotMovedPos.equals(mainRobotPos)) {
+					System.out.println("kraj " + (i + 1));
+					return;
+				}
 
-		Deque<Pos> queue = new ArrayDeque<>();
-		queue.add(new Pos(0, 0));
+				updatedCrazyRobotPosMap.put(crazyRobotMovedPos, updatedCrazyRobotPosMap.getOrDefault(crazyRobotMovedPos, 0) + 1);
+			}
 
-		while (!queue.isEmpty()) {
-			Pos curPos = queue.pollFirst();
-			if (visited[curPos.row][curPos.col] == 1) { continue; }
-
-			visited[curPos.row][curPos.col] = 1;
-
-			for (Pos direction : directions) {
-				Pos movedPos = curPos.addPos(direction);
-				if (!movedPos.isValidIndex()) { continue; }
-				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-
-				visitableMatrix[movedPos.row][movedPos.col] = 1;
-				if (switchOnMatrix[movedPos.row][movedPos.col] == 1) {
-					queue.add(movedPos);
+			List<Pos> deletePosList = new ArrayList<>();
+			for (Pos crazyRobotMovedPos : updatedCrazyRobotPosMap.keySet()) {
+				if (updatedCrazyRobotPosMap.get(crazyRobotMovedPos) >= 2) {
+					deletePosList.add(crazyRobotMovedPos);
 				}
 			}
 
-
-			for (Pos switchPos : switchMap.get(curPos)) {
-				switchOnMatrix[switchPos.row][switchPos.col] = 1;
-				if (visited[switchPos.row][switchPos.col] == 1) { continue; }
-
-				if (visitableMatrix[switchPos.row][switchPos.col] == 1) {
-					queue.add(switchPos);
-				}
+			for (Pos deletePos : deletePosList) {
+				updatedCrazyRobotPosMap.remove(deletePos);
 			}
 
+			crazyRobotPosMap = updatedCrazyRobotPosMap;
 		}
 
 
-		int numSwitchOn = 0;
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < N; j++) {
-				if (switchOnMatrix[i][j] == 1) {
-					numSwitchOn += 1;
-				}
+		char[][] answerMatrix = new char[R][C];
+		for (int i = 0; i < R; i++) {
+			Arrays.fill(answerMatrix[i], '.');
+		}
+
+		answerMatrix[mainRobotPos.row][mainRobotPos.col] = 'I';
+		for (Pos crazyRobotPos : crazyRobotPosMap.keySet()) {
+			answerMatrix[crazyRobotPos.row][crazyRobotPos.col] = 'R';
+		}
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < R; i++) {
+			for (int j = 0; j < C; j++) {
+				sb.append(answerMatrix[i][j]);
+			}
+			sb.append("\n");
+		}
+
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
+	}
+
+	public static Pos moveCrazyRobot(Pos crazyRobotPos) {
+		Pos bestMovedPos = crazyRobotPos;
+		int minDistance = crazyRobotPos.calcDistance(mainRobotPos);
+
+		for (Pos direction : directions) {
+			Pos movedPos = crazyRobotPos.addPos(direction);
+			if (!movedPos.isValidIndex()) { continue; }
+
+			if (movedPos.calcDistance(mainRobotPos) < minDistance) {
+				bestMovedPos = movedPos;
+				minDistance = movedPos.calcDistance(mainRobotPos);
 			}
 		}
 
-		System.out.println(numSwitchOn);
+
+		return bestMovedPos;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
+		R = Integer.parseInt(st.nextToken());
+		C = Integer.parseInt(st.nextToken());
+		mainMatrix = new char[R][C];
+		crazyRobotPosMap = new HashMap<>();
 
-		switchMap = new HashMap<>();
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < N; j++) {
-				switchMap.put(new Pos(i, j), new ArrayList<>());
+		for (int i = 0; i < R; i++) {
+			st = new StringTokenizer(br.readLine());
+			String string = st.nextToken();
+
+			for (int j = 0; j < C; j++) {
+				mainMatrix[i][j] = string.charAt(j);
+
+				if (mainMatrix[i][j] == 'I') {
+					mainRobotPos = new Pos(i, j);
+				}
+
+				if (mainMatrix[i][j] == 'R') {
+					crazyRobotPosMap.put(new Pos(i, j), crazyRobotPosMap.getOrDefault(new Pos(i, j), 0) + 1);
+				}
 			}
 		}
 
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
 
-			int fromRow = Integer.parseInt(st.nextToken()) - 1;
-			int fromCol = Integer.parseInt(st.nextToken()) - 1;
+		st = new StringTokenizer(br.readLine());
+		String string = st.nextToken();
 
-			int toRow = Integer.parseInt(st.nextToken()) - 1;
-			int toCol = Integer.parseInt(st.nextToken()) - 1;
-
-			switchMap.get(new Pos(fromRow, fromCol)).add(new Pos(toRow, toCol));
+		commandList = new int[string.length()];
+		for (int i = 0; i < string.length(); i++) {
+			commandList[i] = Character.getNumericValue(string.charAt(i)) - 1;
 		}
+
 	}
 }
