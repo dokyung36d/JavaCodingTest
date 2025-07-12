@@ -5,14 +5,9 @@ import java.io.*;
 
 
 public class Main {
-	static int R, C;
-	static char[][] mainMatrix;
-	static int[] commandList;
-	static Pos mainRobotPos;
-	static Map<Pos, Integer> crazyRobotPosMap;
-	static Pos[] directions = {new Pos(1, -1), new Pos(1, 0), new Pos(1, 1),
-								new Pos(0, -1), new Pos(0, 0), new Pos(0, 1),
-								new Pos(-1, -1), new Pos(-1, 0), new Pos(-1, 1)};
+	static int N, M;
+	static int[][] mainMatrix;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
 
 	public static class Pos {
 		int row;
@@ -28,30 +23,11 @@ public class Main {
 		}
 
 		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= R || this.col < 0 || this.col >= C) {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
 				return false;
 			}
 
 			return true;
-		}
-
-		public int calcDistance(Pos anotherPos) {
-			return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) { return true; }
-			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-			Pos anotherPos = (Pos) obj;
-
-			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.row, this.col);
 		}
 	}
 
@@ -61,113 +37,102 @@ public class Main {
 	}
 
 	public static void solution() {
-		for (int i = 0; i < commandList.length; i++) {
-			Pos mainRobotMovedPos = mainRobotPos.addPos(directions[commandList[i]]);
-			if (crazyRobotPosMap.get(mainRobotMovedPos) != null) {
-				System.out.println("kraj " + (i + 1));
-				return;
+		int answer = 0;
+
+
+		for (int wallHeight = 9; wallHeight >= 1; wallHeight--) {
+			List<Pos> poolPosList = getPoolPosList(wallHeight);
+
+			for (Pos poolPos : poolPosList) {
+				answer += wallHeight - mainMatrix[poolPos.row][poolPos.col];
+				mainMatrix[poolPos.row][poolPos.col] = wallHeight;
 			}
-			mainRobotPos = mainRobotMovedPos;
-
-			Map<Pos, Integer> updatedCrazyRobotPosMap = new HashMap<>();
-			for (Pos crazyRobotPos : crazyRobotPosMap.keySet()) {
-				Pos crazyRobotMovedPos = moveCrazyRobot(crazyRobotPos);
-				if (crazyRobotMovedPos.equals(mainRobotPos)) {
-					System.out.println("kraj " + (i + 1));
-					return;
-				}
-
-				updatedCrazyRobotPosMap.put(crazyRobotMovedPos, updatedCrazyRobotPosMap.getOrDefault(crazyRobotMovedPos, 0) + 1);
-			}
-
-			List<Pos> deletePosList = new ArrayList<>();
-			for (Pos crazyRobotMovedPos : updatedCrazyRobotPosMap.keySet()) {
-				if (updatedCrazyRobotPosMap.get(crazyRobotMovedPos) >= 2) {
-					deletePosList.add(crazyRobotMovedPos);
-				}
-			}
-
-			for (Pos deletePos : deletePosList) {
-				updatedCrazyRobotPosMap.remove(deletePos);
-			}
-
-			crazyRobotPosMap = updatedCrazyRobotPosMap;
 		}
 
 
-		char[][] answerMatrix = new char[R][C];
-		for (int i = 0; i < R; i++) {
-			Arrays.fill(answerMatrix[i], '.');
-		}
-
-		answerMatrix[mainRobotPos.row][mainRobotPos.col] = 'I';
-		for (Pos crazyRobotPos : crazyRobotPosMap.keySet()) {
-			answerMatrix[crazyRobotPos.row][crazyRobotPos.col] = 'R';
-		}
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < R; i++) {
-			for (int j = 0; j < C; j++) {
-				sb.append(answerMatrix[i][j]);
-			}
-			sb.append("\n");
-		}
-
-		System.out.println(sb.toString().substring(0, sb.length() - 1));
+		System.out.println(answer);
 	}
 
-	public static Pos moveCrazyRobot(Pos crazyRobotPos) {
-		Pos bestMovedPos = crazyRobotPos;
-		int minDistance = crazyRobotPos.calcDistance(mainRobotPos);
+	public static List<Pos> getPoolPosList(int wallHeight) {
+		int[][] poolMatrix = new int[N][M];
+		int[][] wallMatrix = new int[N][M];
+		int[][] edgeMatrix = new int[N][M];
 
-		for (Pos direction : directions) {
-			Pos movedPos = crazyRobotPos.addPos(direction);
-			if (!movedPos.isValidIndex()) { continue; }
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (mainMatrix[i][j] >= wallHeight) {
+					wallMatrix[i][j] = 1;
+				}
+			}
+		}
 
-			if (movedPos.calcDistance(mainRobotPos) < minDistance) {
-				bestMovedPos = movedPos;
-				minDistance = movedPos.calcDistance(mainRobotPos);
+		Deque<Pos> edgeQueue = new ArrayDeque<>();
+		for (int i = 0; i < N; i++) {
+			if (wallMatrix[i][0] == 0) {
+				edgeQueue.add(new Pos(i, 0));
+			}
+
+			if (wallMatrix[i][M - 1] == 0) {
+				edgeQueue.add(new Pos(i, M - 1));
+			}
+		}
+
+		for (int j = 1; j < M - 1; j++) {
+			if (wallMatrix[0][j] == 0) {
+				edgeQueue.add(new Pos(0, j));
+			}
+
+			if (wallMatrix[N - 1][j] == 0) {
+				edgeQueue.add(new Pos(N - 1, j));
+			}
+		}
+
+		while (!edgeQueue.isEmpty()) {
+			Pos curPos = edgeQueue.pollFirst();
+			if (edgeMatrix[curPos.row][curPos.col] == 1) { continue; }
+			edgeMatrix[curPos.row][curPos.col] = 1;
+
+			for (Pos direction : directions) {
+				Pos movedPos = curPos.addPos(direction);
+				if (!movedPos.isValidIndex()) { continue; }
+				if (wallMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+				if (edgeMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+
+				edgeQueue.add(movedPos);
+			}
+		}
+
+		List<Pos> poolPosList = new ArrayList<>();
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (wallMatrix[i][j] == 1) { continue; }
+				if (edgeMatrix[i][j] == 1) { continue; }
+
+				poolMatrix[i][j] = 1;
+				poolPosList.add(new Pos(i, j));
 			}
 		}
 
 
-		return bestMovedPos;
+
+		return poolPosList;
 	}
+
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		R = Integer.parseInt(st.nextToken());
-		C = Integer.parseInt(st.nextToken());
-		mainMatrix = new char[R][C];
-		crazyRobotPosMap = new HashMap<>();
+		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
 
-		for (int i = 0; i < R; i++) {
+		mainMatrix = new int[N][M];
+		for (int i = 0; i < N; i++) {
 			st = new StringTokenizer(br.readLine());
 			String string = st.nextToken();
-
-			for (int j = 0; j < C; j++) {
-				mainMatrix[i][j] = string.charAt(j);
-
-				if (mainMatrix[i][j] == 'I') {
-					mainRobotPos = new Pos(i, j);
-				}
-
-				if (mainMatrix[i][j] == 'R') {
-					crazyRobotPosMap.put(new Pos(i, j), crazyRobotPosMap.getOrDefault(new Pos(i, j), 0) + 1);
-				}
+			for (int j = 0; j < M; j++) {
+				mainMatrix[i][j] = Character.getNumericValue(string.charAt(j));
 			}
 		}
-
-
-		st = new StringTokenizer(br.readLine());
-		String string = st.nextToken();
-
-		commandList = new int[string.length()];
-		for (int i = 0; i < string.length(); i++) {
-			commandList[i] = Character.getNumericValue(string.charAt(i)) - 1;
-		}
-
 	}
 }
