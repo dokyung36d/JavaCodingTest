@@ -6,8 +6,77 @@ import java.io.*;
 
 public class Main {
 	static int N, M;
-	static Map<Integer, List<Integer>> friendMap, enemyMap;
-	static int[] parentList;
+	static char[][] mainMatrix;
+	static Pos startPos, destPos;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+
+	public static class Pos {
+		int row;
+		int col;
+
+		public Pos(int row, int col) {
+			this.row = row;
+			this.col = col;
+		}
+
+		public Pos addPos(Pos direction) {
+			return new Pos(this.row + direction.row, this.col + direction.col);
+		}
+
+		public boolean isValidIndex() {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
+				return false;
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+			Pos anotherPos = (Pos) obj;
+
+			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.row, this.col);
+		}
+	}
+
+	public static class Node implements Comparable<Node> {
+		Pos curPos;
+		int directionIndex;
+		int numRotate;
+
+		public Node(Pos curPos, int directionIndex, int numRotate) {
+			this.curPos = curPos;
+			this.directionIndex = directionIndex;
+			this.numRotate = numRotate;
+		}
+
+		public List<Node> getNearNode() {
+			List<Node> nearNodeList = new ArrayList<>();
+
+			nearNodeList.add(new Node(this.curPos.addPos(directions[directionIndex]), this.directionIndex, this.numRotate));
+
+			int leftDirectionIndex = (this.directionIndex + 1) % 4;
+			nearNodeList.add(new Node(this.curPos.addPos(directions[leftDirectionIndex]), leftDirectionIndex, this.numRotate + 1));
+
+			int rightDirectionIndex = (this.directionIndex + 3) % 4;
+			nearNodeList.add(new Node(this.curPos.addPos(directions[rightDirectionIndex]), rightDirectionIndex, this.numRotate + 1));
+
+			return nearNodeList;
+		}
+
+		@Override
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.numRotate, anotherNode.numRotate);
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,95 +84,60 @@ public class Main {
 	}
 
 	public static void solution() {
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < enemyMap.get(i).size(); j++) {
-				for (int k = j + 1; k < enemyMap.get(i).size(); k++) {
-					int enemy1 = enemyMap.get(i).get(j);
-					int enemy2 = enemyMap.get(i).get(k);
+		int[][][] visited = new int[N][M][4];
 
-					friendMap.get(enemy1).add(enemy2);
-					friendMap.get(enemy2).add(enemy1);
-				}
+		PriorityQueue<Node> pq = new PriorityQueue<>();
+		for (int i = 0; i < 4; i++) {
+			pq.add(new Node(startPos, i, 0));
+		}
+
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
+			if (visited[node.curPos.row][node.curPos.col][node.directionIndex] == 1) { continue; }
+			visited[node.curPos.row][node.curPos.col][node.directionIndex] = 1;
+
+			if (node.curPos.equals(destPos)) {
+				System.out.println(node.numRotate);
+				return;
+			}
+
+			List<Node> nearNodeList = node.getNearNode();
+			for (Node nearNode : nearNodeList) {
+				if (!nearNode.curPos.isValidIndex()) { continue; }
+				if (mainMatrix[nearNode.curPos.row][nearNode.curPos.col] == '*') { continue; }
+				if (visited[nearNode.curPos.row][nearNode.curPos.col][nearNode.directionIndex] == 1) { continue; }
+
+				pq.add(nearNode);
 			}
 		}
 
-
-		for (int i = 0; i < N; i++) {
-			for (int friend : friendMap.get(i)) {
-				int iParent = findParent(i);
-				int friendParent = findParent(friend);
-
-				if (iParent != friendParent) {
-					union(iParent, friendParent);
-				}
-			}
-		}
-
-
-		Map<Integer, Integer> parentMap = new HashMap<>();
-		for (int i = 0; i < N; i++) {
-			int parent = parentList[i];
-			if (parentMap.get(parent) == null) {
-				parentMap.put(parent, 1);
-			}
-		}
-
-
-		System.out.println(parentMap.keySet().size());
-	}
-
-	public static void union(int num1, int num2) {
-		int num1Parent = findParent(num1);
-		int num2Parent = findParent(num2);
-
-		if (num1Parent != num2Parent) {
-			parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
-		}
-	}
-
-	public static int findParent(int num) {
-		if (parentList[num] == num) { return num; }
-
-		return parentList[num] = findParent(parentList[num]);
+		return;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
+
+		M = Integer.parseInt(st.nextToken());
 		N = Integer.parseInt(st.nextToken());
 
-		st = new StringTokenizer(br.readLine());
-		M = Integer.parseInt(st.nextToken());
-
-		friendMap = new HashMap<>();
-		enemyMap = new HashMap<>();
+		mainMatrix = new char[N][M];
 		for (int i = 0; i < N; i++) {
-			friendMap.put(i, new ArrayList<>());
-			enemyMap.put(i, new ArrayList<>());
-		}
-
-
-		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
-			String relationship = st.nextToken();
+			String string = st.nextToken();
+			for (int j = 0; j < M; j++) {
+				mainMatrix[i][j] = string.charAt(j);
 
-			int node1 = Integer.parseInt(st.nextToken()) - 1;
-			int node2 = Integer.parseInt(st.nextToken()) - 1;
+				if (mainMatrix[i][j] == 'C' && startPos == null) {
+					startPos = new Pos(i, j);
+					mainMatrix[i][j] = '.';
+				}
 
-			if (relationship.equals("F")) {
-				friendMap.get(node1).add(node2);
-				friendMap.get(node2).add(node1);
+				if (mainMatrix[i][j] == 'C' && startPos != null) {
+					destPos = new Pos(i, j);
+					mainMatrix[i][j] = '.';
+				}
 			}
-
-			else {
-				enemyMap.get(node1).add(node2);
-				enemyMap.get(node2).add(node1);
-			}
-		}
-
-		parentList = new int[N];
-		for (int i = 0; i < N; i++) {
-			parentList[i] = i;
 		}
 	}
 }
