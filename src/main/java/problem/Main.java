@@ -6,30 +6,8 @@ import java.io.*;
 
 public class Main {
 	static int N, M;
-	static int[][] mainMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-
-	public static class Pos {
-		int row;
-		int col;
-
-		public Pos(int row, int col) {
-			this.row = row;
-			this.col = col;
-		}
-
-		public Pos addPos(Pos direction) {
-			return new Pos(this.row + direction.row, this.col + direction.col);
-		}
-
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-				return false;
-			}
-
-			return true;
-		}
-	}
+	static Map<Integer, List<Integer>> friendMap, enemyMap;
+	static int[] parentList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -37,102 +15,95 @@ public class Main {
 	}
 
 	public static void solution() {
-		int answer = 0;
-
-
-		for (int wallHeight = 9; wallHeight >= 1; wallHeight--) {
-			List<Pos> poolPosList = getPoolPosList(wallHeight);
-
-			for (Pos poolPos : poolPosList) {
-				answer += wallHeight - mainMatrix[poolPos.row][poolPos.col];
-				mainMatrix[poolPos.row][poolPos.col] = wallHeight;
-			}
-		}
-
-
-		System.out.println(answer);
-	}
-
-	public static List<Pos> getPoolPosList(int wallHeight) {
-		int[][] poolMatrix = new int[N][M];
-		int[][] wallMatrix = new int[N][M];
-		int[][] edgeMatrix = new int[N][M];
-
 		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] >= wallHeight) {
-					wallMatrix[i][j] = 1;
+			for (int j = 0; j < enemyMap.get(i).size(); j++) {
+				for (int k = j + 1; k < enemyMap.get(i).size(); k++) {
+					int enemy1 = enemyMap.get(i).get(j);
+					int enemy2 = enemyMap.get(i).get(k);
+
+					friendMap.get(enemy1).add(enemy2);
+					friendMap.get(enemy2).add(enemy1);
 				}
 			}
 		}
 
-		Deque<Pos> edgeQueue = new ArrayDeque<>();
+
 		for (int i = 0; i < N; i++) {
-			if (wallMatrix[i][0] == 0) {
-				edgeQueue.add(new Pos(i, 0));
-			}
+			for (int friend : friendMap.get(i)) {
+				int iParent = findParent(i);
+				int friendParent = findParent(friend);
 
-			if (wallMatrix[i][M - 1] == 0) {
-				edgeQueue.add(new Pos(i, M - 1));
-			}
-		}
-
-		for (int j = 1; j < M - 1; j++) {
-			if (wallMatrix[0][j] == 0) {
-				edgeQueue.add(new Pos(0, j));
-			}
-
-			if (wallMatrix[N - 1][j] == 0) {
-				edgeQueue.add(new Pos(N - 1, j));
+				if (iParent != friendParent) {
+					union(iParent, friendParent);
+				}
 			}
 		}
 
-		while (!edgeQueue.isEmpty()) {
-			Pos curPos = edgeQueue.pollFirst();
-			if (edgeMatrix[curPos.row][curPos.col] == 1) { continue; }
-			edgeMatrix[curPos.row][curPos.col] = 1;
 
-			for (Pos direction : directions) {
-				Pos movedPos = curPos.addPos(direction);
-				if (!movedPos.isValidIndex()) { continue; }
-				if (wallMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-				if (edgeMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-				edgeQueue.add(movedPos);
-			}
-		}
-
-		List<Pos> poolPosList = new ArrayList<>();
+		Map<Integer, Integer> parentMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (wallMatrix[i][j] == 1) { continue; }
-				if (edgeMatrix[i][j] == 1) { continue; }
-
-				poolMatrix[i][j] = 1;
-				poolPosList.add(new Pos(i, j));
+			int parent = parentList[i];
+			if (parentMap.get(parent) == null) {
+				parentMap.put(parent, 1);
 			}
 		}
 
 
-
-		return poolPosList;
+		System.out.println(parentMap.keySet().size());
 	}
 
+	public static void union(int num1, int num2) {
+		int num1Parent = findParent(num1);
+		int num2Parent = findParent(num2);
+
+		if (num1Parent != num2Parent) {
+			parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+		}
+	}
+
+	public static int findParent(int num) {
+		if (parentList[num] == num) { return num; }
+
+		return parentList[num] = findParent(parentList[num]);
+	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
-
 		N = Integer.parseInt(st.nextToken());
+
+		st = new StringTokenizer(br.readLine());
 		M = Integer.parseInt(st.nextToken());
 
-		mainMatrix = new int[N][M];
+		friendMap = new HashMap<>();
+		enemyMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
+			friendMap.put(i, new ArrayList<>());
+			enemyMap.put(i, new ArrayList<>());
+		}
+
+
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
-			String string = st.nextToken();
-			for (int j = 0; j < M; j++) {
-				mainMatrix[i][j] = Character.getNumericValue(string.charAt(j));
+			String relationship = st.nextToken();
+
+			int node1 = Integer.parseInt(st.nextToken()) - 1;
+			int node2 = Integer.parseInt(st.nextToken()) - 1;
+
+			if (relationship.equals("F")) {
+				friendMap.get(node1).add(node2);
+				friendMap.get(node2).add(node1);
 			}
+
+			else {
+				enemyMap.get(node1).add(node2);
+				enemyMap.get(node2).add(node1);
+			}
+		}
+
+		parentList = new int[N];
+		for (int i = 0; i < N; i++) {
+			parentList[i] = i;
 		}
 	}
 }
