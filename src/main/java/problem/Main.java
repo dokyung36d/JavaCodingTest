@@ -5,23 +5,8 @@ import java.io.*;
 
 
 public class Main {
-	static int N;
-	static int[] bossList, isParent;
-	static Map<Integer, List<Integer>> childMap;
-
-	public static class Node implements Comparable<Node> {
-		int curNum;
-		int time;
-
-		public Node(int curNum, int time) {
-			this.curNum = curNum;
-			this.time = time;
-		}
-
-		public int compareTo(Node anotherNode) {
-			return Integer.compare(-this.time, -anotherNode.time);
-		}
-	}
+	static int N, M, H;
+	static Map<Integer, List<Integer>> giftMap;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -29,49 +14,23 @@ public class Main {
 	}
 
 	public static void solution() {
-		if (N == 1) {
-			System.out.println(0);
-			return;
-		}
-		boolean result = doesChildHaveChild(1);
-		int answer = recursive(0);
-		System.out.println(answer);
-	}
+		int[][] dpMatrix = new int[N + 1][H + 1];
+		dpMatrix[0][0] = 1;
 
-	public static int recursive(int parentNum) {
-		if (!doesChildHaveChild(parentNum)) {
-			return childMap.get(parentNum).size();
-		}
+		for (int i = 1; i <= N; i++) {
+			dpMatrix[i] = Arrays.copyOf(dpMatrix[i - 1], H + 1);
+			for (int j = 1; j <= H; j++) {
+				for (int gift : giftMap.get(i)) {
+					if (gift > j) { continue; }
+					dpMatrix[i][j] += dpMatrix[i - 1][j - gift];
+				}
 
-		int maxTime = 0;
-		PriorityQueue<Node> pq = new PriorityQueue<>();
-		for (int child : childMap.get(parentNum)) {
-			pq.add(new Node(child, recursive(child)));
-		}
-
-		int calledTime = 0;
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
-			calledTime += 1;
-
-			maxTime = Math.max(maxTime, calledTime + node.time);
-
-		}
-
-
-		return maxTime;
-	}
-
-	public static boolean doesChildHaveChild(int parentNum) {
-		List<Integer> childList = childMap.get(parentNum);
-
-		for (int child : childList) {
-			if (isParent[child] == 1) {
-				return true;
+				dpMatrix[i][j] = dpMatrix[i][j] % 10007;
 			}
+
 		}
 
-		return false;
+		System.out.println(dpMatrix[N][H]);
 	}
 
 	public static void init() throws IOException {
@@ -79,22 +38,22 @@ public class Main {
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		bossList = new int[N];
-		isParent = new int[N];
+		M = Integer.parseInt(st.nextToken());
+		H = Integer.parseInt(st.nextToken());
 
-		childMap = new HashMap<>();
+		giftMap = new HashMap<>();
 		for (int i = 0; i < N; i++) {
-			childMap.put(i, new ArrayList<>());
+			giftMap.put(i + 1, new ArrayList<>());
 		}
 
-		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			bossList[i] = Integer.parseInt(st.nextToken());
+			st = new StringTokenizer(br.readLine());
 
-			if (i != 0) {
-				isParent[bossList[i]] = 1;
-				childMap.get(bossList[i]).add(i);
+			while (st.hasMoreTokens()) {
+				int blockHeight = Integer.parseInt(st.nextToken());
+				giftMap.get(i + 1).add(blockHeight);
 			}
 		}
+
 	}
 }
