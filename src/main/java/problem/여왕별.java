@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 여왕별 {
     static int M, N;
     static int[][] mainMatrix;
     static int[][] commandMatrix;
