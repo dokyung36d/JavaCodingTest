@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 스티커붙이기 {
     static int N, M, K;
     static int[][] mainMatrix;
     static List<Integer[][]> stickerList;
