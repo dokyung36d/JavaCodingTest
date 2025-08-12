@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 컬러볼 {
     static int N;
     static Map<Integer, Integer> cumulativeSumMap;
     static PriorityQueue<Node> pq;
