@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 거짓말 {
     static int N, M;
     static Map<Integer, List<Integer>> humanPartyMap, partyHumanMap, partyPartyGraphMap;
     static Deque<Integer> truthHumanQueue;
@@ -26,12 +26,12 @@ public class Main {
             PartyEdge anotherPartyEdge = (PartyEdge) obj;
             if (this.party1 == anotherPartyEdge.party1 && this.party2 == anotherPartyEdge.party2) { return true; }
             return false;
-         }
+        }
 
-         @Override
+        @Override
         public int hashCode() {
             return Objects.hash(this.party1, this.party2);
-         }
+        }
     }
 
     public static void main(String[] args) throws Exception {
