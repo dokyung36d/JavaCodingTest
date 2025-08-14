@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 저울 {
     static int N, M;
     static Map<Edge, Integer> edgeMap;
     static int[][] distanceMatrix;
