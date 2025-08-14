@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 택배 {
     static int N, C, M;
     static PriorityQueue<Node> pq;
     static int[] capacityList;
