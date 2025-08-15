@@ -4,10 +4,10 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 미생물연구 {
     static int N, Q;
     static RCPos[] rcDirections = {new RCPos(-1, 0), new RCPos(0, 1),
-                                    new RCPos(1, 0), new RCPos(0, - 1)};
+            new RCPos(1, 0), new RCPos(0, - 1)};
     static XYPos[] xyDirections = {new XYPos(-1, 0), new XYPos(0, 1),
             new XYPos(1, 0), new XYPos(0, - 1)};
     static int[][] mainMatrix;
