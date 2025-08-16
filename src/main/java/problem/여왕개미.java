@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 여왕개미 {
     static int Q, N;
     static List<House> houseList;
     static int[][] commandList;
