@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 민트초코유유 {
     public static int N, T;
     public static int[][] colorMatrix;
     public static int[][] powerMatrix;
