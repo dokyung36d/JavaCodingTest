@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 컵라면 {
     static int N;
     static PriorityQueue<CupNoodle> pq;
     static int[] parentList;
