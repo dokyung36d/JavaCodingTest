@@ -3,7 +3,7 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class Main {
+public class 개구리의여행 {
     static int N, Q;
     static char[][] mainMatrix;
     static Pos[][] commands;
