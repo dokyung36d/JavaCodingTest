@@ -4,13 +4,10 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int N, M, F;
-    static int[][] floorMatrix, columnMatrix;
-    static Pos[] directions = {new Pos(0, 1), new Pos(0, -1), new Pos(1, 0), new Pos(-1, 0)};
-    static Pos columnStartPos, columnDestPos;
-    static Pos floorStartPos, floorDestPos;
-    static Pos topLeftColumnBottomPos;
-    static List<Fire> fireList;
+    static int R, C, K;
+    static int[][] mainMatrix, jumpMatrix;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static Golem[] golemList;
 
     public static class Pos {
         int row;
@@ -25,97 +22,94 @@ public class Main {
             return new Pos(this.row + direction.row, this.col + direction.col);
         }
 
-        public Pos moveInColumnMatrix(Pos direction) {
-            Pos movedPos = this.addPos(direction);
-
-            if (0 <= movedPos.row && movedPos.row < M && 0 <= movedPos.col && movedPos.col < M) {
-                return new Pos(this.col, this.row);
-            }
-
-            if (2 * M <= movedPos.row && movedPos.row < 3 * M && 2 * M <= movedPos.col && movedPos.col < 3 * M) {
-                return new Pos(this.col, this.row);
-            }
-
-            if (0 <= movedPos.row && movedPos.row < M && 2 * M <= movedPos.col && movedPos.col < 3 * M) {
-                return new Pos(3 * M - this.col - 1, 3 * M - this.row - 1);
-            }
-
-            if (2 * M <= movedPos.row && movedPos.row < 3 * M && 0 <= movedPos.col && movedPos.col < M) {
-                return new Pos(3 * M - this.col - 1, 3 * M - this.row - 1);
-            }
-
-            return movedPos;
-        }
-
-        public boolean isValidIndexInFloor() {
-            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
+        public boolean isValidIndex() {
+            if (this.row < 0 || this.row >= R + 3 || this.col < 0 || this.col >= C) {
                 return false;
             }
 
             return true;
         }
 
-        public boolean isValidIndexInColumn() {
-            if (this.row < 0 || this.row >= 3 * M || this.col < 0 || this.col >= 3 * M) {
-                return false;
+        public boolean canGolemFit() {
+            if (!this.isValidIndex()) { return false; }
+            if (mainMatrix[this.row][this.col] != 0) { return false; }
+
+            for (Pos direction : directions) {
+                Pos movedPos = this.addPos(direction);
+                if (!movedPos.isValidIndex()) { return false; }
+                if (mainMatrix[movedPos.row][movedPos.col] != 0) { return false; }
             }
 
             return true;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.row, this.col);
         }
     }
 
-    public static class Fire {
-        Pos curPos;
-        int cycle;
-        int remainTime;
+    public static class Golem {
+        Pos centerPos;
+        int uniqueNum;
         int directionIndex;
 
-        public Fire(Pos curPos, int cycle, int remainTime, int directionIndex) {
-            this.curPos = curPos;
-            this.cycle = cycle;
-            this.remainTime = remainTime;
+        public Golem(Pos centerPos, int uniqueNum, int directionIndex) {
+            this.centerPos = centerPos;
+            this.uniqueNum = uniqueNum;
             this.directionIndex = directionIndex;
         }
 
-        public Fire advance() {
-            if (this.remainTime == 1) {
-                Pos movedPos = this.curPos.addPos(directions[directionIndex]);
-                if (!movedPos.isValidIndexInFloor()) { return null; }
-                if (floorMatrix[movedPos.row][movedPos.col] == 1) { return null; }
-                if (floorMatrix[movedPos.row][movedPos.col] == 3) { return null; }
-                if (movedPos.equals(floorDestPos)) { return null; }
-
-                floorMatrix[movedPos.row][movedPos.col] = 2;
-                return new Fire(movedPos, cycle, cycle, this.directionIndex);
+        public Golem move() {
+            Golem downGolem = this.goDown();
+            if (downGolem != null) {
+                return downGolem;
             }
 
-            return new Fire(this.curPos, this.cycle, this.remainTime - 1, this.directionIndex);
+            Golem leftDownGolem = this.goLeft();
+            if (leftDownGolem != null) {
+                return leftDownGolem;
+            }
+
+            Golem rightDownGolem = this.goRight();
+            if (rightDownGolem != null) {
+                return rightDownGolem;
+            }
+
+            return null;
         }
-    }
 
-    public static class Node {
-        Pos curPos;
-        int depth;
+        public Golem goDown() {
+            Pos downPos = this.centerPos.addPos(directions[2]);
+            if (!downPos.canGolemFit()) { return null; }
 
-        public Node(Pos curPos, int depth) {
-            this.curPos = curPos;
-            this.depth = depth;
+            return new Golem(downPos, this.uniqueNum, this.directionIndex);
+        }
+
+        public Golem goLeft() {
+            Pos leftPos = this.centerPos.addPos(directions[3]);
+            if (!leftPos.canGolemFit()) { return null; }
+
+            Pos leftDownPos = leftPos.addPos(directions[2]);
+            if (!leftDownPos.canGolemFit()) { return null; }
+
+            return new Golem(leftDownPos, this.uniqueNum, (this.directionIndex + 3) % 4);
+        }
+
+        public Golem goRight() {
+            Pos rightPos = this.centerPos.addPos(directions[1]);
+            if (!rightPos.canGolemFit()) { return null; }
+
+            Pos rightDownPos = rightPos.addPos(directions[2]);
+            if (!rightDownPos.canGolemFit()) { return null; }
+
+            return new Golem(rightDownPos, this.uniqueNum, (this.directionIndex + 1) % 4);
+        }
+
+        public void applyToMainMatrix() {
+            for (Pos direction : directions) {
+                Pos movedPos = this.centerPos.addPos(direction);
+                mainMatrix[movedPos.row][movedPos.col] = this.uniqueNum;
+            }
+            mainMatrix[this.centerPos.row][this.centerPos.col] = this.uniqueNum;
+
+            Pos jumpPos = this.centerPos.addPos(directions[this.directionIndex]);
+            jumpMatrix[jumpPos.row][jumpPos.col] = 1;
         }
     }
 
@@ -125,266 +119,85 @@ public class Main {
     }
 
     public static void solution() {
-        Pos pos = new Pos(8, 5);
-        Pos movedPos = pos.moveInColumnMatrix(new Pos(0, 1));
+        int answer = 0;
 
-        int depthInColumn = bfsInColumn();
-        advanceAllFire();
-        if (depthInColumn == -1 || floorMatrix[floorStartPos.row][floorStartPos.col] == 2) {
-            System.out.println(-1);
-            return;
-        }
-        int depthInFloor = bfsInFloor();
-        if (depthInFloor == -1) {
-            System.out.println(-1);
-            return;
+        for (Golem golem : golemList) {
+            while (true) {
+                Golem movedGolem = golem.move();
+                if (movedGolem == null) { break; }
+
+                golem = movedGolem;
+            }
+
+
+            if (golem.centerPos.row <= 3) {
+                initMatrix();
+                continue;
+            }
+
+            golem.applyToMainMatrix();
+            answer += getScore(golem);
         }
 
-        System.out.println(depthInColumn + 1 + depthInFloor);
+        System.out.println(answer);
     }
 
-    public static int bfsInFloor() {
-        Deque<Node> queue = new ArrayDeque<>();
-        int[][] visited = new int[N][N];
-        int maxDepth = 0;
+    public static int getScore(Golem golem) {
+        int maxRow = 0;
 
-        queue.add(new Node(floorStartPos, 0));
-        while (!queue.isEmpty()) {
-            Node node = queue.pollFirst();
-            if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
-            visited[node.curPos.row][node.curPos.col] = 1;
-
-            if (node.depth > maxDepth) {
-                advanceAllFire();
-                maxDepth = node.depth;
-            }
-            if (floorMatrix[node.curPos.row][node.curPos.col] == 2) { continue; }
-
-
-            if (node.curPos.equals(floorDestPos)) {
-                return node.depth;
-            }
-
-
-
-            for (Pos direction : directions) {
-                Pos movedPos = node.curPos.addPos(direction);
-                if (!movedPos.isValidIndexInFloor()) { continue; }
-                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-                if (floorMatrix[movedPos.row][movedPos.col] != 0) { continue; }
-
-                queue.addLast(new Node(movedPos, node.depth + 1));
-            }
-        }
-
-        return -1;
-    }
-
-    public static int bfsInColumn() {
-        Deque<Node> queue = new ArrayDeque<>();
-        int[][] visited = new int[3 * M][3 * M];
-        int maxDepth = 0;
-
-        queue.add(new Node(columnStartPos, 0));
+        Pos curPos = golem.centerPos;
+        int[][] visited = new int[R + 3][C];
+        Deque<Pos> queue = new ArrayDeque<>();
+        queue.add(curPos);
 
         while (!queue.isEmpty()) {
-            Node node = queue.pollFirst();
-            if (visited[node.curPos.row][node.curPos.col] == 1) { continue; }
-            visited[node.curPos.row][node.curPos.col] = 1;
+            Pos pos = queue.pollFirst();
+            if (visited[pos.row][pos.col] == 1) { continue; }
+            visited[pos.row][pos.col] = 1;
 
-            if (node.depth > maxDepth) {
-                advanceAllFire();
-                maxDepth = node.depth;
+            if (pos.row > maxRow) {
+                maxRow = pos.row;
             }
-
-            if (node.curPos.equals(columnDestPos)) {
-                return node.depth;
-            }
-
 
             for (Pos direction : directions) {
-                Pos movedPos = node.curPos.moveInColumnMatrix(direction);
-                if (!movedPos.isValidIndexInColumn()) { continue; }
-                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-                if (columnMatrix[movedPos.row][movedPos.col] == 1)  { continue; }
+                Pos movedPos = pos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
 
-
-                queue.addLast(new Node(movedPos, node.depth + 1));
-            }
-
-        }
-
-        return -1;
-    }
-
-    public static void advanceAllFire() {
-        List<Fire> updatedFireList = new ArrayList<>();
-
-        for (Fire fire : fireList) {
-            Fire advancedFire = fire.advance();
-            if (advancedFire == null) { continue; }
-
-            updatedFireList.add(advancedFire);
-        }
-
-        fireList = updatedFireList;
-    }
-
-    public static int[][] rotateNTimes(int[][] matrix, int numRotate) {
-        for (int i = 0; i < numRotate; i++) {
-            matrix = rotateMatrix(matrix);
-        }
-
-        return matrix;
-    }
-
-    public static int[][] rotateMatrix(int[][] matrix) {
-        int[][] rotatedMatrix = new int[matrix.length][matrix.length];
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix.length; j++) {
-                rotatedMatrix[j][matrix.length - i - 1] = matrix[i][j];
+                if (mainMatrix[pos.row][pos.col] == mainMatrix[movedPos.row][movedPos.col] || jumpMatrix[pos.row][pos.col] == 1) {
+                    queue.add(movedPos);
+                }
             }
         }
 
-        return rotatedMatrix;
+        return maxRow - 2;
     }
 
-    public static void applyToColumnMatrix(Pos topLeftPos, int[][] matrix) {
-        for (int i = 0; i < M; i++) {
-            for (int j = 0; j < M; j++) {
-                Pos curPos = topLeftPos.addPos(new Pos(i, j));
-                columnMatrix[curPos.row][curPos.col] = matrix[i][j];
-            }
-        }
+    public static void initMatrix() {
+        mainMatrix = new int[R + 3][C];
+        jumpMatrix = new int[R + 3][C];
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
         StringTokenizer st = new StringTokenizer(br.readLine());
+        R = Integer.parseInt(st.nextToken());
+        C = Integer.parseInt(st.nextToken());
+        K = Integer.parseInt(st.nextToken());
 
-        N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
-        F = Integer.parseInt(st.nextToken());
+        mainMatrix = new int[R + 3][C];
+        jumpMatrix = new int[R + 3][C];
 
-        floorMatrix = new int[N][N];
-        for (int i = 0; i < N; i++) {
+        golemList = new Golem[K];
+        for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
 
-            for (int j = 0; j < N; j++) {
-                floorMatrix[i][j] = Integer.parseInt(st.nextToken());
-
-                if (floorMatrix[i][j] == 4) {
-                    floorDestPos = new Pos(i, j);
-                    floorMatrix[i][j] = 0;
-                }
-
-                if (floorMatrix[i][j] == 3 && topLeftColumnBottomPos == null) {
-                    topLeftColumnBottomPos = new Pos(i, j);
-                }
-            }
-        }
-
-        for (int i = 0; i < M; i++) {
-            Pos eastPos = new Pos(topLeftColumnBottomPos.row + i, topLeftColumnBottomPos.col - 1);
-            if (floorMatrix[eastPos.row][eastPos.col] == 0) {
-                floorStartPos = eastPos;
-                columnDestPos = new Pos(M + i, 0);
-            }
-
-            Pos westPos = new Pos(topLeftColumnBottomPos.row + i, topLeftColumnBottomPos.col + M);
-            if (floorMatrix[westPos.row][westPos.col] == 0) {
-                floorStartPos = westPos;
-                columnDestPos = new Pos(M + i, 3 * M - 1);
-            }
-
-            Pos southPos = new Pos(topLeftColumnBottomPos.row + M, topLeftColumnBottomPos.col + i);
-            if (floorMatrix[southPos.row][southPos.col] == 0) {
-                floorStartPos = southPos;
-                columnDestPos = new Pos(3 * M - 1, M + i);
-            }
-
-            Pos northPos = new Pos(topLeftColumnBottomPos.row - 1, topLeftColumnBottomPos.col + i);
-            if (floorMatrix[northPos.row][northPos.col] == 0) {
-                floorStartPos = northPos;
-                columnDestPos = new Pos(0, M + i);
-            }
-        }
-
-
-
-        columnMatrix = new int[3 * M][3 * M];
-
-        int[][] eastMatrix = new int[M][M];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                eastMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-        eastMatrix = rotateNTimes(eastMatrix, 3);
-        applyToColumnMatrix(new Pos(M, 2 * M), eastMatrix);
-
-
-        int[][] westMatrix = new int[M][M];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                westMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-        westMatrix = rotateNTimes(westMatrix, 1);
-        applyToColumnMatrix(new Pos(M, 0), westMatrix);
-
-
-        int[][] southMatrix = new int[M][M];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                southMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-        southMatrix = rotateNTimes(southMatrix, 0);
-        applyToColumnMatrix(new Pos(2 * M, M), southMatrix);
-
-
-        int[][] northMatrix = new int[M][M];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                northMatrix[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-        northMatrix = rotateNTimes(northMatrix, 2);
-        applyToColumnMatrix(new Pos(0, M), northMatrix);
-
-        int[][] centerMatrix = new int[M][M];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < M; j++) {
-                centerMatrix[i][j] = Integer.parseInt(st.nextToken());
-
-                if (centerMatrix[i][j] == 2) {
-                    columnStartPos = new Pos(M + i, M + j);
-                    centerMatrix[i][j] = 0;
-                }
-            }
-        }
-        centerMatrix = rotateNTimes(centerMatrix, 0);
-        applyToColumnMatrix(new Pos(M, M), centerMatrix);
-
-
-        fireList = new ArrayList<>();
-        for (int i = 0; i < F; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int r = Integer.parseInt(st.nextToken());
-            int c = Integer.parseInt(st.nextToken());
+            int col = Integer.parseInt(st.nextToken()) - 1;
             int directionIndex = Integer.parseInt(st.nextToken());
-            int cycle = Integer.parseInt(st.nextToken());
 
-            fireList.add(new Fire(new Pos(r, c), cycle, cycle, directionIndex));
-            floorMatrix[r][c] = 2;
+            golemList[i] = new Golem(new Pos(1, col), i + 1, directionIndex);
         }
     }
+
 }
