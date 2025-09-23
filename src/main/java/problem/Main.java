@@ -4,12 +4,13 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	static int L, N, Q;
-	static int[][] mainMatrix, soldierMatrix;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-	static Map<Integer, Soldier> soldierMap;
-	static int[][] commands;
-	static int[] initPList;
+	static int N, M, K;
+	static int[][] mainMatrix;
+	static List<Pos> runnerPosList;
+	static Pos exitPos;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, 1), new Pos(0, -1)};
+	static int numTotalMove;
+	
 	
 	public static class Pos {
 		int row;
@@ -24,79 +25,62 @@ public class Main {
 			return new Pos(this.row + direction.row, this.col + direction.col);
 		}
 		
+		public Pos minusPos(Pos direction) {
+			return new Pos(this.row - direction.row, this.col - direction.col);
+		}
+		
 		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= L || this.col < 0 || this.col >= L) {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
 				return false;
 			}
 			
 			return true;
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+			
+			Pos anotherPos = (Pos) obj;
+			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+			return false;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.row, this.col);
+		}
+		
+		public int calcDistance(Pos anotherPos) {
+			return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
+		}
+		
+		public boolean isInBox(Box box) {
+			if (box.topLeftPos.row <= this.row &&
+					this.row < box.topLeftPos.row + box.size && 
+					box.topLeftPos.col <= this.col &&
+					this.col < box.topLeftPos.col + box.size) {
+				return true;
+			}
+			return false;
+		}
+		
+		public Pos getRotatedPosInBox(Box box) {
+			Pos standardPos = this.minusPos(box.topLeftPos);
+			Pos rotatedPos = new Pos(standardPos.col, box.size - standardPos.row - 1);
+			
+			return rotatedPos.addPos(box.topLeftPos);
+		}
 	}
 	
-	public static class Soldier {
-		int pk;
+	public static class Box {
 		Pos topLeftPos;
-		int h;
-		int w;
-		int p;
+		int size;
 		
-		public Soldier(int pk, Pos topLeftPos, int h, int w, int p) {
-			this.pk = pk;
+		public Box(Pos topLeftPos, int size) {
 			this.topLeftPos = topLeftPos;
-			this.h = h;
-			this.w = w;
-			this.p = p;
-		}
-		
-		public void applyToMatrix(int[][] matrix) {
-			for (int i = 0; i < h; i++) {
-				for (int j = 0; j < w; j++) {
-					matrix[topLeftPos.row + i][topLeftPos.col + j] = this.pk;
-				}
-			}
-		}
-		
-		public List<Pos> getSides(int directionIndex) {
-			List<Pos> sideList = new ArrayList<>();
-			
-			if (directionIndex == 0) {
-				for (int j = 0; j < w; j++) {
-					sideList.add(new Pos(topLeftPos.row - 1, topLeftPos.col + j));
-				}
-			}
-			
-			if (directionIndex == 1) {
-				for (int i = 0; i < h; i++) {
-					sideList.add(topLeftPos.addPos(new Pos(i, this.w)));
-				}
-			}
-			
-			if (directionIndex == 2) {
-				for (int j = 0; j < w; j++) {
-					sideList.add(topLeftPos.addPos(new Pos(this.h, j)));
-				}
-			}
-			
-			if (directionIndex == 3) {
-				for (int i = 0; i < h; i++) {
-					sideList.add(topLeftPos.addPos(new Pos(i, -1)));
-				}
-			}
-			
-			return sideList;
-		}
-		
-		public int getDamage() {
-			int damage = 0;
-			for (int i = 0; i < h; i++) {
-				for (int j = 0; j < w; j++) {
-					if (mainMatrix[this.topLeftPos.row + i][this.topLeftPos.col + j] == 1) {
-						damage += 1;
-					}
-				}
-			}
-			
-			return damage;
+			this.size = size;
 		}
 	}
 	
@@ -106,136 +90,175 @@ public class Main {
 	}
 	
 	public static void solution() {
-		for (int i = 0; i < Q; i++) {
-			attack(commands[i]);
-		}
 		
-		
-		int answer = 0;
-		for (int i = 0; i < N; i++) {
-			int pk = i + 1;
-			if (soldierMap.get(pk) == null) { continue; }
+		for (int i = 0; i < K; i++) {
+			allRunnersMove();
 			
-			answer += initPList[i] - soldierMap.get(pk).p;
+			if (runnerPosList.size() == 0) { break; }
+			
+			Box bestBox = getBestBox();
+			int[][] partMatrix = getPartMainMatrix(bestBox);
+			int[][] rotatedMatrix = rotateMatrix(partMatrix);
+			applyToMainMatrix(bestBox, rotatedMatrix);
+			rotateAllPos(bestBox);
+			
+//			System.out.println("hello world");	
 		}
 		
-		System.out.println(answer);
 		
+		StringBuilder sb = new StringBuilder();
+		sb.append(numTotalMove + "\n");
+		sb.append((exitPos.row + 1) + " " + (exitPos.col + 1));
+		
+		System.out.println(sb.toString());
 	}
 	
-	public static void attack(int[] command) {
-		int attackPk = command[0];
-		int directionIndex = command[1];
+	public static void rotateAllPos(Box box) {
+		exitPos = exitPos.getRotatedPosInBox(box);
 		
-		int[][] updatedSoliderMatrix = new int[L][L];
-		int[] attackedList = new int[N];
-	
-		Deque<Integer> queue = new ArrayDeque<>();
-		queue.add(attackPk);
-		
-		if (soldierMap.get(attackPk) == null) { return; }
-		
-		while (!queue.isEmpty()) {
-			int pk = queue.pollFirst();
-			attackedList[pk - 1] = 1;
-			
-			Soldier soldier = soldierMap.get(pk);
-			List<Pos> sidePosList = soldier.getSides(directionIndex);
-			
-			for (Pos pos : sidePosList) {
-				if (!pos.isValidIndex()) { return; }
-				if (mainMatrix[pos.row][pos.col] == 2) { return; }
-				if (soldierMatrix[pos.row][pos.col] == 0) { continue; }
-				if (attackedList[soldierMatrix[pos.row][pos.col] - 1] != 0) { continue; }
-				
-				queue.addLast(soldierMatrix[pos.row][pos.col]);		
+		List<Pos> updatedRunnerPosList = new ArrayList<>();
+		for (Pos runnerPos : runnerPosList) {
+			if (runnerPos.isInBox(box)) {
+				updatedRunnerPosList.add(runnerPos.getRotatedPosInBox(box));
 			}
-		}
-		
-		
-		for (int i = 0; i < N; i++) {
-			if (soldierMap.get(i + 1) == null) { continue; }
-			
-			if (i + 1 == attackPk) {
-				Soldier attackSoldier = soldierMap.get(attackPk);
-				attackSoldier.topLeftPos = attackSoldier.topLeftPos.addPos(directions[directionIndex]);
-				
-				soldierMap.put(attackPk, attackSoldier);
-				attackSoldier.applyToMatrix(updatedSoliderMatrix);
-			}
-			
-			else if (attackedList[i] == 1) {
-				Soldier attackedSoldier = soldierMap.get(i + 1);
-				attackedSoldier.topLeftPos = attackedSoldier.topLeftPos.addPos(directions[directionIndex]);
-				
-				int damage = attackedSoldier.getDamage();
-				attackedSoldier.p -= damage;
-				
-				if (attackedSoldier.p <= 0) {
-					soldierMap.remove(attackedSoldier.pk);
-					continue;
-				}
-				
-				soldierMap.put(attackedSoldier.pk, attackedSoldier);
-				attackedSoldier.applyToMatrix(updatedSoliderMatrix);
-			}
-			
 			else {
-				Soldier soldier = soldierMap.get(i + 1);
-				soldier.applyToMatrix(updatedSoliderMatrix);
+				updatedRunnerPosList.add(runnerPos);
 			}
 		}
 		
-		soldierMatrix = updatedSoliderMatrix;
+		runnerPosList = updatedRunnerPosList;
+	}
+	
+	public static int[][] rotateMatrix(int[][] matrix) {
+		int[][] rotatedMatrix = new int[matrix.length][matrix.length];
+		
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix.length; j++) {
+				int value = matrix[i][j];
+				if (value != 0) {
+					value -= 1;
+				}
+				rotatedMatrix[j][matrix.length - i - 1] = value;
+			}
+		}
+		
+		return rotatedMatrix;
+	}
+	
+	public static int[][] getPartMainMatrix(Box box) {
+		int[][] partMatrix = new int[box.size][box.size];
+		
+		for (int i = 0; i < box.size; i++) {
+			for (int j = 0; j < box.size; j++) {
+				partMatrix[i][j] = mainMatrix[box.topLeftPos.row + i][box.topLeftPos.col + j];
+			}
+		}
+		
+		return partMatrix;
+	}
+	
+	public static void applyToMainMatrix(Box box, int[][] matrix) {
+		for (int i = 0; i < box.size; i++) {
+			for (int j = 0; j < box.size; j++) {
+				mainMatrix[box.topLeftPos.row + i][box.topLeftPos.col + j] = matrix[i][j];
+			}
+		}
+	}
+	
+	public static Box getBestBox() {
+		for (int size = 1; size <= N; size++) {
+			for (int row = 0; row + size <= N; row++) {
+				for (int col = 0; col + size <= N; col++) {
+					Box box = new Box(new Pos(row, col), size);
+					if (isBoxFit(box)) { return box; }
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	public static boolean isBoxFit(Box box) {
+		if (!exitPos.isInBox(box)) {
+			return false;
+		}
+		
+		for (Pos runnerPos : runnerPosList) {
+			if (runnerPos.isInBox(box)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public static void allRunnersMove() {
+		List<Pos> updatedRunnerPosList = new ArrayList<>();
+		for (Pos runnerPos : runnerPosList) {
+			int prevDistance = runnerPos.calcDistance(exitPos);
+			int flag = 0;
+			
+			for (Pos direction : directions) {
+				Pos movedPos = runnerPos.addPos(direction);
+				if (!movedPos.isValidIndex()) { continue; }
+				if (mainMatrix[movedPos.row][movedPos.col] != 0) { continue; }
+				
+				int distance = movedPos.calcDistance(exitPos);
+				if (distance >= prevDistance) { continue; }
+				
+				numTotalMove += 1;
+				flag = 1;
+				if (movedPos.equals(exitPos)) {
+					break;
+				}
+				updatedRunnerPosList.add(movedPos);
+				break;
+			}
+			
+			if (flag == 0) {
+				updatedRunnerPosList.add(runnerPos);
+			}
+		}
+		
+		runnerPosList = updatedRunnerPosList;
 	}
 	
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		
-		L = Integer.parseInt(st.nextToken());
 		N = Integer.parseInt(st.nextToken());
-		Q = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
+		K = Integer.parseInt(st.nextToken());
 		
-		mainMatrix = new int[L][L];
-		soldierMatrix = new int[L][L];
-		for (int i = 0; i < L; i++) {
+		
+		mainMatrix = new int[N][N];
+		for (int i = 0; i < N; i++) {
 			st = new StringTokenizer(br.readLine());
-			
-			for (int j = 0; j < L; j++) {
+			for (int j = 0; j < N; j++) {
 				mainMatrix[i][j] = Integer.parseInt(st.nextToken());
 			}
 		}
 		
 		
-		soldierMap = new HashMap<>();
-		initPList = new int[N];
-		for (int i = 0; i < N; i++) {
+		runnerPosList = new ArrayList<>();
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 			
 			int row = Integer.parseInt(st.nextToken()) - 1;
 			int col = Integer.parseInt(st.nextToken()) - 1;
-			int h = Integer.parseInt(st.nextToken());
-			int w = Integer.parseInt(st.nextToken());
-			int p = Integer.parseInt(st.nextToken());
 			
-			Soldier soldier = new Soldier(i + 1, new Pos(row, col), h, w, p);
-			soldierMap.put(i + 1, soldier);
-			soldier.applyToMatrix(soldierMatrix);
-			initPList[i] = p;
+			runnerPosList.add(new Pos(row, col));
 		}
 		
 		
-		commands = new int[Q][2];
-		for (int i = 0; i < Q; i++) {
-			st = new StringTokenizer(br.readLine());
-			
-			int pk = Integer.parseInt(st.nextToken());
-			int directionIndex = Integer.parseInt(st.nextToken());
-			
-			commands[i][0] = pk;
-			commands[i][1] = directionIndex;
-		}
+		st = new StringTokenizer(br.readLine());
+		int row = Integer.parseInt(st.nextToken()) - 1;
+		int col = Integer.parseInt(st.nextToken()) - 1;
+		
+		exitPos = new Pos(row, col);
+		
+		
+		numTotalMove = 0;
 	}
-
 }
