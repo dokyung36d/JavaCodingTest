@@ -6,11 +6,10 @@ import java.io.*;
 public class Main {
 	static int N, M, K;
 	static int[][] mainMatrix;
-	static List<Pos> runnerPosList;
-	static Pos exitPos;
-	static Pos[] directions = {new Pos(-1, 0), new Pos(1, 0), new Pos(0, 1), new Pos(0, -1)};
-	static int numTotalMove;
-	
+	static Tower[][] towerMatrix;
+	static Tower minTower, maxTower;
+	static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0, -1), new Pos(-1, 0)};
+	static int[][] attackMatrix;
 	
 	public static class Pos {
 		int row;
@@ -22,19 +21,15 @@ public class Main {
 		}
 		
 		public Pos addPos(Pos direction) {
-			return new Pos(this.row + direction.row, this.col + direction.col);
+			return new Pos((this.row + direction.row + N) % N, (this.col + direction.col + M) % M);
 		}
 		
-		public Pos minusPos(Pos direction) {
-			return new Pos(this.row - direction.row, this.col - direction.col);
+		public int getPower() {
+			return mainMatrix[this.row][this.col];
 		}
 		
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
-				return false;
-			}
-			
-			return true;
+		public int getSum() {
+			return this.row + this.col;
 		}
 		
 		@Override
@@ -51,36 +46,43 @@ public class Main {
 		public int hashCode() {
 			return Objects.hash(this.row, this.col);
 		}
+	}
+	
+	public static class Tower implements Comparable<Tower> {
+		Pos pos;
+		int lastAttacked;
 		
-		public int calcDistance(Pos anotherPos) {
-			return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
+		
+		public Tower(Pos pos, int lastAttacked) {
+			this.pos = pos;
+			this.lastAttacked = lastAttacked;
 		}
 		
-		public boolean isInBox(Box box) {
-			if (box.topLeftPos.row <= this.row &&
-					this.row < box.topLeftPos.row + box.size && 
-					box.topLeftPos.col <= this.col &&
-					this.col < box.topLeftPos.col + box.size) {
-				return true;
+		@Override
+		public int compareTo(Tower anotherTower) {
+			if (this.pos.getPower() != anotherTower.pos.getPower()) {
+				return Integer.compare(this.pos.getPower(), anotherTower.pos.getPower());
 			}
-			return false;
-		}
-		
-		public Pos getRotatedPosInBox(Box box) {
-			Pos standardPos = this.minusPos(box.topLeftPos);
-			Pos rotatedPos = new Pos(standardPos.col, box.size - standardPos.row - 1);
 			
-			return rotatedPos.addPos(box.topLeftPos);
+			if (this.lastAttacked != anotherTower.lastAttacked) {
+				return Integer.compare(-this.lastAttacked, -anotherTower.lastAttacked);
+			}
+			
+			if (this.pos.getSum() != anotherTower.pos.getSum()) {
+				return Integer.compare(-this.pos.getSum(), -anotherTower.pos.getSum());
+			}
+			
+			return Integer.compare(-this.pos.col, -anotherTower.pos.col);
 		}
 	}
 	
-	public static class Box {
-		Pos topLeftPos;
-		int size;
+	public static class Node {
+		Pos pos;
+		List<Pos> pathList;
 		
-		public Box(Pos topLeftPos, int size) {
-			this.topLeftPos = topLeftPos;
-			this.size = size;
+		public Node(Pos pos, List<Pos> pathList) {
+			this.pos = pos;
+			this.pathList = pathList;
 		}
 	}
 	
@@ -90,175 +92,196 @@ public class Main {
 	}
 	
 	public static void solution() {
-		
-		for (int i = 0; i < K; i++) {
-			allRunnersMove();
+		for (int turn = 1; turn <= K; turn++) {
+			int numTower = getTowerNum();
+			if (numTower <= 1) { break; }
 			
-			if (runnerPosList.size() == 0) { break; }
+			setMinMaxTower();
+			towerMatrix[minTower.pos.row][minTower.pos.col].lastAttacked = turn;
+			mainMatrix[minTower.pos.row][minTower.pos.col] += (N + M);
 			
-			Box bestBox = getBestBox();
-			int[][] partMatrix = getPartMainMatrix(bestBox);
-			int[][] rotatedMatrix = rotateMatrix(partMatrix);
-			applyToMainMatrix(bestBox, rotatedMatrix);
-			rotateAllPos(bestBox);
 			
-//			System.out.println("hello world");	
-		}
-		
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append(numTotalMove + "\n");
-		sb.append((exitPos.row + 1) + " " + (exitPos.col + 1));
-		
-		System.out.println(sb.toString());
-	}
-	
-	public static void rotateAllPos(Box box) {
-		exitPos = exitPos.getRotatedPosInBox(box);
-		
-		List<Pos> updatedRunnerPosList = new ArrayList<>();
-		for (Pos runnerPos : runnerPosList) {
-			if (runnerPos.isInBox(box)) {
-				updatedRunnerPosList.add(runnerPos.getRotatedPosInBox(box));
+			List<Pos> path = getPath();
+			if (path != null) {
+				lazerAttack(minTower.pos, path);
+				setAttackMatrix(path);
 			}
 			else {
-				updatedRunnerPosList.add(runnerPos);
+				List<Pos> attackList = cannonAttack();
+				setAttackMatrix(attackList);
+			}
+			
+			repair();
+		}
+		
+		System.out.println(getMaxValue());
+	}
+	
+	public static int getTowerNum() {
+		int numTower = 0;
+		
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				
+				numTower += 1;
 			}
 		}
 		
-		runnerPosList = updatedRunnerPosList;
+		return numTower;
 	}
 	
-	public static int[][] rotateMatrix(int[][] matrix) {
-		int[][] rotatedMatrix = new int[matrix.length][matrix.length];
+	public static int getMaxValue() {
+		int maxValue = 0;
 		
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix.length; j++) {
-				int value = matrix[i][j];
-				if (value != 0) {
-					value -= 1;
-				}
-				rotatedMatrix[j][matrix.length - i - 1] = value;
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				maxValue = Math.max(maxValue, mainMatrix[i][j]);
 			}
 		}
 		
-		return rotatedMatrix;
+		return maxValue;
 	}
 	
-	public static int[][] getPartMainMatrix(Box box) {
-		int[][] partMatrix = new int[box.size][box.size];
+	public static void lazerAttack(Pos startPos, List<Pos> pathList) {
+		int power = mainMatrix[startPos.row][startPos.col];
 		
-		for (int i = 0; i < box.size; i++) {
-			for (int j = 0; j < box.size; j++) {
-				partMatrix[i][j] = mainMatrix[box.topLeftPos.row + i][box.topLeftPos.col + j];
+		for (int i = 0; i < pathList.size() - 1; i++) {
+			Pos pos = pathList.get(i);
+			mainMatrix[pos.row][pos.col] -= (power / 2);
+		}
+		
+		Pos destPos = pathList.get(pathList.size() - 1);
+		mainMatrix[destPos.row][destPos.col] -= power;
+		
+		convertMinusToZero();
+	}
+	
+	public static List<Pos> cannonAttack() {
+		int power = mainMatrix[minTower.pos.row][minTower.pos.col];
+		
+		Pos destPos = maxTower.pos;
+		List<Pos> attackedList = new ArrayList<>();
+		
+		for (int i = -1; i <= 1; i++) {
+			for (int j = -1; j <= 1; j++) {
+				if (i == 0 && j == 0) { continue; }
+				
+				Pos movedPos = destPos.addPos(new Pos(i, j));
+				if (movedPos.equals(minTower.pos)) { continue; }
+				if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+				mainMatrix[movedPos.row][movedPos.col] -= (power / 2);
+				attackedList.add(movedPos);
 			}
 		}
 		
-		return partMatrix;
+		mainMatrix[destPos.row][destPos.col] -= power;
+		attackedList.add(destPos);
+		convertMinusToZero();
+		
+		return attackedList;
 	}
 	
-	public static void applyToMainMatrix(Box box, int[][] matrix) {
-		for (int i = 0; i < box.size; i++) {
-			for (int j = 0; j < box.size; j++) {
-				mainMatrix[box.topLeftPos.row + i][box.topLeftPos.col + j] = matrix[i][j];
+	public static void repair() {
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				if (attackMatrix[i][j] == 1) { continue; }
+				
+				mainMatrix[i][j] += 1;		
 			}
 		}
 	}
 	
-	public static Box getBestBox() {
-		for (int size = 1; size <= N; size++) {
-			for (int row = 0; row + size <= N; row++) {
-				for (int col = 0; col + size <= N; col++) {
-					Box box = new Box(new Pos(row, col), size);
-					if (isBoxFit(box)) { return box; }
-				}
+	public static void setAttackMatrix(List<Pos> attackedList) {
+		attackMatrix = new int[N][M];
+		
+		attackMatrix[minTower.pos.row][minTower.pos.col] = 1;
+		attackMatrix[maxTower.pos.row][maxTower.pos.col] = 1;
+		
+		for (Pos pos : attackedList) {
+			attackMatrix[pos.row][pos.col] = 1;
+		}
+	}
+	
+	public static void convertMinusToZero() {
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				mainMatrix[i][j] = Math.max(0,  mainMatrix[i][j]);
+			}
+		}
+	}
+	
+	public static List<Pos> getPath() {
+		int[][] visited = new int[N][M];
+		
+		Pos startPos = minTower.pos;
+		Deque<Node> queue = new ArrayDeque<>();
+		queue.addLast(new Node(startPos, new ArrayList<>()));
+		
+		Pos destPos = maxTower.pos;
+		
+		while (!queue.isEmpty()) {
+			Node node = queue.pollFirst();
+			if (visited[node.pos.row][node.pos.col] == 1) { continue; }
+			visited[node.pos.row][node.pos.col] = 1;
+			
+			if (node.pos.equals(destPos)) { return node.pathList; }
+			
+			for (Pos direction : directions) {
+				Pos movedPos = node.pos.addPos(direction);
+				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+				if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+				
+				List<Pos> updatedPosList = new ArrayList<>(node.pathList);
+				updatedPosList.add(movedPos);
+				
+				queue.addLast(new Node(movedPos, updatedPosList));
 			}
 		}
 		
 		return null;
 	}
 	
-	public static boolean isBoxFit(Box box) {
-		if (!exitPos.isInBox(box)) {
-			return false;
-		}
-		
-		for (Pos runnerPos : runnerPosList) {
-			if (runnerPos.isInBox(box)) {
-				return true;
-			}
-		}
-		
-		return false;
-	}
 	
-	public static void allRunnersMove() {
-		List<Pos> updatedRunnerPosList = new ArrayList<>();
-		for (Pos runnerPos : runnerPosList) {
-			int prevDistance = runnerPos.calcDistance(exitPos);
-			int flag = 0;
-			
-			for (Pos direction : directions) {
-				Pos movedPos = runnerPos.addPos(direction);
-				if (!movedPos.isValidIndex()) { continue; }
-				if (mainMatrix[movedPos.row][movedPos.col] != 0) { continue; }
+	
+	public static void setMinMaxTower() {
+		minTower = null;
+		maxTower = null;
+		
+		
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < M; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				Tower tower = towerMatrix[i][j];
 				
-				int distance = movedPos.calcDistance(exitPos);
-				if (distance >= prevDistance) { continue; }
-				
-				numTotalMove += 1;
-				flag = 1;
-				if (movedPos.equals(exitPos)) {
-					break;
+				if (minTower == null || tower.compareTo(minTower) < 0) {
+					minTower = tower;
 				}
-				updatedRunnerPosList.add(movedPos);
-				break;
-			}
-			
-			if (flag == 0) {
-				updatedRunnerPosList.add(runnerPos);
+				
+				if (maxTower == null || tower.compareTo(maxTower) > 0) {
+					maxTower = tower;
+				}
 			}
 		}
-		
-		runnerPosList = updatedRunnerPosList;
 	}
 	
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		
 		StringTokenizer st = new StringTokenizer(br.readLine());
+		
 		N = Integer.parseInt(st.nextToken());
 		M = Integer.parseInt(st.nextToken());
 		K = Integer.parseInt(st.nextToken());
 		
-		
-		mainMatrix = new int[N][N];
+		mainMatrix = new int[N][M];
+		towerMatrix = new Tower[N][M];
 		for (int i = 0; i < N; i++) {
 			st = new StringTokenizer(br.readLine());
-			for (int j = 0; j < N; j++) {
+			for (int j = 0; j < M; j++) {
 				mainMatrix[i][j] = Integer.parseInt(st.nextToken());
+				towerMatrix[i][j] = new Tower(new Pos(i, j), 0);
 			}
 		}
-		
-		
-		runnerPosList = new ArrayList<>();
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-			
-			int row = Integer.parseInt(st.nextToken()) - 1;
-			int col = Integer.parseInt(st.nextToken()) - 1;
-			
-			runnerPosList.add(new Pos(row, col));
-		}
-		
-		
-		st = new StringTokenizer(br.readLine());
-		int row = Integer.parseInt(st.nextToken()) - 1;
-		int col = Integer.parseInt(st.nextToken()) - 1;
-		
-		exitPos = new Pos(row, col);
-		
-		
-		numTotalMove = 0;
 	}
 }
