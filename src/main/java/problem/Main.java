@@ -4,14 +4,28 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	static int N, M, K;
+	static int N, Q;
 	static int[][] mainMatrix;
-	static Tower[][] towerMatrix;
-	static Tower minTower, maxTower;
-	static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0, -1), new Pos(-1, 0)};
-	static int[][] attackMatrix;
+	static Map<Integer, Group> groupMap;
+	static Group[] groupList;
+	static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
 	
-	public static class Pos {
+	public static class XYPos {
+		int x;
+		int y;
+		
+		public XYPos(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+		
+		public Pos convertToPos() {
+			return new Pos(N - this.y - 1, this.x);
+		}
+	}
+	
+	
+	public static class Pos implements Comparable<Pos> {
 		int row;
 		int col;
 		
@@ -21,16 +35,19 @@ public class Main {
 		}
 		
 		public Pos addPos(Pos direction) {
-			return new Pos((this.row + direction.row + N) % N, (this.col + direction.col + M) % M);
+			return new Pos(this.row + direction.row, this.col + direction.col);
 		}
 		
-		public int getPower() {
-			return mainMatrix[this.row][this.col];
+		public Pos minusPos(Pos direction) {
+			return new Pos(this.row - direction.row, this.col - direction.col);
 		}
 		
-		public int getSum() {
-			return this.row + this.col;
+		public boolean isValidIndex() {
+			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) { return false; }
+			
+			return true;
 		}
+		
 		
 		@Override
 		public boolean equals(Object obj) {
@@ -39,6 +56,7 @@ public class Main {
 			
 			Pos anotherPos = (Pos) obj;
 			if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+			
 			return false;
 		}
 		
@@ -46,43 +64,127 @@ public class Main {
 		public int hashCode() {
 			return Objects.hash(this.row, this.col);
 		}
+		
+		@Override
+		public int compareTo(Pos anotherPos) {
+			if (this.row != anotherPos.row) {
+				return Integer.compare(-this.row, -anotherPos.row);
+			}
+			
+			return Integer.compare(this.col, anotherPos.col);
+		}
 	}
 	
-	public static class Tower implements Comparable<Tower> {
-		Pos pos;
-		int lastAttacked;
+	public static class Group implements Comparable<Group> {
+		int pk;
+		Pos downLeftPos;
+		List<Pos> posList;
 		
+		public Group(int pk, Pos downLeftPos, List<Pos> posList) {
+			this.pk = pk;
+			this.downLeftPos = downLeftPos;
+			this.posList = posList;
+		}
 		
-		public Tower(Pos pos, int lastAttacked) {
-			this.pos = pos;
-			this.lastAttacked = lastAttacked;
+		public Group(int pk, Pos downLeftPos, Pos topRightPos) {
+			this.pk = pk;
+			this.downLeftPos = downLeftPos;
+			this.posList = new ArrayList<>();
+			
+			for (int i = downLeftPos.row; i >= topRightPos.row; i--) {
+				for (int j = downLeftPos.col; j <= topRightPos.col; j++) {
+					posList.add(new Pos(i, j));
+				}
+			}
+		}
+		
+		public Group(int pk) {
+			this.pk = pk;
+			this.posList = new ArrayList<>();
 		}
 		
 		@Override
-		public int compareTo(Tower anotherTower) {
-			if (this.pos.getPower() != anotherTower.pos.getPower()) {
-				return Integer.compare(this.pos.getPower(), anotherTower.pos.getPower());
+		public int compareTo(Group anotherGroup) {
+			if (this.posList.size() != anotherGroup.posList.size()) {
+				return Integer.compare(-this.posList.size(), -anotherGroup.posList.size());
 			}
 			
-			if (this.lastAttacked != anotherTower.lastAttacked) {
-				return Integer.compare(-this.lastAttacked, -anotherTower.lastAttacked);
+			return Integer.compare(this.pk, anotherGroup.pk);
+		}
+		
+		public void applyToMatrix(int[][] matrix) {
+			for (Pos pos : this.posList) {
+				matrix[pos.row][pos.col] = this.pk;
+			}
+		}
+		
+		
+		public boolean canFit(Pos movedDownLeftPos, int[][] matrix) {
+			Pos direction = movedDownLeftPos.minusPos(this.downLeftPos);
+			
+			for (Pos pos : this.posList) {
+				Pos movedPos = pos.addPos(direction);
+				if (!movedPos.isValidIndex()) { return false; }
+				if (matrix[movedPos.row][movedPos.col] != 0) { return false; }
 			}
 			
-			if (this.pos.getSum() != anotherTower.pos.getSum()) {
-				return Integer.compare(-this.pos.getSum(), -anotherTower.pos.getSum());
+			return true;
+		}
+		
+		public void move(Pos movedDownLeftPos) {
+			Pos direction = movedDownLeftPos.minusPos(this.downLeftPos);
+			
+			List<Pos> updatedPosList = new ArrayList<>();
+			for (Pos pos : this.posList) {
+				Pos movedPos = pos.addPos(direction);
+				updatedPosList.add(movedPos);
 			}
 			
-			return Integer.compare(-this.pos.col, -anotherTower.pos.col);
+			this.downLeftPos = movedDownLeftPos;
+			this.posList = updatedPosList;
+		}
+		
+		public void addPos(Pos pos) {
+			this.posList.add(pos);
+		}
+		
+		public void setDownLeftPos() {
+			this.downLeftPos = this.posList.get(0);
+			
+			for (int i = 1; i < this.posList.size(); i++) {
+				Pos pos = posList.get(i);
+				if (pos.compareTo(this.downLeftPos) < 0) {
+					this.downLeftPos = pos;
+				}
+			}
 		}
 	}
 	
 	public static class Node {
-		Pos pos;
-		List<Pos> pathList;
+		int pk1;
+		int pk2;
 		
-		public Node(Pos pos, List<Pos> pathList) {
-			this.pos = pos;
-			this.pathList = pathList;
+		public Node(int pk1, int pk2) {
+			this.pk1 = Math.min(pk1, pk2);
+			this.pk2 = Math.max(pk1, pk2);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) { return true; }
+			if (obj == null || this.getClass() != obj.getClass()) { return false; }
+			
+			Node anotherNode = (Node) obj;
+			if (this.pk1 == anotherNode.pk1 && this.pk2 == anotherNode.pk2) {
+				return true;
+			}
+			
+			return false;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.pk1, this.pk2);
 		}
 	}
 	
@@ -92,196 +194,182 @@ public class Main {
 	}
 	
 	public static void solution() {
-		for (int turn = 1; turn <= K; turn++) {
-			int numTower = getTowerNum();
-			if (numTower <= 1) { break; }
-			
-			setMinMaxTower();
-			towerMatrix[minTower.pos.row][minTower.pos.col].lastAttacked = turn;
-			mainMatrix[minTower.pos.row][minTower.pos.col] += (N + M);
-			
-			
-			List<Pos> path = getPath();
-			if (path != null) {
-				lazerAttack(minTower.pos, path);
-				setAttackMatrix(path);
-			}
-			else {
-				List<Pos> attackList = cannonAttack();
-				setAttackMatrix(attackList);
-			}
-			
-			repair();
-		}
+		StringBuilder sb = new StringBuilder();
 		
-		System.out.println(getMaxValue());
-	}
-	
-	public static int getTowerNum() {
-		int numTower = 0;
-		
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] == 0) { continue; }
+		for (Group group : groupList) {
+			group.applyToMatrix(mainMatrix);
+			updateGroupMap();
+			
+			checkGroupsDivided();
+			updateGroupMap();
+			
+			int[][] updatedMainMatrix = new int[N][N];
+			
+			List<Group> curGroupList = new ArrayList<>();
+			for (int pk : groupMap.keySet()) {
+				curGroupList.add(groupMap.get(pk));
+			}
+			Collections.sort(curGroupList);
+			
+			for (Group curGroup : curGroupList) {
+				Pos updatedDownLeftPos = getBestDownLeftPos(curGroup, updatedMainMatrix);
+				if (updatedDownLeftPos == null) { continue; }
 				
-				numTower += 1;
+				curGroup.move(updatedDownLeftPos);
+				curGroup.applyToMatrix(updatedMainMatrix);	
 			}
-		}
-		
-		return numTower;
-	}
-	
-	public static int getMaxValue() {
-		int maxValue = 0;
-		
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				maxValue = Math.max(maxValue, mainMatrix[i][j]);
-			}
-		}
-		
-		return maxValue;
-	}
-	
-	public static void lazerAttack(Pos startPos, List<Pos> pathList) {
-		int power = mainMatrix[startPos.row][startPos.col];
-		
-		for (int i = 0; i < pathList.size() - 1; i++) {
-			Pos pos = pathList.get(i);
-			mainMatrix[pos.row][pos.col] -= (power / 2);
-		}
-		
-		Pos destPos = pathList.get(pathList.size() - 1);
-		mainMatrix[destPos.row][destPos.col] -= power;
-		
-		convertMinusToZero();
-	}
-	
-	public static List<Pos> cannonAttack() {
-		int power = mainMatrix[minTower.pos.row][minTower.pos.col];
-		
-		Pos destPos = maxTower.pos;
-		List<Pos> attackedList = new ArrayList<>();
-		
-		for (int i = -1; i <= 1; i++) {
-			for (int j = -1; j <= 1; j++) {
-				if (i == 0 && j == 0) { continue; }
-				
-				Pos movedPos = destPos.addPos(new Pos(i, j));
-				if (movedPos.equals(minTower.pos)) { continue; }
-				if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
-				mainMatrix[movedPos.row][movedPos.col] -= (power / 2);
-				attackedList.add(movedPos);
-			}
-		}
-		
-		mainMatrix[destPos.row][destPos.col] -= power;
-		attackedList.add(destPos);
-		convertMinusToZero();
-		
-		return attackedList;
-	}
-	
-	public static void repair() {
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] == 0) { continue; }
-				if (attackMatrix[i][j] == 1) { continue; }
-				
-				mainMatrix[i][j] += 1;		
-			}
-		}
-	}
-	
-	public static void setAttackMatrix(List<Pos> attackedList) {
-		attackMatrix = new int[N][M];
-		
-		attackMatrix[minTower.pos.row][minTower.pos.col] = 1;
-		attackMatrix[maxTower.pos.row][maxTower.pos.col] = 1;
-		
-		for (Pos pos : attackedList) {
-			attackMatrix[pos.row][pos.col] = 1;
-		}
-	}
-	
-	public static void convertMinusToZero() {
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				mainMatrix[i][j] = Math.max(0,  mainMatrix[i][j]);
-			}
-		}
-	}
-	
-	public static List<Pos> getPath() {
-		int[][] visited = new int[N][M];
-		
-		Pos startPos = minTower.pos;
-		Deque<Node> queue = new ArrayDeque<>();
-		queue.addLast(new Node(startPos, new ArrayList<>()));
-		
-		Pos destPos = maxTower.pos;
-		
-		while (!queue.isEmpty()) {
-			Node node = queue.pollFirst();
-			if (visited[node.pos.row][node.pos.col] == 1) { continue; }
-			visited[node.pos.row][node.pos.col] = 1;
 			
-			if (node.pos.equals(destPos)) { return node.pathList; }
 			
-			for (Pos direction : directions) {
-				Pos movedPos = node.pos.addPos(direction);
-				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-				if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+			mainMatrix = updatedMainMatrix;
+			sb.append(getScore() + "\n");
+		}
+		
+		
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
+	}
+	
+	public static Pos getBestDownLeftPos(Group group, int[][] matrix) {
+		for (int j = 0; j < N; j++) {
+			for (int i = N - 1; i >= 0; i--) {
+				Pos downLeftPos = new Pos(i, j);
 				
-				List<Pos> updatedPosList = new ArrayList<>(node.pathList);
-				updatedPosList.add(movedPos);
-				
-				queue.addLast(new Node(movedPos, updatedPosList));
+				if (group.canFit(downLeftPos, matrix)) { return downLeftPos; }
 			}
 		}
 		
 		return null;
 	}
 	
+	public static void checkGroupsDivided() {
+		for (int pk : groupMap.keySet()) {
+			if (checkGroupDivided(pk)) {
+				removeGroupFromMainMatrix(pk);
+			}
+		}
+	}
 	
+	public static boolean checkGroupDivided(int pk) {
+		Group group = groupMap.get(pk);
+		Pos pos = group.downLeftPos;
+		int groupSize = group.posList.size();
+		
+		int[][] visited = new int[N][N];
+		Deque<Pos> queue = new ArrayDeque<>();
+		queue.add(pos);
+		
+		int size = 0;
+		while (!queue.isEmpty()) {
+			Pos curPos = queue.pollFirst();
+			
+			if (visited[curPos.row][curPos.col] == 1) { continue; }
+			visited[curPos.row][curPos.col] = 1;
+			
+			size += 1;
+			
+			for (Pos direction : directions) {
+				Pos movedPos = curPos.addPos(direction);
+				if (!movedPos.isValidIndex()) { continue; }
+				if (mainMatrix[movedPos.row][movedPos.col] != pk) { continue; }
+				if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+				
+				queue.addLast(movedPos);		
+			}
+		}
+		
+		if (size == groupSize) {
+			return false;
+		}
+		
+		return true;
+	}
 	
-	public static void setMinMaxTower() {
-		minTower = null;
-		maxTower = null;
-		
-		
+	public static void removeGroupFromMainMatrix(int pk) {
 		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < M; j++) {
-				if (mainMatrix[i][j] == 0) { continue; }
-				Tower tower = towerMatrix[i][j];
-				
-				if (minTower == null || tower.compareTo(minTower) < 0) {
-					minTower = tower;
-				}
-				
-				if (maxTower == null || tower.compareTo(maxTower) > 0) {
-					maxTower = tower;
+			for (int j = 0; j < N; j++) {
+				if (mainMatrix[i][j] == pk) {
+					mainMatrix[i][j] = 0;
 				}
 			}
 		}
 	}
 	
-	public static void init() throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		StringTokenizer st = new StringTokenizer(br.readLine());
+	public static void updateGroupMap() {
+		groupMap = new HashMap<>();
 		
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
-		K = Integer.parseInt(st.nextToken());
-		
-		mainMatrix = new int[N][M];
-		towerMatrix = new Tower[N][M];
 		for (int i = 0; i < N; i++) {
-			st = new StringTokenizer(br.readLine());
-			for (int j = 0; j < M; j++) {
-				mainMatrix[i][j] = Integer.parseInt(st.nextToken());
-				towerMatrix[i][j] = new Tower(new Pos(i, j), 0);
+			for (int j = 0; j < N; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				
+				int pk = mainMatrix[i][j];
+				if (groupMap.get(pk) == null) {
+					groupMap.put(pk, new Group(pk));
+				}
+				
+				groupMap.get(pk).addPos(new Pos(i, j));
 			}
 		}
+		
+		
+		for (int pk : groupMap.keySet()) {
+			groupMap.get(pk).setDownLeftPos();
+		}
+	}
+	
+	public static int getScore() {
+		Map<Node, Integer> nodeMap = new HashMap<>();
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < N; j++) {
+				if (mainMatrix[i][j] == 0) { continue; }
+				Pos pos = new Pos(i, j);
+				
+				for (Pos direction : directions) {
+					Pos movedPos = pos.addPos(direction);
+					if (!movedPos.isValidIndex()) { continue; }
+					if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+					if (mainMatrix[i][j] == mainMatrix[movedPos.row][movedPos.col]) { continue; }
+					
+					nodeMap.put(new Node(mainMatrix[i][j], mainMatrix[movedPos.row][movedPos.col]), 1);
+				}
+			}
+		}
+		
+		
+		int score = 0;
+		for (Node node : nodeMap.keySet()) {
+			score += (groupMap.get(node.pk1).posList.size() * groupMap.get(node.pk2).posList.size());
+		}
+		
+		return score;
+	}
+	
+	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		N = Integer.parseInt(st.nextToken());
+		Q = Integer.parseInt(st.nextToken());
+		
+		mainMatrix = new int[N][N];
+		
+		groupMap = new HashMap<>();
+		groupList = new Group[Q];
+		
+		
+		for (int i = 0; i < Q; i++) {
+			st = new StringTokenizer(br.readLine());
+			
+			int x1 = Integer.parseInt(st.nextToken());
+			int y1 = Integer.parseInt(st.nextToken());
+			
+			int x2 = Integer.parseInt(st.nextToken()) - 1;
+			int y2 = Integer.parseInt(st.nextToken()) - 1;
+			
+			Pos downLeftPos = new XYPos(x1, y1).convertToPos();
+			Pos topRightPos = new XYPos(x2, y2).convertToPos();
+			
+			Group group = new Group(i + 1, downLeftPos, topRightPos);
+			groupList[i] = group;
+		}
+		
 	}
 }

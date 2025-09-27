@@ -3,51 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 미생물연구 {
     static int N, Q;
-    static RCPos[] rcDirections = {new RCPos(-1, 0), new RCPos(0, 1),
-            new RCPos(1, 0), new RCPos(0, - 1)};
-    static XYPos[] xyDirections = {new XYPos(-1, 0), new XYPos(0, 1),
-            new XYPos(1, 0), new XYPos(0, - 1)};
     static int[][] mainMatrix;
-    static XYPos[][] commands;
-    static Map<Integer, CellGroup> cellGroupMap;
-
-    public static class RCPos implements Comparable<RCPos> {
-        int row;
-        int col;
-
-        public RCPos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public RCPos addRCPos(RCPos direction) {
-            return new RCPos(this.row + direction.row, this.col + direction.col);
-        }
-
-        public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
-                return false;
-            }
-
-            return true;
-        }
-
-        public XYPos convertToXYPos() {
-            return new XYPos(N - this.col - 1, this.row);
-        }
-
-        @Override
-        public int compareTo(RCPos anotherRCPos) {
-            if (this.row == anotherRCPos.row) {
-                return Integer.compare(this.col, anotherRCPos.col);
-            }
-
-            return Integer.compare(-this.row, -anotherRCPos.row);
-        }
-    }
+    static Map<Integer, Group> groupMap;
+    static Group[] groupList;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
 
     public static class XYPos {
         int x;
@@ -58,30 +19,154 @@ public class 미생물연구 {
             this.y = y;
         }
 
-        public XYPos addXYPos(XYPos direction) {
-            return new XYPos(this.x + direction.x, this.y + direction.y);
+        public Pos convertToPos() {
+            return new Pos(N - this.y - 1, this.x);
+        }
+    }
+
+
+    public static class Pos implements Comparable<Pos> {
+        int row;
+        int col;
+
+        public Pos(int row, int col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public Pos addPos(Pos direction) {
+            return new Pos(this.row + direction.row, this.col + direction.col);
+        }
+
+        public Pos minusPos(Pos direction) {
+            return new Pos(this.row - direction.row, this.col - direction.col);
         }
 
         public boolean isValidIndex() {
-            if (this.x < 0 || this.x >= N || this.y < 0 || this.y >= N) {
-                return false;
+            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) { return false; }
+
+            return true;
+        }
+
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Pos anotherPos = (Pos) obj;
+            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.row, this.col);
+        }
+
+        @Override
+        public int compareTo(Pos anotherPos) {
+            if (this.row != anotherPos.row) {
+                return Integer.compare(-this.row, -anotherPos.row);
+            }
+
+            return Integer.compare(this.col, anotherPos.col);
+        }
+    }
+
+    public static class Group implements Comparable<Group> {
+        int pk;
+        Pos downLeftPos;
+        List<Pos> posList;
+
+        public Group(int pk, Pos downLeftPos, List<Pos> posList) {
+            this.pk = pk;
+            this.downLeftPos = downLeftPos;
+            this.posList = posList;
+        }
+
+        public Group(int pk, Pos downLeftPos, Pos topRightPos) {
+            this.pk = pk;
+            this.downLeftPos = downLeftPos;
+            this.posList = new ArrayList<>();
+
+            for (int i = downLeftPos.row; i >= topRightPos.row; i--) {
+                for (int j = downLeftPos.col; j <= topRightPos.col; j++) {
+                    posList.add(new Pos(i, j));
+                }
+            }
+        }
+
+        public Group(int pk) {
+            this.pk = pk;
+            this.posList = new ArrayList<>();
+        }
+
+        @Override
+        public int compareTo(Group anotherGroup) {
+            if (this.posList.size() != anotherGroup.posList.size()) {
+                return Integer.compare(-this.posList.size(), -anotherGroup.posList.size());
+            }
+
+            return Integer.compare(this.pk, anotherGroup.pk);
+        }
+
+        public void applyToMatrix(int[][] matrix) {
+            for (Pos pos : this.posList) {
+                matrix[pos.row][pos.col] = this.pk;
+            }
+        }
+
+
+        public boolean canFit(Pos movedDownLeftPos, int[][] matrix) {
+            Pos direction = movedDownLeftPos.minusPos(this.downLeftPos);
+
+            for (Pos pos : this.posList) {
+                Pos movedPos = pos.addPos(direction);
+                if (!movedPos.isValidIndex()) { return false; }
+                if (matrix[movedPos.row][movedPos.col] != 0) { return false; }
             }
 
             return true;
         }
 
-        public RCPos convertToRCPos() {
-            return new RCPos(N - this.y - 1, this.x);
+        public void move(Pos movedDownLeftPos) {
+            Pos direction = movedDownLeftPos.minusPos(this.downLeftPos);
+
+            List<Pos> updatedPosList = new ArrayList<>();
+            for (Pos pos : this.posList) {
+                Pos movedPos = pos.addPos(direction);
+                updatedPosList.add(movedPos);
+            }
+
+            this.downLeftPos = movedDownLeftPos;
+            this.posList = updatedPosList;
+        }
+
+        public void addPos(Pos pos) {
+            this.posList.add(pos);
+        }
+
+        public void setDownLeftPos() {
+            this.downLeftPos = this.posList.get(0);
+
+            for (int i = 1; i < this.posList.size(); i++) {
+                Pos pos = posList.get(i);
+                if (pos.compareTo(this.downLeftPos) < 0) {
+                    this.downLeftPos = pos;
+                }
+            }
         }
     }
 
     public static class Node {
-        int num1;
-        int num2;
+        int pk1;
+        int pk2;
 
-        public Node(int num1, int num2) {
-            this.num1 = Math.min(num1, num2);
-            this.num2 = Math.max(num1, num2);
+        public Node(int pk1, int pk2) {
+            this.pk1 = Math.min(pk1, pk2);
+            this.pk2 = Math.max(pk1, pk2);
         }
 
         @Override
@@ -90,45 +175,16 @@ public class 미생물연구 {
             if (obj == null || this.getClass() != obj.getClass()) { return false; }
 
             Node anotherNode = (Node) obj;
-            if (this.num1 == anotherNode.num1 && this.num2 == anotherNode.num2) { return true; }
+            if (this.pk1 == anotherNode.pk1 && this.pk2 == anotherNode.pk2) {
+                return true;
+            }
+
             return false;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.num1, this.num2);
-        }
-    }
-
-    public static class CellGroup implements Comparable<CellGroup> {
-        int uniqueNum;
-        Map<RCPos, Integer> rcPosMap;
-        RCPos downLeftRCPos;
-
-        public CellGroup(int uniqueNum, List<RCPos> rcPosList) {
-            this.uniqueNum = uniqueNum;
-
-            rcPosMap = new HashMap<>();
-            for (RCPos rcPos: rcPosList) {
-                rcPosMap.put(rcPos, 1);
-
-                if (downLeftRCPos == null) {
-                    downLeftRCPos = rcPos;
-                }
-                else if (downLeftRCPos.compareTo(rcPos) > 0){
-                    downLeftRCPos = rcPos;
-                }
-            }
-        }
-
-        @Override
-        public int compareTo(CellGroup anotherCellGroup) {
-            if (this.rcPosMap.keySet().size() == anotherCellGroup.rcPosMap.keySet().size()) {
-                return Integer.compare(this.uniqueNum, anotherCellGroup.uniqueNum);
-            }
-
-            return Integer.compare(-this.rcPosMap.keySet().size(),
-                    -anotherCellGroup.rcPosMap.keySet().size());
+            return Objects.hash(this.pk1, this.pk2);
         }
     }
 
@@ -140,206 +196,180 @@ public class 미생물연구 {
     public static void solution() {
         StringBuilder sb = new StringBuilder();
 
-        for (int i = 0; i < Q; i++) {
-            XYPos[] command = commands[i];
+        for (Group group : groupList) {
+            group.applyToMatrix(mainMatrix);
+            updateGroupMap();
 
-            int uniqueNum = i + 1;
-            XYPos downLeftXYPos = command[0];
-            XYPos upRightPos = command[1];
+            checkGroupsDivided();
+            updateGroupMap();
 
-            fillMainMatrix(uniqueNum, downLeftXYPos, upRightPos);
-            setCellGroupMap();
-            checkCellGroupsDivided();
-            updateMainMatrix();
-            setCellGroupMap();
+            int[][] updatedMainMatrix = new int[N][N];
 
-            int score = getScore();
+            List<Group> curGroupList = new ArrayList<>();
+            for (int pk : groupMap.keySet()) {
+                curGroupList.add(groupMap.get(pk));
+            }
+            Collections.sort(curGroupList);
 
-            sb.append(score + "\n");
+            for (Group curGroup : curGroupList) {
+                Pos updatedDownLeftPos = getBestDownLeftPos(curGroup, updatedMainMatrix);
+                if (updatedDownLeftPos == null) { continue; }
+
+                curGroup.move(updatedDownLeftPos);
+                curGroup.applyToMatrix(updatedMainMatrix);
+            }
+
+
+            mainMatrix = updatedMainMatrix;
+            sb.append(getScore() + "\n");
         }
+
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int getScore() {
-        int score = 0;
-        Map<Node, Integer> nearMap = new HashMap<>();
+    public static Pos getBestDownLeftPos(Group group, int[][] matrix) {
+        for (int j = 0; j < N; j++) {
+            for (int i = N - 1; i >= 0; i--) {
+                Pos downLeftPos = new Pos(i, j);
 
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (mainMatrix[i][j] == 0) { continue; }
-                RCPos rcPos = new RCPos(i, j);
-
-                for (RCPos direction : rcDirections) {
-                    RCPos movedPos = rcPos.addRCPos(direction);
-                    if (!movedPos.isValidIndex()) { continue; }
-                    if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
-                    if (mainMatrix[i][j] == mainMatrix[movedPos.row][movedPos.col]) { continue; }
-
-                    nearMap.put(new Node(mainMatrix[i][j], mainMatrix[movedPos.row][movedPos.col]), 1);
-                }
+                if (group.canFit(downLeftPos, matrix)) { return downLeftPos; }
             }
         }
 
-        for (Node node :  nearMap.keySet()) {
-            score += (cellGroupMap.get(node.num1).rcPosMap.keySet().size() * cellGroupMap.get(node.num2).rcPosMap.keySet().size());
-        }
-
-        return score;
+        return null;
     }
 
-    public static void updateMainMatrix() {
-        int[][] updatedMainMatrix = new int[N][N];
-
-        PriorityQueue<CellGroup> pq = new PriorityQueue<>();
-        for (int i = 0; i < Q; i++) {
-            pq.add(cellGroupMap.get(i + 1));
+    public static void checkGroupsDivided() {
+        for (int pk : groupMap.keySet()) {
+            if (checkGroupDivided(pk)) {
+                removeGroupFromMainMatrix(pk);
+            }
         }
-
-        while (!pq.isEmpty()) {
-            CellGroup cellGroup = pq.poll();
-            moveCellGroup(cellGroup, updatedMainMatrix);
-        }
-
-        mainMatrix = updatedMainMatrix;
     }
 
+    public static boolean checkGroupDivided(int pk) {
+        Group group = groupMap.get(pk);
+        Pos pos = group.downLeftPos;
+        int groupSize = group.posList.size();
 
-    public static void moveCellGroup(CellGroup cellGroup, int[][] matrix) {
-        List<RCPos> rcPosList = new ArrayList<>(cellGroup.rcPosMap.keySet());
-        if (rcPosList.size() == 0) { return; }
+        int[][] visited = new int[N][N];
+        Deque<Pos> queue = new ArrayDeque<>();
+        queue.add(pos);
 
-        for (int col = 0; col < N; col++) {
-            for (int row = N - 1; row >= 0; row--) {
-                RCPos direction = new RCPos(row - cellGroup.downLeftRCPos.row, col - cellGroup.downLeftRCPos.col);
-                if (!canCellGroupMove(rcPosList, direction, matrix)) { continue; }
-                applyCellGroupMoveToMatrix(cellGroup.uniqueNum, rcPosList, direction, matrix);
-                return;
+        int size = 0;
+        while (!queue.isEmpty()) {
+            Pos curPos = queue.pollFirst();
 
+            if (visited[curPos.row][curPos.col] == 1) { continue; }
+            visited[curPos.row][curPos.col] = 1;
+
+            size += 1;
+
+            for (Pos direction : directions) {
+                Pos movedPos = curPos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] != pk) { continue; }
+                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+
+                queue.addLast(movedPos);
             }
         }
 
-        cellGroupMap.put(cellGroup.uniqueNum, new CellGroup(cellGroup.uniqueNum, new ArrayList<>()));
-    }
-
-    public static boolean canCellGroupMove(List<RCPos> rcPosList, RCPos direction, int[][] matrix) {
-        for (RCPos rcPos : rcPosList) {
-            RCPos movedRCPos = rcPos.addRCPos(direction);
-            if (!movedRCPos.isValidIndex()) { return false; }
-            if (matrix[movedRCPos.row][movedRCPos.col] != 0) { return false; }
+        if (size == groupSize) {
+            return false;
         }
 
         return true;
     }
 
-    public static void applyCellGroupMoveToMatrix(int uniqueNum, List<RCPos> rcPosList, RCPos direction, int[][] matrix) {
-        for (RCPos rcPos : rcPosList) {
-            RCPos movedRCPos = rcPos.addRCPos(direction);
-            matrix[movedRCPos.row][movedRCPos.col] = uniqueNum;
-        }
-    }
-
-    public static void checkCellGroupsDivided() {
-        for (int i = 0; i < Q; i++) {
-            checkCellGroupDivided(i + 1);
-        }
-    }
-
-    public static void checkCellGroupDivided(int uniqueNum) {
-        CellGroup cellGroup = cellGroupMap.get(uniqueNum);
-        int groupSize = cellGroup.rcPosMap.keySet().size();
-        if (groupSize == 0) { return; }
-
-        RCPos startPos = new ArrayList<>(cellGroup.rcPosMap.keySet()).get(0);
-        Deque<RCPos> queue = new ArrayDeque<>();
-        queue.addLast(startPos);
-
-        int[][] visited = new int[N][N];
-        int numVisitPos = 0;
-        while (!queue.isEmpty()) {
-            RCPos rcPos = queue.pollFirst();
-            if (visited[rcPos.row][rcPos.col] == 1) { continue; }
-            visited[rcPos.row][rcPos.col] = 1;
-            numVisitPos += 1;
-
-            for (RCPos direction : rcDirections) {
-                RCPos movedRCPos = rcPos.addRCPos(direction);
-                if (!movedRCPos.isValidIndex()) { continue; }
-                if (visited[movedRCPos.row][movedRCPos.col] == 1) { continue; }
-                if (mainMatrix[movedRCPos.row][movedRCPos.col] != uniqueNum) { continue; }
-
-                queue.add(movedRCPos);
-            }
-        }
-
-        if (numVisitPos != groupSize) {
-            cellGroupMap.put(uniqueNum, new CellGroup(uniqueNum, new ArrayList<>()));
-        }
-    }
-
-    public static void fillMainMatrix(int uniqueNum, XYPos downLeftXYPos, XYPos upRightXYPos) {
-        RCPos downLeftRCPos = downLeftXYPos.convertToRCPos();
-        RCPos upRightRCPos = upRightXYPos.convertToRCPos();
-
-        for (int row = upRightRCPos.row; row <= downLeftRCPos.row; row++) {
-            for (int col = downLeftRCPos.col; col <= upRightRCPos.col; col++) {
-                if (mainMatrix[row][col] != 0) {
-                    cellGroupMap.get(mainMatrix[row][col]).rcPosMap.remove(new RCPos(row, col));
+    public static void removeGroupFromMainMatrix(int pk) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                if (mainMatrix[i][j] == pk) {
+                    mainMatrix[i][j] = 0;
                 }
-
-                cellGroupMap.get(uniqueNum).rcPosMap.put(new RCPos(row,col), 1);
-                mainMatrix[row][col] = uniqueNum;
             }
         }
-
     }
 
-    public static void setCellGroupMap() {
-        Map<Integer, List<RCPos>> groupPosMap = new HashMap<>();
-        for (int i = 0; i < Q; i++) {
-            groupPosMap.put(i + 1, new ArrayList<>());
-        }
+    public static void updateGroupMap() {
+        groupMap = new HashMap<>();
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 if (mainMatrix[i][j] == 0) { continue; }
-                groupPosMap.get(mainMatrix[i][j]).add(new RCPos(i, j));
+
+                int pk = mainMatrix[i][j];
+                if (groupMap.get(pk) == null) {
+                    groupMap.put(pk, new Group(pk));
+                }
+
+                groupMap.get(pk).addPos(new Pos(i, j));
             }
         }
 
 
-        for (int i = 0; i < Q; i++) {
-            cellGroupMap.put(i + 1, new CellGroup(i + 1, groupPosMap.get(i + 1)));
+        for (int pk : groupMap.keySet()) {
+            groupMap.get(pk).setDownLeftPos();
         }
+    }
+
+    public static int getScore() {
+        Map<Node, Integer> nodeMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                if (mainMatrix[i][j] == 0) { continue; }
+                Pos pos = new Pos(i, j);
+
+                for (Pos direction : directions) {
+                    Pos movedPos = pos.addPos(direction);
+                    if (!movedPos.isValidIndex()) { continue; }
+                    if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+                    if (mainMatrix[i][j] == mainMatrix[movedPos.row][movedPos.col]) { continue; }
+
+                    nodeMap.put(new Node(mainMatrix[i][j], mainMatrix[movedPos.row][movedPos.col]), 1);
+                }
+            }
+        }
+
+
+        int score = 0;
+        for (Node node : nodeMap.keySet()) {
+            score += (groupMap.get(node.pk1).posList.size() * groupMap.get(node.pk2).posList.size());
+        }
+
+        return score;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
+        StringTokenizer st = new StringTokenizer(br.readLine());
         N = Integer.parseInt(st.nextToken());
         Q = Integer.parseInt(st.nextToken());
 
-        commands = new XYPos[Q][2];
+        mainMatrix = new int[N][N];
+
+        groupMap = new HashMap<>();
+        groupList = new Group[Q];
+
+
         for (int i = 0; i < Q; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int downLeftX = Integer.parseInt(st.nextToken());
-            int downLeftY = Integer.parseInt(st.nextToken());
-            XYPos downLeftXYPos = new XYPos(downLeftX, downLeftY);
+            int x1 = Integer.parseInt(st.nextToken());
+            int y1 = Integer.parseInt(st.nextToken());
 
-            int upRightX = Integer.parseInt(st.nextToken()) - 1;
-            int upRightY = Integer.parseInt(st.nextToken()) - 1;
-            XYPos upRightXYPos = new XYPos(upRightX, upRightY);
+            int x2 = Integer.parseInt(st.nextToken()) - 1;
+            int y2 = Integer.parseInt(st.nextToken()) - 1;
 
-            commands[i][0] = downLeftXYPos;
-            commands[i][1] = upRightXYPos;
+            Pos downLeftPos = new XYPos(x1, y1).convertToPos();
+            Pos topRightPos = new XYPos(x2, y2).convertToPos();
+
+            Group group = new Group(i + 1, downLeftPos, topRightPos);
+            groupList[i] = group;
         }
 
-        cellGroupMap = new HashMap<>();
-        for (int i = 0; i < Q; i++) {
-            cellGroupMap.put(i + 1, new CellGroup(i + 1, new ArrayList<>()));
-        }
-        mainMatrix = new int[N][N];
     }
 }
