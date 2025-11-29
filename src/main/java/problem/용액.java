@@ -3,66 +3,49 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 용액 {
-    public static int N;
-    public static int[] numList;
+    static int N;
+    static int[] numList;
 
     public static void main(String[] args) throws Exception {
         init();
         solution();
-
     }
 
     public static void solution() {
-        int minPair = 0;
-        int maxPair = 1;
-        int answerSumValue = Math.abs(numList[minPair] + numList[maxPair]);
+        int answerLeftNum = numList[0];
+        int answerRightNum = numList[1];
+        int minSumValue = Integer.MAX_VALUE;
 
-        for (int i = 0; i < N - 1; i++) {
-            int pairIndex = binarySearch(i);
-
-            int sumValue = Math.abs(numList[i] + numList[pairIndex]);
-            if (sumValue < answerSumValue) {
-                answerSumValue = sumValue;
-                minPair = i;
-                maxPair = pairIndex;
-            }
-        }
-
-        System.out.println(numList[minPair] + " " + numList[maxPair]);
-    }
-
-    public static int binarySearch(int curIndex) {
-        int curNum = numList[curIndex];
-
-        int leftIndex = curIndex + 1;
+        int leftIndex = 0;
         int rightIndex = N - 1;
 
-        int answerIndex = curIndex;
-        int minSum = Integer.MAX_VALUE;
+        while (leftIndex < rightIndex) {
+            int leftNum = numList[leftIndex];
+            int rightNum = numList[rightIndex];
 
-        while (leftIndex <= rightIndex) {
-            int midIndex = (leftIndex + rightIndex) / 2;
-            int midValue = numList[midIndex];
+            int sumValue = leftNum + rightNum;
 
-            int sumValue = curNum + midValue;
-            if (Math.abs(sumValue) < minSum) {
-                minSum = Math.abs(sumValue);
-                answerIndex = midIndex;
+            if (sumValue == 0) {
+                System.out.println(leftNum + " " + rightNum);
+                return;
+            }
+            if (Math.abs(sumValue) < minSumValue) {
+                minSumValue = Math.abs(sumValue);
+
+                answerLeftNum = leftNum;
+                answerRightNum = rightNum;
             }
 
-
-            if (sumValue == 0) { return midIndex; }
-            if (sumValue < 0 ) {
-                leftIndex = midIndex + 1;
+            if (sumValue < 0) {
+                leftIndex += 1;
             }
-            else {
-                rightIndex = midIndex - 1;
+            if (sumValue > 0) {
+                rightIndex -= 1;
             }
         }
 
-        return answerIndex;
+        System.out.println(answerLeftNum + " " + answerRightNum);
     }
 
     public static void init() throws IOException {
