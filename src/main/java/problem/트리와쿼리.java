@@ -3,12 +3,11 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 트리와쿼리 {
     static int N, R, Q;
-    static Map<Integer, List<Integer>> treeMap;
+    static Map<Integer, List<Integer>> graphMap;
+    static int[] visited, numNodeList;
     static int[] queryList;
-    static int[] dpList, visited;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,43 +15,32 @@ public class 트리와쿼리 {
     }
 
     public static void solution() {
-        dpList = new int[N];
-        visited = new int[N];
-        Arrays.fill(dpList, Integer.MAX_VALUE);
-
         recursive(R);
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < Q; i++) {
-            sb.append(dpList[queryList[i]]);
+            sb.append(numNodeList[queryList[i]]);
             sb.append("\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int recursive(int curNode) {
-        if (dpList[curNode] != Integer.MAX_VALUE) { return dpList[curNode]; }
+    public static int recursive(int num) {
+        if (visited[num] == 1) { return numNodeList[num]; }
 
-        visited[curNode] = 1;
+        visited[num] = 1;
+        int numNode = 1;
 
-        int numLeafNode = 1;
-        int flag = 0;
-        for (int nearNode : treeMap.get(curNode)) {
-            if (dpList[nearNode] != Integer.MAX_VALUE) {
-                continue;
-            }
-
+        for (int nearNode : graphMap.get(num)) {
             if (visited[nearNode] == 1) { continue; }
 
-            flag = 1;
-            numLeafNode += recursive(nearNode);
+            numNode += recursive(nearNode);
         }
 
-        dpList[curNode] = numLeafNode;
-        return dpList[curNode];
+        numNodeList[num] = numNode;
+        return numNodeList[num];
     }
-
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -62,26 +50,29 @@ public class 트리와쿼리 {
         R = Integer.parseInt(st.nextToken()) - 1;
         Q = Integer.parseInt(st.nextToken());
 
-        treeMap = new HashMap<>();
+        visited = new int[N];
+        numNodeList = new int[N];
+        queryList = new int[Q];
+
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
-            treeMap.put(i, new ArrayList<>());
+            graphMap.put(i, new ArrayList<>());
         }
 
         for (int i = 0; i < N - 1; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
 
-            treeMap.get(node1).add(node2);
-            treeMap.get(node2).add(node1);
+            graphMap.get(num1).add(num2);
+            graphMap.get(num2).add(num1);
         }
 
-        queryList = new int[Q];
-        for (int i = 0;  i < Q; i++) {
+
+        for (int i = 0; i < Q; i++) {
             st = new StringTokenizer(br.readLine());
             queryList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
-
     }
 }
