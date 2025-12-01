@@ -3,28 +3,22 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 최소스패닝트리 {
     static int V, E;
-    static int[] parentList;
-    static PriorityQueue<Edge> pq;
+    static Map<Integer, List<Node>> graphMap;
 
-    public static class Edge implements Comparable<Edge> {
-        int node1;
-        int node2;
+    public static class Node implements Comparable<Node> {
+        int destNum;
         int cost;
 
-        public Edge(int node1, int node2, int cost) {
-            this.node1 = node1;
-            this.node2 = node2;
+        public Node(int destNum, int cost) {
+            this.destNum = destNum;
             this.cost = cost;
         }
 
-        @Override
-        public int compareTo(Edge anotherEdge) {
-            return Integer.compare(this.cost, anotherEdge.cost);
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
         }
-
     }
 
     public static void main(String[] args) throws Exception {
@@ -33,40 +27,32 @@ public class 최소스패닝트리 {
     }
 
     public static void solution() {
-        parentList = new int[V];
-        for (int i = 0; i < V; i++) {
-            parentList[i] = i;
-        }
+        int answer = 0;
 
-        int totalCost = 0;
+        int[] visited = new int[V];
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+
+        for (Node node : graphMap.get(0)) {
+            if (visited[node.destNum] == 1) { continue; }
+            pq.add(node);
+        }
+        visited[0] = 1;
 
         while (!pq.isEmpty()) {
-            Edge edge = pq.poll();
+            Node node = pq.poll();
+            if (visited[node.destNum] == 1) { continue; }
+            visited[node.destNum] = 1;
 
-            int node1Parent = findParent(edge.node1);
-            int node2Parent = findParent(edge.node2);
-            if (node1Parent == node2Parent) { continue; }
+            answer += node.cost;
 
-            union(edge.node1, edge.node2);
-            totalCost += edge.cost;
+            for (Node nearNode : graphMap.get(node.destNum)) {
+                if (visited[nearNode.destNum] == 1) { continue; }
+
+                pq.add(nearNode);
+            }
         }
 
-        System.out.println(totalCost);
-    }
-
-    public static void union(int node1, int node2) {
-        int node1Parent = findParent(node1);
-        int node2Parent = findParent(node2);
-
-        if (node1Parent == node2Parent) { return; }
-
-        parentList[Math.min(node1Parent, node2Parent)] = Math.max(node1Parent, node2Parent);
-    }
-
-    public static int findParent(int curNode) {
-        if (curNode == parentList[curNode]) { return curNode; }
-
-        return parentList[curNode] = findParent(parentList[curNode]);
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
@@ -76,14 +62,20 @@ public class 최소스패닝트리 {
         V = Integer.parseInt(st.nextToken());
         E = Integer.parseInt(st.nextToken());
 
-        pq = new PriorityQueue<>();
+        graphMap = new HashMap<>();
+        for (int i = 0; i < V; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
         for (int i = 0; i < E; i++) {
             st = new StringTokenizer(br.readLine());
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            pq.add(new Edge(node1, node2, cost));
+            graphMap.get(num1).add(new Node(num2, cost));
+            graphMap.get(num2).add(new Node(num1, cost));
         }
     }
 }

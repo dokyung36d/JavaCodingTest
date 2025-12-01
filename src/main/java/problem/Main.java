@@ -4,61 +4,78 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int N, C;
-    static int[][] infoList;
+    static int V, E;
+	static Map<Integer, List<Node>> graphMap;
 
-    public static void main(String[] args) throws Exception {
-        init();
-        solution();
-    }
+	public static class Node implements Comparable<Node> {
+		int destNum;
+		int cost;
 
-    public static void solution() {
-        int[][] dpMatrix = new int[N + 1][C + 1];
-        for (int i = 0; i <= N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-            dpMatrix[i][0] = 0;
-        }
+		public Node(int destNum, int cost) {
+			this.destNum = destNum;
+			this.cost = cost;
+		}
 
-        for (int i = 1; i <= N; i++) {
-            int cost = infoList[i - 1][0];
-            int customer = infoList[i - 1][1];
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.cost, anotherNode.cost);
+		}
+	}
 
-            for (int j = 1; j <= C; j++) {
-                int maxNumMultiply;
-                if (j % customer == 0) {
-                    maxNumMultiply = j / customer;
-                }
-                else {
-                    maxNumMultiply = (j / customer) + 1;
-                }
+	public static void main(String[] args) throws Exception {
+		init();
+		solution();
+	}
 
-                for (int numMultiply = 0; numMultiply <= maxNumMultiply; numMultiply++) {
-                    dpMatrix[i][j] = Math.min(dpMatrix[i][j],
-                            dpMatrix[i - 1][Math.max(0, j - customer * numMultiply)] + cost * numMultiply);
-                }
-            }
-        }
+	public static void solution() {
+		int answer = 0;
 
+		int[] visited = new int[V];
+		PriorityQueue<Node> pq = new PriorityQueue<>();
 
-        System.out.println(dpMatrix[N][C]);
-    }
+		for (Node node : graphMap.get(0)) {
+			if (visited[node.destNum] == 1) { continue; }
+			pq.add(node);
+		}
+		visited[0] = 1;
 
-    public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
+			if (visited[node.destNum] == 1) { continue; }
+			visited[node.destNum] = 1;
 
-        C = Integer.parseInt(st.nextToken());
-        N = Integer.parseInt(st.nextToken());
+			answer += node.cost;
 
-        infoList = new int[N][2];
-        for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
+			for (Node nearNode : graphMap.get(node.destNum)) {
+				if (visited[nearNode.destNum] == 1) { continue; }
 
-            int cost = Integer.parseInt(st.nextToken());
-            int customer = Integer.parseInt(st.nextToken());
+				pq.add(nearNode);
+			}
+		}
 
-            infoList[i][0] = cost;
-            infoList[i][1] = customer;
-        }
-    }
+		System.out.println(answer);
+	}
+
+	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+
+		V = Integer.parseInt(st.nextToken());
+		E = Integer.parseInt(st.nextToken());
+
+		graphMap = new HashMap<>();
+		for (int i = 0; i < V; i++) {
+			graphMap.put(i, new ArrayList<>());
+		}
+
+		for (int i = 0; i < E; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int num1 = Integer.parseInt(st.nextToken()) - 1;
+			int num2 = Integer.parseInt(st.nextToken()) - 1;
+			int cost = Integer.parseInt(st.nextToken());
+
+			graphMap.get(num1).add(new Node(num2, cost));
+			graphMap.get(num2).add(new Node(num1, cost));
+		}
+	}
 }
