@@ -4,20 +4,24 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int V, E;
-	static Map<Integer, List<Node>> graphMap;
+    static int N, M;
+	static int[] parentList;
+	static PriorityQueue<Edge> pq;
+	static int numParent;
 
-	public static class Node implements Comparable<Node> {
-		int destNum;
+	public static class Edge implements Comparable<Edge> {
+		int num1;
+		int num2;
 		int cost;
 
-		public Node(int destNum, int cost) {
-			this.destNum = destNum;
+		public Edge(int num1, int num2, int cost) {
+			this.num1 = Math.min(num1, num2);
+			this.num2 = Math.max(num1, num2);
 			this.cost = cost;
 		}
 
-		public int compareTo(Node anotherNode) {
-			return Integer.compare(this.cost, anotherNode.cost);
+		public int compareTo(Edge anotherEdge) {
+			return Integer.compare(this.cost, anotherEdge.cost);
 		}
 	}
 
@@ -29,53 +33,59 @@ public class Main {
 	public static void solution() {
 		int answer = 0;
 
-		int[] visited = new int[V];
-		PriorityQueue<Node> pq = new PriorityQueue<>();
+		while (numParent != 2) {
+			Edge edge = pq.poll();
 
-		for (Node node : graphMap.get(0)) {
-			if (visited[node.destNum] == 1) { continue; }
-			pq.add(node);
-		}
-		visited[0] = 1;
+			int num1Parent = findParent(edge.num1);
+			int num2Parent = findParent(edge.num2);
+			if (num1Parent == num2Parent) { continue; }
 
-		while (!pq.isEmpty()) {
-			Node node = pq.poll();
-			if (visited[node.destNum] == 1) { continue; }
-			visited[node.destNum] = 1;
-
-			answer += node.cost;
-
-			for (Node nearNode : graphMap.get(node.destNum)) {
-				if (visited[nearNode.destNum] == 1) { continue; }
-
-				pq.add(nearNode);
-			}
+			union(edge.num1, edge.num2);
+			answer += edge.cost;
 		}
 
 		System.out.println(answer);
+	}
+
+	public static int findParent(int num) {
+		if (parentList[num] == num) { return num; }
+
+		return parentList[num] = findParent(parentList[num]);
+	}
+
+	public static void union(int num1, int num2) {
+		int num1Parent = findParent(num1);
+		int num2Parent = findParent(num2);
+
+		if (num1Parent == num2Parent) { return; }
+
+		parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+		numParent -= 1;
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		V = Integer.parseInt(st.nextToken());
-		E = Integer.parseInt(st.nextToken());
+		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
 
-		graphMap = new HashMap<>();
-		for (int i = 0; i < V; i++) {
-			graphMap.put(i, new ArrayList<>());
+		parentList = new int[N];
+		for (int i = 0; i < N; i++) {
+			parentList[i] = i;
 		}
 
-		for (int i = 0; i < E; i++) {
+		numParent = N;
+
+		pq = new PriorityQueue<>();
+		for (int i = 0; i < M; i++) {
 			st = new StringTokenizer(br.readLine());
 
 			int num1 = Integer.parseInt(st.nextToken()) - 1;
 			int num2 = Integer.parseInt(st.nextToken()) - 1;
 			int cost = Integer.parseInt(st.nextToken());
 
-			graphMap.get(num1).add(new Node(num2, cost));
-			graphMap.get(num2).add(new Node(num1, cost));
+			pq.add(new Edge(num1, num2, cost));
 		}
 	}
 }

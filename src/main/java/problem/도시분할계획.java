@@ -3,24 +3,23 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 도시분할계획 {
     static int N, M;
-    static PriorityQueue<Edge> pq;
     static int[] parentList;
+    static PriorityQueue<Edge> pq;
+    static int numParent;
 
     public static class Edge implements Comparable<Edge> {
-        int node1;
-        int node2;
+        int num1;
+        int num2;
         int cost;
 
-        public Edge(int node1, int node2, int cost) {
-            this.node1 = node1;
-            this.node2 = node2;
+        public Edge(int num1, int num2, int cost) {
+            this.num1 = Math.min(num1, num2);
+            this.num2 = Math.max(num1, num2);
             this.cost = cost;
         }
 
-        @Override
         public int compareTo(Edge anotherEdge) {
             return Integer.compare(this.cost, anotherEdge.cost);
         }
@@ -32,42 +31,36 @@ public class 도시분할계획 {
     }
 
     public static void solution() {
-        parentList = new int[N];
-        for (int i = 0; i < N; i++) {
-            parentList[i] = i;
-        }
+        int answer = 0;
 
-        int numCluster = N;
-        int totalCost = 0;
-
-        while (numCluster > 2) {
+        while (numParent != 2) {
             Edge edge = pq.poll();
 
-            int node1Parent = findParent(edge.node1);
-            int node2Parent = findParent(edge.node2);
-            if (node1Parent == node2Parent) { continue; }
+            int num1Parent = findParent(edge.num1);
+            int num2Parent = findParent(edge.num2);
+            if (num1Parent == num2Parent) { continue; }
 
-            union(edge.node1, edge.node2);
-            numCluster -= 1;
-            totalCost += edge.cost;
+            union(edge.num1, edge.num2);
+            answer += edge.cost;
         }
 
-        System.out.println(totalCost);
+        System.out.println(answer);
     }
 
-    public static void union(int node1, int node2) {
-        int node1Parent = findParent(node1);
-        int node2Parent = findParent(node2);
+    public static int findParent(int num) {
+        if (parentList[num] == num) { return num; }
 
-        if (node1Parent == node2Parent) { return; }
-
-        parentList[Math.max(node1Parent, node2Parent)] = Math.min(node1Parent,node2Parent);
+        return parentList[num] = findParent(parentList[num]);
     }
 
-    public static int findParent(int curNode) {
-        if (parentList[curNode] == curNode) { return curNode; }
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
 
-        return parentList[curNode] = findParent(parentList[curNode]);
+        if (num1Parent == num2Parent) { return; }
+
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        numParent -= 1;
     }
 
     public static void init() throws IOException {
@@ -77,15 +70,22 @@ public class 도시분할계획 {
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
+        parentList = new int[N];
+        for (int i = 0; i < N; i++) {
+            parentList[i] = i;
+        }
+
+        numParent = N;
+
         pq = new PriorityQueue<>();
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            pq.add(new Edge(node1, node2, cost));
+            pq.add(new Edge(num1, num2, cost));
         }
     }
 }
