@@ -4,26 +4,8 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int N, M;
-	static int[] parentList;
-	static PriorityQueue<Edge> pq;
-	static int numParent;
-
-	public static class Edge implements Comparable<Edge> {
-		int num1;
-		int num2;
-		int cost;
-
-		public Edge(int num1, int num2, int cost) {
-			this.num1 = Math.min(num1, num2);
-			this.num2 = Math.max(num1, num2);
-			this.cost = cost;
-		}
-
-		public int compareTo(Edge anotherEdge) {
-			return Integer.compare(this.cost, anotherEdge.cost);
-		}
-	}
+    static int N, S;
+	static int[] numList, sumList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -31,36 +13,29 @@ public class Main {
 	}
 
 	public static void solution() {
-		int answer = 0;
+		int answer = Integer.MAX_VALUE / 2;
 
-		while (numParent != 2) {
-			Edge edge = pq.poll();
+		int leftIndex = 0;
+		int rightIndex = 1;
 
-			int num1Parent = findParent(edge.num1);
-			int num2Parent = findParent(edge.num2);
-			if (num1Parent == num2Parent) { continue; }
+		while (rightIndex < N + 1) {
+			int sumValue = sumList[rightIndex] - sumList[leftIndex];
 
-			union(edge.num1, edge.num2);
-			answer += edge.cost;
+			if (sumValue < S) {
+				rightIndex += 1;
+				continue;
+			}
+
+			if (rightIndex - leftIndex < answer) {
+				answer = rightIndex - leftIndex;
+			}
+			leftIndex += 1;
 		}
 
+		if (answer == Integer.MAX_VALUE / 2) {
+			answer = 0;
+		}
 		System.out.println(answer);
-	}
-
-	public static int findParent(int num) {
-		if (parentList[num] == num) { return num; }
-
-		return parentList[num] = findParent(parentList[num]);
-	}
-
-	public static void union(int num1, int num2) {
-		int num1Parent = findParent(num1);
-		int num2Parent = findParent(num2);
-
-		if (num1Parent == num2Parent) { return; }
-
-		parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
-		numParent -= 1;
 	}
 
 	public static void init() throws IOException {
@@ -68,24 +43,16 @@ public class Main {
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
+		S = Integer.parseInt(st.nextToken());
 
-		parentList = new int[N];
+		numList = new int[N];
+		sumList = new int[N + 1];
+
+		st = new StringTokenizer(br.readLine());
 		for (int i = 0; i < N; i++) {
-			parentList[i] = i;
-		}
-
-		numParent = N;
-
-		pq = new PriorityQueue<>();
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int num1 = Integer.parseInt(st.nextToken()) - 1;
-			int num2 = Integer.parseInt(st.nextToken()) - 1;
-			int cost = Integer.parseInt(st.nextToken());
-
-			pq.add(new Edge(num1, num2, cost));
+			int num = Integer.parseInt(st.nextToken());
+			numList[i] = num;
+			sumList[i + 1] = num + sumList[i];
 		}
 	}
 }
