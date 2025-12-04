@@ -4,35 +4,10 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int N, M;
-	static String str1, str2;
+	static int N, M;
+	static int[] numList;
 	static int[][] dpMatrix;
-
-	public static class Pos {
-		int row;
-		int col;
-
-		public Pos(int row, int col) {
-			this.row = row;
-			this.col = col;
-		}
-
-		public Pos addPos(Pos direction) {
-			return new Pos(this.row + direction.row, this.col + direction.col);
-		}
-
-		public boolean isValidIndex() {
-			if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-				return false;
-			}
-
-			return true;
-		}
-
-		public int getDPValue() {
-			return dpMatrix[this.row][this.col];
-		}
-	}
+	static int[][] queryList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -40,93 +15,59 @@ public class Main {
 	}
 
 	public static void solution() {
-		int rowFlag = 0;
 		for (int i = 0; i < N; i++) {
-			if (rowFlag == 1 || str1.charAt(i) == str2.charAt(0)) {
-				dpMatrix[i][0] = 1;
-				rowFlag = 1;
+			dpMatrix[i][i] = 1;
+		}
+
+		for (int i = 0; i < N - 1; i++) {
+			if (numList[i] == numList[i + 1]) {
+				dpMatrix[i][i + 1] = 1;
 			}
 		}
 
-		int colFlag = 0;
-		for (int j = 0; j < M; j++) {
-			if (colFlag == 1 || str2.charAt(j) == str1.charAt(0)) {
-				dpMatrix[0][j] = 1;
-				colFlag = 1;
-			}
-		}
+		for (int gap = 1; gap < N; gap++) {
+			for (int from = 0; from + gap < N; from++) {
+				int to = from + gap;
 
-
-		for (int i = 1; i < N; i++) {
-			for (int j = 1; j < M; j++) {
-				if (str1.charAt(i) == str2.charAt(j)) {
-					dpMatrix[i][j] = dpMatrix[i - 1][j - 1] + 1;
-					continue;
+				if (dpMatrix[from + 1][to - 1] == 1 && numList[from] == numList[to]) {
+					dpMatrix[from][to] = 1;
 				}
-
-				dpMatrix[i][j] = Math.max(dpMatrix[i - 1][j], dpMatrix[i][j - 1]);
 			}
 		}
-
-		if (dpMatrix[N - 1][M - 1] == 0) {
-			System.out.println(0);
-			return;
-		}
-
-		System.out.println(dpMatrix[N - 1][M - 1]);
-
 
 		StringBuilder sb = new StringBuilder();
-		Pos curPos = new Pos(N - 1, M - 1);
-		while (curPos.row != 0 && curPos.col != 0) {
-			Pos leftPos = curPos.addPos(new Pos(0, -1));
-			Pos upPos = curPos.addPos(new Pos(-1, 0));
-			Pos upLeftPos = curPos.addPos(new Pos(-1, -1));
-
-			if (curPos.getDPValue() == upLeftPos.getDPValue()) {
-				curPos = upLeftPos;
-				continue;
-			}
-
-			if (curPos.getDPValue() == leftPos.getDPValue()) {
-				curPos = leftPos;
-				continue;
-			}
-
-			if (curPos.getDPValue() == upPos.getDPValue()) {
-				curPos = upPos;
-				continue;
-			}
-
-			sb.append(str1.charAt(curPos.row));
-			curPos = upLeftPos;
+		for (int i = 0; i < M; i++) {
+			sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
+			sb.append(" ");
 		}
 
-		if (curPos.getDPValue() == 0) {
-
-		}
-		else if (curPos.row == 0) {
-			sb.append(str1.charAt(0));
-		}
-		else {
-			sb.append(str2.charAt(0));
-		}
-
-		System.out.println(sb.reverse().toString());
+		System.out.println(sb.toString().substring(0, sb.length() - 1));
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		str1 = st.nextToken();
+
+		N = Integer.parseInt(st.nextToken());
+		numList = new int[N];
 
 		st = new StringTokenizer(br.readLine());
-		str2 = st.nextToken();
+		for (int i = 0; i < N; i++) {
+			numList[i] = Integer.parseInt(st.nextToken());
+		}
+		dpMatrix = new int[N][N];
 
-		N = str1.length();
-		M = str2.length();
+		st = new StringTokenizer(br.readLine());
+		M = Integer.parseInt(st.nextToken());
 
-		dpMatrix = new int[N][M];
+		queryList = new int[M][2];
+		for (int i = 0; i < M; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int from = Integer.parseInt(st.nextToken()) - 1;
+			int to = Integer.parseInt(st.nextToken()) - 1;
+			queryList[i][0] = from;
+			queryList[i][1] = to;
+		}
 	}
 }

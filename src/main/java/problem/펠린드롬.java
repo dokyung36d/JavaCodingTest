@@ -3,29 +3,18 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 펠린드롬 {
-    static int N;
+    static int N, M;
     static int[] numList;
-    static int M;
-    static Query[] queryList;
+    static int[][] dpMatrix;
+    static int[][] queryList;
 
-    public static class Query {
-        int from;
-        int to;
-
-        public Query(int from, int to) {
-            this.from = from;
-            this.to = to;
-        }
-    }
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
             dpMatrix[i][i] = 1;
         }
@@ -36,20 +25,20 @@ public class 펠린드롬 {
             }
         }
 
-        for (int gap = 2; gap <= N - 1; gap++) {
-            for (int start = 0; start + gap < N; start++) {
-                int end = start + gap;
-                if (numList[start] == numList[end] && dpMatrix[start + 1][end - 1] == 1) {
-                    dpMatrix[start][end] = 1;
+        for (int gap = 1; gap < N; gap++) {
+            for (int from = 0; from + gap < N; from++) {
+                int to = from + gap;
+
+                if (dpMatrix[from + 1][to - 1] == 1 && numList[from] == numList[to]) {
+                    dpMatrix[from][to] = 1;
                 }
             }
         }
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < M; i++) {
-            Query query = queryList[i];
-            sb.append(dpMatrix[query.from][query.to]);
-            sb.append("\n");
+            sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
+            sb.append(" ");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
@@ -57,8 +46,8 @@ public class 펠린드롬 {
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         N = Integer.parseInt(st.nextToken());
         numList = new int[N];
 
@@ -66,17 +55,19 @@ public class 펠린드롬 {
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
+        dpMatrix = new int[N][N];
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
-        queryList = new Query[M];
 
+        queryList = new int[M][2];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
             int from = Integer.parseInt(st.nextToken()) - 1;
             int to = Integer.parseInt(st.nextToken()) - 1;
-            queryList[i] = new Query(from, to);
+            queryList[i][0] = from;
+            queryList[i][1] = to;
         }
     }
 }
