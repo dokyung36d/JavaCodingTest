@@ -3,102 +3,98 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class ACMCraft {
-    static int T, N, K;
-    static int[] timeList;
-    static int destBuilding;
-    static Map<Integer, List<Integer>> graphMap;
-    static int[] numPrevJobList;
+    static int N, K, W;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    static Map<Integer, List<Integer>> pointMap;
+    static int[] timeList, numPointedList;
 
     public static class Node implements Comparable<Node> {
-        int uniqueNum;
-        int endTime;
+        int curNum;
+        int cost;
 
-        public Node(int uniqueNum, int endTime) {
-            this.uniqueNum = uniqueNum;
-            this.endTime = endTime;
+        public Node(int curNum, int cost) {
+            this.curNum = curNum;
+            this.cost = cost;
         }
 
         @Override
         public int compareTo(Node anotherNode) {
-            return Integer.compare(this.endTime, anotherNode.endTime);
+            return Integer.compare(this.cost, anotherNode.cost);
         }
     }
 
     public static void main(String[] args) throws Exception {
         StringTokenizer st = new StringTokenizer(br.readLine());
-        T = Integer.parseInt(st.nextToken());
+        int T = Integer.parseInt(st.nextToken());
 
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < T; i++) {
             init();
-            solution();
+            sb.append(solution());
+            sb.append("\n");
         }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static void solution() {
+    public static int solution() {
         PriorityQueue<Node> pq = new PriorityQueue<>();
         for (int i = 0; i < N; i++) {
-            if (numPrevJobList[i] != 0) { continue; }
-
-            if (i == destBuilding) {
-                System.out.println(timeList[i]);
-                return;
-            }
+            if (numPointedList[i] != 0) { continue; }
 
             pq.add(new Node(i, timeList[i]));
         }
 
-        int totalTime = 0;
+        int answer = 0;
+
         while (!pq.isEmpty()) {
             Node node = pq.poll();
+            answer = Math.max(answer, node.cost);
+            if (node.curNum == W) {
+                return node.cost;
+            }
 
-            totalTime = Math.max(totalTime, node.endTime);
-            for (int nearNode : graphMap.get(node.uniqueNum)) {
-                numPrevJobList[nearNode] -= 1;
-
-                if (numPrevJobList[nearNode] == 0) {
-                    pq.add(new Node(nearNode, node.endTime + timeList[nearNode]));
-
-                    if (nearNode == destBuilding) {
-                        System.out.println(node.endTime + timeList[nearNode]);
-                        return;
-                    }
+            for (int nextNum : pointMap.get(node.curNum)) {
+                numPointedList[nextNum] -= 1;
+                if (numPointedList[nextNum] == 0) {
+                    pq.add(new Node(nextNum, node.cost + timeList[nextNum]));
                 }
             }
         }
 
-        System.out.println(totalTime);
+        return answer;
     }
 
     public static void init() throws IOException {
         StringTokenizer st = new StringTokenizer(br.readLine());
-
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
         timeList = new int[N];
-        graphMap = new HashMap<>();
+        numPointedList = new int[N];
+
+        pointMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            pointMap.put(i, new ArrayList<>());
+        }
+
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             timeList[i] = Integer.parseInt(st.nextToken());
-
-            graphMap.put(i, new ArrayList<>());
         }
 
-        numPrevJobList = new int[N];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
 
             int from = Integer.parseInt(st.nextToken()) - 1;
             int to = Integer.parseInt(st.nextToken()) - 1;
 
-            graphMap.get(from).add(to);
-            numPrevJobList[to] += 1;
+            numPointedList[to] += 1;
+            pointMap.get(from).add(to);
         }
 
         st = new StringTokenizer(br.readLine());
-        destBuilding = Integer.parseInt(st.nextToken()) - 1;
+        W = Integer.parseInt(st.nextToken()) - 1;
     }
 }
