@@ -4,58 +4,64 @@ import java.util.*;
 import java.io.*;
 
 public class 사이클게임 {
-    static int n;
-    static int m;
+    static int N, M;
     static int[] parentList;
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    static int[][] commadList;
 
     public static void main(String[] args) throws Exception {
         init();
-        for (int i = 0; i < m; i++) {
-            StringTokenizer st = new StringTokenizer(br.readLine());
-            int firstVertex = Integer.parseInt(st.nextToken());
-            int secondVertex = Integer.parseInt(st.nextToken());
+        solution();
+    }
 
-            int parentVertex = Math.min(firstVertex, secondVertex);
-            int childVertex = Math.max(firstVertex, secondVertex);
+    public static void solution() {
+        for (int i = 0; i < M; i++) {
+            int num1Parent = findParent(commadList[i][0]);
+            int num2Parent = findParent(commadList[i][1]);
 
-            if (findRootParent(childVertex) == findRootParent(parentVertex)) {
+            if (num1Parent == num2Parent) {
                 System.out.println(i + 1);
                 return;
             }
 
-            union(parentVertex, childVertex);
+            union(num1Parent, num2Parent);
         }
+
         System.out.println(0);
     }
 
-    public static void union(int vertex1, int vertex2) {
-        int root1 = findRootParent(vertex1);
-        int root2 = findRootParent(vertex2);
+    public static int findParent(int num) {
+        if (num == parentList[num]) { return num; }
 
-
-        if (root1 != root2) {
-            parentList[root2] = root1;
-        }
+        return parentList[num] = findParent(parentList[num]);
     }
 
-    public static int findRootParent(int vertex) {
-        if (parentList[vertex] == vertex) {
-            return vertex;
-        }
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
 
-        return parentList[vertex] = findRootParent(parentList[vertex]);
+        if (num1Parent == num2Parent) { return; }
+
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        n = Integer.parseInt(st.nextToken());
-        m = Integer.parseInt(st.nextToken());
+        N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        parentList = new int[n];
-        for (int i = 0; i < n; i++) {
+        parentList = new int[N];
+        for (int i = 0; i < N; i++) {
             parentList[i] = i;
+        }
+
+        commadList = new int[M][2];
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            commadList[i][0] = Integer.parseInt(st.nextToken());
+            commadList[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }
