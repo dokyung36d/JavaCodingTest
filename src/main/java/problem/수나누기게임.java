@@ -4,9 +4,14 @@ import java.util.*;
 import java.io.*;
 
 
+import java.util.*;
+import java.io.*;
+
 public class 수나누기게임 {
     static int N;
     static int[] numList;
+    static Map<Integer, Integer> numToIndexMap;
+    static final int MAX_NUM = 1000001;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,20 +19,16 @@ public class 수나누기게임 {
     }
 
     public static void solution() {
-        int[] indexList= new int[1000001];
         int[] scoreList = new int[N];
-        Map<Integer, Integer> scoreMap = new HashMap<>();
 
         for (int i = 0; i < N; i++) {
-            indexList[numList[i]] = i + 1;
-        }
+            int num = numList[i];
 
-        for (int i = 0; i < N; i++) {
-            for (int curNum = numList[i] * 2; curNum < 1000001; curNum += numList[i]) {
-                if (indexList[curNum] == 0) { continue; }
+            for (int multiplyNum = num; multiplyNum < MAX_NUM; multiplyNum += num) {
+                if (numToIndexMap.get(multiplyNum) == null) { continue; }
 
                 scoreList[i] += 1;
-                scoreList[indexList[curNum] - 1] -= 1;
+                scoreList[numToIndexMap.get(multiplyNum)] -= 1;
             }
         }
 
@@ -45,11 +46,13 @@ public class 수나누기게임 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
+        numList = new int[N];
+        numToIndexMap = new HashMap<>();
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
+            numToIndexMap.put(numList[i], i);
         }
     }
 }
