@@ -4,97 +4,74 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-    static int N, K, W;
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    static Map<Integer, List<Integer>> pointMap;
-    static int[] timeList, numPointedList;
+	static int N;
+	static List<Integer> primeNumList, primeCumulativeSumList;
 
-    public static class Node implements Comparable<Node> {
-        int curNum;
-        int cost;
+	public static void main(String[] args) throws Exception {
+		init();
+		solution();
+	}
 
-        public Node(int curNum, int cost) {
-            this.curNum = curNum;
-            this.cost = cost;
-        }
+	public static void solution() {
+		setPrimeNumList();
 
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.cost, anotherNode.cost);
-        }
-    }
+		int leftIndex = 0;
+		int rightIndex = 0;
 
-    public static void main(String[] args) throws Exception {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        int T = Integer.parseInt(st.nextToken());
+		int answer = 0;
+		while (leftIndex <= rightIndex && rightIndex < primeCumulativeSumList.size()) {
+			int sumValue = primeCumulativeSumList.get(rightIndex) - primeCumulativeSumList.get(leftIndex);
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < T; i++) {
-            init();
-            sb.append(solution());
-            sb.append("\n");
-        }
+			if (sumValue == N) {
+				answer += 1;
+				leftIndex += 1;
+				continue;
+			}
 
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
-    }
+			if (sumValue < N) {
+				rightIndex += 1;
+				continue;
+			}
 
-    public static int solution() {
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        for (int i = 0; i < N; i++) {
-            if (numPointedList[i] != 0) { continue; }
+			if (sumValue > N) {
+				leftIndex += 1;
+				continue;
+			}
+		}
+		System.out.println(answer);
+	}
 
-            pq.add(new Node(i, timeList[i]));
-        }
+	public static void setPrimeNumList() {
+		primeNumList = new ArrayList<>();
+		primeCumulativeSumList = new ArrayList<>();
+		int[] isPrime = new int[N + 1]; // 0 ~ N
 
-        int answer = 0;
+		Arrays.fill(isPrime, 1);
+		isPrime[0] = 0;
+		isPrime[1] = 0;
 
-        while (!pq.isEmpty()) {
-            Node node = pq.poll();
-            answer = Math.max(answer, node.cost);
-            if (node.curNum == W) {
-                return node.cost;
-            }
+		for (int i = 0; i < N + 1; i++) {
+			if (isPrime[i] == 0) { continue; }
 
-            for (int nextNum : pointMap.get(node.curNum)) {
-                numPointedList[nextNum] -= 1;
-                if (numPointedList[nextNum] == 0) {
-                    pq.add(new Node(nextNum, node.cost + timeList[nextNum]));
-                }
-            }
-        }
+			for (int j = 2 * i; j < N + 1; j += i) {
+				isPrime[j] = 0;
+			}
+		}
 
-        return answer;
-    }
+		int primeCumulativeSum = 0;
+		primeCumulativeSumList.add(primeCumulativeSum);
+		for (int i = 0; i < N + 1; i++) {
+			if (isPrime[i] == 0 ) { continue; }
+			primeNumList.add(i);
+			primeCumulativeSumList.add(primeCumulativeSum + i);
+			primeCumulativeSum += i;
+		}
+	}
 
-    public static void init() throws IOException {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        N = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
+	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st = new StringTokenizer(br.readLine());
 
-        timeList = new int[N];
-        numPointedList = new int[N];
-
-        pointMap = new HashMap<>();
-        for (int i = 0; i < N; i++) {
-            pointMap.put(i, new ArrayList<>());
-        }
-
-        st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < N; i++) {
-            timeList[i] = Integer.parseInt(st.nextToken());
-        }
-
-        for (int i = 0; i < K; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int from = Integer.parseInt(st.nextToken()) - 1;
-            int to = Integer.parseInt(st.nextToken()) - 1;
-
-            numPointedList[to] += 1;
-            pointMap.get(from).add(to);
-        }
-
-        st = new StringTokenizer(br.readLine());
-        W = Integer.parseInt(st.nextToken()) - 1;
-    }
+		N = Integer.parseInt(st.nextToken());
+	}
 }

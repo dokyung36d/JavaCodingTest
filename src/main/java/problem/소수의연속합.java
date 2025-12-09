@@ -3,10 +3,9 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 소수의연속합 {
     static int N;
-    static List<Integer> primeNumList, cumulativeSum;
+    static List<Integer> primeNumList, primeCumulativeSumList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,65 +14,58 @@ public class 소수의연속합 {
 
     public static void solution() {
         setPrimeNumList();
-        setCumulativeSum();
 
-        int left = 0;
-        int right = 1;
+        int leftIndex = 0;
+        int rightIndex = 0;
 
         int answer = 0;
-        while (left <= right && right < cumulativeSum.size()) {
-            int sumValue = cumulativeSum.get(right) - cumulativeSum.get(left);
+        while (leftIndex <= rightIndex && rightIndex < primeCumulativeSumList.size()) {
+            int sumValue = primeCumulativeSumList.get(rightIndex) - primeCumulativeSumList.get(leftIndex);
 
             if (sumValue == N) {
                 answer += 1;
-                left += 1;
+                leftIndex += 1;
+                continue;
             }
 
-            else if (sumValue < N) {
-                right += 1;
+            if (sumValue < N) {
+                rightIndex += 1;
+                continue;
             }
 
-            else if (sumValue > N) {
-                left += 1;
+            if (sumValue > N) {
+                leftIndex += 1;
+                continue;
             }
         }
-
         System.out.println(answer);
     }
 
     public static void setPrimeNumList() {
-        int[] isPrime = new int[N + 1];
-        Arrays.fill(isPrime, 1);
+        primeNumList = new ArrayList<>();
+        primeCumulativeSumList = new ArrayList<>();
+        int[] isPrime = new int[N + 1]; // 0 ~ N
 
+        Arrays.fill(isPrime, 1);
         isPrime[0] = 0;
         isPrime[1] = 0;
 
-        for (int num = 2; num < N + 1; num++) {
-            if (isPrime[num] == 0) {
-                continue;
-            }
-
-            for (int i = num * 2; i < N + 1; i += num) {
-                isPrime[i] = 0;
-            }
-        }
-
-        primeNumList = new ArrayList<>();
         for (int i = 0; i < N + 1; i++) {
-            if (isPrime[i] == 1) {
-                primeNumList.add(i);
+            if (isPrime[i] == 0) { continue; }
+
+            for (int j = 2 * i; j < N + 1; j += i) {
+                isPrime[j] = 0;
             }
         }
-    }
 
-    public static void setCumulativeSum() {
-        cumulativeSum = new ArrayList<>();
-        cumulativeSum.add(0);
-        for (int i = 0; i < primeNumList.size(); i++) {
-            cumulativeSum.add(cumulativeSum.get(cumulativeSum.size() - 1) + primeNumList.get(i));
+        int primeCumulativeSum = 0;
+        primeCumulativeSumList.add(primeCumulativeSum);
+        for (int i = 0; i < N + 1; i++) {
+            if (isPrime[i] == 0 ) { continue; }
+            primeNumList.add(i);
+            primeCumulativeSumList.add(primeCumulativeSum + i);
+            primeCumulativeSum += i;
         }
-
-
     }
 
     public static void init() throws IOException {
@@ -81,6 +73,5 @@ public class 소수의연속합 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-
     }
 }
