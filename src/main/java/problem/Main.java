@@ -4,32 +4,8 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	static List<Integer> commandList;
-
-	public static class Node {
-		int left;
-		int right;
-
-		public Node(int left, int right) {
-			this.left = left;
-			this.right = right;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.left, this.right);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) { return true; }
-			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-			Node anotherNode = (Node) obj;
-			if (this.left == anotherNode.left && this.right == anotherNode.right) { return true; }
-			return false;
-		}
-	}
+	static int N;
+	static int[] numList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -37,60 +13,48 @@ public class Main {
 	}
 
 	public static void solution() {
-		Map<Node, Integer> costMap = new HashMap<>();
-		costMap.put(new Node(0, 0), 0);
+		long minSum = Long.MAX_VALUE / 2;
+		int[] answerNumList = new int[3];
 
-		for (int command : commandList) {
-			Map<Node, Integer> updatedCostMap = new HashMap<>();
+		for (int i = 0; i < N - 2; i++) {
+			int leftIndex = i + 1;
+			int rightIndex = N - 1;
 
-			for (Node node : costMap.keySet()) {
-				int leftCost = getCost(node.left, command);
-				Node leftMovedNode = new Node(command, node.right);
-				updatedCostMap.put(leftMovedNode, Math.min(updatedCostMap.getOrDefault(leftMovedNode, Integer.MAX_VALUE / 2), costMap.get(node) + leftCost));
+			while (leftIndex < rightIndex) {
+				long sumValue = (long) numList[i] + (long) numList[leftIndex] + (long) numList[rightIndex];
 
+				if (Math.abs(sumValue) < minSum) {
+					minSum = Math.abs(sumValue);
+					answerNumList[0] = numList[i];
+					answerNumList[1] = numList[leftIndex];
+					answerNumList[2] = numList[rightIndex];
+				}
 
-				int rightCost = getCost(node.right, command);
-				Node rightMovedNode = new Node(node.left, command);
-				updatedCostMap.put(rightMovedNode, Math.min(updatedCostMap.getOrDefault(rightMovedNode, Integer.MAX_VALUE / 2), costMap.get(node) + rightCost));
+				if (sumValue < 0) {
+					leftIndex += 1;
+				}
+				else {
+					rightIndex -= 1;
+				}
 			}
-
-			costMap = updatedCostMap;
 		}
 
-		int answer = Integer.MAX_VALUE / 2;
-		for (Node node : costMap.keySet()) {
-			answer = Math.min(answer, costMap.get(node));
-		}
-		System.out.println(answer);
-	}
-
-	public static int getCost(int from, int to) {
-		if (from == 0) {
-			return 2;
-		}
-
-		if (from == to) {
-			return 1;
-		}
-
-		if (Math.abs(from - to) == 2) {
-			return 4;
-		}
-
-		return 3;
+		System.out.println(answerNumList[0] + " " + answerNumList[1] + " " + answerNumList[2]);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
+		N = Integer.parseInt(st.nextToken());
 
-		commandList = new ArrayList<>();
-		while (true) {
-			int command = Integer.parseInt(st.nextToken());
-			if (command == 0) { break; }
-
-			commandList.add(command);
+		numList = new int[N];
+		st = new StringTokenizer(br.readLine());
+		for (int i = 0; i < N; i++) {
+			numList[i] = Integer.parseInt(st.nextToken());
 		}
+
+		Arrays.sort(numList);
 	}
+
 }
