@@ -3,19 +3,16 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-import java.util.*;
-import java.io.*;
-
-
 public class 텀프로젝트 {
-    static int T, n;
-    static int[] numList;
+    static int T;
+    static int N;
+    static int[] numList, numPointedList;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws Exception {
         StringTokenizer st = new StringTokenizer(br.readLine());
-
         T = Integer.parseInt(st.nextToken());
+
         for (int i = 0; i < T; i++) {
             init();
             solution();
@@ -23,48 +20,56 @@ public class 텀프로젝트 {
     }
 
     public static void solution() {
-        int[] visited = new int[n];
+        int answer = 0;
+        int[] visited = new int[N];
 
-        int numPersonInCycle = 0;
-
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < N; i++) {
             if (visited[i] == 1) { continue; }
+            if (numPointedList[i] != 0) { continue; }
 
-            Map<Integer, Integer> visitOrderMap = new HashMap<>();
+
+            int[] visitedInThisCycle = new int[N];
             int visitOrder = 1;
-            visitOrderMap.put(i, 1);
-
-            int curPerson = i;
-            visited[curPerson] = 1;
+            int curNum = i;
             while (true) {
-                int nextPerson = numList[curPerson];
-                if (visitOrderMap.get(nextPerson) != null) { // When Cycle is established
-                    numPersonInCycle += visitOrder - visitOrderMap.get(nextPerson) + 1;
-                    break;
-                }
+                visited[curNum] = 1;
+                visitedInThisCycle[curNum] = visitOrder;
 
-                if (visited[nextPerson] == 1) {
-                    break;
-                }
-
-                visited[nextPerson] = 1;
+                int nextNum = numList[curNum];
                 visitOrder += 1;
-                visitOrderMap.put(nextPerson, visitOrder);
-                curPerson = nextPerson;
+
+                if (visitedInThisCycle[nextNum] != 0) {
+                    int numInCycle = visitOrder - visitedInThisCycle[nextNum];
+                    int numVisitedInThisCycle = visitOrder - 1;
+                    answer += (numVisitedInThisCycle - numInCycle);
+
+                    break;
+                }
+
+                if (visited[nextNum] == 1) {
+                    answer += (visitOrder - 1);
+                    break;
+                }
+
+                curNum = nextNum;
+
             }
         }
+        System.out.println(answer);
 
-        System.out.println(n - numPersonInCycle);
     }
 
     public static void init() throws IOException {
         StringTokenizer st = new StringTokenizer(br.readLine());
-        n = Integer.parseInt(st.nextToken());
+        N = Integer.parseInt(st.nextToken());
 
-        numList = new int[n];
+        numList = new int[N];
+        numPointedList = new int[N];
+
         st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken()) - 1;
+            numPointedList[numList[i]] += 1;
         }
     }
 

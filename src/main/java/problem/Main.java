@@ -4,109 +4,73 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	static int N, M;
-	static Map<Node, Integer> graphMap;
-	static int[] numPointedList;
+	static int T;
+    static int N;
+    static int[] numList, numPointedList;
+    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-	public static class Node {
-		int from;
-		int to;
+    public static void main(String[] args) throws Exception {
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        T = Integer.parseInt(st.nextToken());
 
-		public Node(int from, int to) {
-			this.from = from;
-			this.to = to;
-		}
+        for (int i = 0; i < T; i++) {
+            init();
+            solution();
+        }
+    }
 
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.from, this.to);
-		}
+    public static void solution() {
+        int answer = 0;
+        int[] visited = new int[N];
 
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) { return true; }
-			if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-			Node anotherNode = (Node) obj;
-			if (this.from == anotherNode.from && this.to == anotherNode.to) { return true; }
-			return false;
-		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		init();
-		solution();
-	}
-
-	public static void solution() {
-		StringBuilder sb = new StringBuilder();
-		int numPolledSinger = 0;
-		Queue<Integer> queue = new ArrayDeque<>();
-		int[] polled = new int[N];
-
-		for (int i = 0; i < N; i++) {
-			if (numPointedList[i] != 0) { continue; }
-			queue.add(i);
-			polled[i] = 1;
-		}
+        for (int i = 0; i < N; i++) {
+            if (visited[i] == 1) { continue; }
+            if (numPointedList[i] != 0) { continue; }
 
 
-		while (!queue.isEmpty()) {
-			int singer = queue.poll();
-			numPolledSinger += 1;
+            int[] visitedInThisCycle = new int[N];
+            int visitOrder = 1;
+            int curNum = i;
+            while (true) {
+                visited[curNum] = 1;
+                visitedInThisCycle[curNum] = visitOrder;
 
-			sb.append(singer + 1);
-			sb.append("\n");
+                int nextNum = numList[curNum];
+                visitOrder += 1;
 
-			for (int nextSinger = 0; nextSinger < N; nextSinger++) {
-				if (polled[nextSinger] == 1) { continue; }
-				int numDirected = graphMap.getOrDefault(new Node(singer, nextSinger), 0);
-				numPointedList[nextSinger] -= numDirected;
+                if (visitedInThisCycle[nextNum] != 0) {
+                    int numInCycle = visitOrder - visitedInThisCycle[nextNum];
+                    int numVisitedInThisCycle = visitOrder - 1;
+                    answer += (numVisitedInThisCycle - numInCycle);
 
-				if (numPointedList[nextSinger] == 0) {
-					queue.add(nextSinger);
-					polled[nextSinger] = 1;
-				}
-			}
-		}
+                    break;
+                }
 
-		if (numPolledSinger == N) {
-			System.out.println(sb.toString().substring(0, sb.length() - 1));
-		}
-		else {
-			System.out.println(0);
-		}
-	}
+                if (visited[nextNum] == 1) {
+                    answer += (visitOrder - 1);
+                    break;
+                }
 
-	public static void init() throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		StringTokenizer st = new StringTokenizer(br.readLine());
+                curNum = nextNum;
 
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
+            }
+        }
+        System.out.println(answer);
 
-		numPointedList = new int[N];
-		graphMap = new HashMap<>();
+    }
 
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
+    public static void init() throws IOException {
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
 
-			int numSinger = Integer.parseInt(st.nextToken());
-			int[] singerList = new int[numSinger];
+        numList = new int[N];
+        numPointedList = new int[N];
 
-			for (int j = 0; j < numSinger; j++) {
-				singerList[j] = Integer.parseInt(st.nextToken()) - 1;
-			}
-
-			for (int firstSingerIndex = 0; firstSingerIndex < numSinger; firstSingerIndex++) {
-				for (int secondSingerIndex = firstSingerIndex + 1; secondSingerIndex < numSinger; secondSingerIndex++) {
-					Node node = new Node(singerList[firstSingerIndex], singerList[secondSingerIndex]);
-
-					graphMap.put(node, graphMap.getOrDefault(node, 0) + 1);
-					numPointedList[singerList[secondSingerIndex]] += 1;
-				}
-			}
-		}
-	}
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            numList[i] = Integer.parseInt(st.nextToken()) - 1;
+            numPointedList[numList[i]] += 1;
+        }
+    }
 
 }
