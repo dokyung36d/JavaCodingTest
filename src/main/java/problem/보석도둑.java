@@ -3,40 +3,39 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 보석도둑 {
     static int N, K;
-    static PriorityQueue<Gem> gemPq;
-    static PriorityQueue<PolledGem> polledGemPq;
-    static int[] bagList;
+    static PriorityQueue<Gem> gemPQ;
+    static PriorityQueue<PolledGem> polledGemPQ;
+    static int[] bagSizeList;
 
     public static class Gem implements Comparable<Gem> {
-        int weight;
-        int value;
+        int m;
+        int v;
 
-        public Gem(int weight, int value) {
-            this.weight = weight;
-            this.value = value;
+        public Gem(int m, int v) {
+            this.m = m;
+            this.v = v;
         }
 
         @Override
         public int compareTo(Gem anotherGem) {
-            return Integer.compare(this.weight, anotherGem.weight);
+            return Integer.compare(this.m, anotherGem.m);
         }
     }
 
     public static class PolledGem implements Comparable<PolledGem> {
-        int weight;
-        int value;
+        int m;
+        int v;
 
-        public PolledGem(int weight, int value) {
-            this.weight = weight;
-            this.value = value;
+        public PolledGem(int m, int v) {
+            this.m = m;
+            this.v = v;
         }
 
         @Override
         public int compareTo(PolledGem anotherPolledGem) {
-            return Integer.compare(-this.value, -anotherPolledGem.value);
+            return Integer.compare(-this.v, -anotherPolledGem.v);
         }
     }
 
@@ -47,54 +46,56 @@ public class 보석도둑 {
 
     public static void solution() {
         long answer = 0;
+        for (int i = 0; i < K; i++) {
+            int bagSize = bagSizeList[i];
 
-        for (int bag : bagList) {
-            while (!gemPq.isEmpty()) {
-                Gem gem = gemPq.poll();
-                if (gem.weight > bag) {
-                    gemPq.add(gem);
+            while (true) {
+                if (gemPQ.isEmpty()) { break; }
+
+                Gem gem = gemPQ.poll();
+                if (gem.m > bagSize) {
+                    gemPQ.add(gem);
                     break;
                 }
 
-                polledGemPq.add(new PolledGem(gem.weight, gem.value));
+                polledGemPQ.add(new PolledGem(gem.m, gem.v));
             }
 
-            if (polledGemPq.isEmpty()) {
-                continue;
-            }
+            if (polledGemPQ.isEmpty()) { continue; }
 
-            answer += polledGemPq.poll().value;
+            PolledGem polledGem = polledGemPQ.poll();
+            answer += (long) polledGem.v;
         }
 
         System.out.println(answer);
     }
 
-    public static void init() throws IOException {
+    public static void init() throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        gemPq = new PriorityQueue<>();
-        polledGemPq = new PriorityQueue<>();
+        gemPQ = new PriorityQueue<>();
+        polledGemPQ = new PriorityQueue<>();
 
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
+            int m = Integer.parseInt(st.nextToken());
+            int v = Integer.parseInt(st.nextToken());
 
-            int weight = Integer.parseInt(st.nextToken());
-            int value = Integer.parseInt(st.nextToken());
-
-            gemPq.add(new Gem(weight, value));
+            Gem gem = new Gem(m, v);
+            gemPQ.add(gem);
         }
 
-
-        bagList = new int[K];
+        bagSizeList = new int[K];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
-            bagList[i] = Integer.parseInt(st.nextToken());
+
+            bagSizeList[i] = Integer.parseInt(st.nextToken());
         }
 
-        Arrays.sort(bagList);
+        Arrays.sort(bagSizeList);
     }
 }
