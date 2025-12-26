@@ -3,48 +3,35 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-
 public class 문제집 {
     static int N, M;
+    static int[] numPointedList;
     static Map<Integer, List<Integer>> graphMap;
-    static int[] numParentList;
-
-    public static class Node implements Comparable<Node> {
-        int num;
-
-        public Node(int num) {
-            this.num = num;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.num, anotherNode.num);
-        }
-
-    }
+    static PriorityQueue<Integer> pq;
 
     public static void main(String[] args) throws Exception {
         init();
-        PriorityQueue<Node> queue = new PriorityQueue<>();
+        solution();
+    }
+
+    public static void solution() {
+        StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < N; i++) {
-            if (numParentList[i] == 0) {
-                queue.add(new Node(i));
-            }
+            if (numPointedList[i] != 0) { continue; }
+            pq.add(i);
         }
 
-        StringBuilder sb = new StringBuilder();
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
-            sb.append(node.num + 1 + " ");
+        while (!pq.isEmpty()) {
+            int num = pq.poll();
+            sb.append(num + 1 + " ");
 
-            for (int i = 0; i < graphMap.get(node.num).size(); i++) {
-                int childNum = graphMap.get(node.num).get(i);
-                numParentList[childNum] -= 1;
-                if (numParentList[childNum] == 0) {
-                    queue.add(new Node(childNum));
+            for (int next : graphMap.get(num)) {
+                numPointedList[next] -= 1;
+
+                if (numPointedList[next] == 0) {
+                    pq.add(next);
                 }
-
             }
         }
 
@@ -55,24 +42,26 @@ public class 문제집 {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        graphMap = new HashMap<>();
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-        numParentList = new int[N];
+        numPointedList = new int[N];
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
             graphMap.put(i, new ArrayList<>());
         }
 
+
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
-            int headNum = Integer.parseInt(st.nextToken()) - 1;
-            int tailNum = Integer.parseInt(st.nextToken()) - 1;
 
-            graphMap.get(headNum).add(tailNum);
-            numParentList[tailNum] += 1;
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
+
+            numPointedList[to] += 1;
+            graphMap.get(from).add(to);
         }
 
+        pq = new PriorityQueue<>();
     }
-
 }

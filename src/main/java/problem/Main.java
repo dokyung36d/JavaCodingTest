@@ -4,40 +4,10 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	static int N, K;
-    static PriorityQueue<Gem> gemPQ;
-    static PriorityQueue<PolledGem> polledGemPQ;
-    static int[] bagSizeList;
-
-    public static class Gem implements Comparable<Gem> {
-        int m;
-        int v;
-
-        public Gem(int m, int v) {
-            this.m = m;
-            this.v = v;
-        }
-
-        @Override
-        public int compareTo(Gem anotherGem) {
-            return Integer.compare(this.m, anotherGem.m);
-        }
-    }
-
-    public static class PolledGem implements Comparable<PolledGem> {
-        int m;
-        int v;
-
-        public PolledGem(int m, int v) {
-            this.m = m;
-            this.v = v;
-        }
-
-        @Override
-        public int compareTo(PolledGem anotherPolledGem) {
-            return Integer.compare(-this.v, -anotherPolledGem.v);
-        }
-    }
+	static int N, M;
+    static int[] numPointedList;
+    static Map<Integer, List<Integer>> graphMap;
+    static PriorityQueue<Integer> pq;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -45,57 +15,53 @@ public class Main {
     }
 
     public static void solution() {
-        long answer = 0;
-        for (int i = 0; i < K; i++) {
-            int bagSize = bagSizeList[i];
+        StringBuilder sb = new StringBuilder();
 
-            while (true) {
-                if (gemPQ.isEmpty()) { break; }
-
-                Gem gem = gemPQ.poll();
-                if (gem.m > bagSize) {
-                    gemPQ.add(gem);
-                    break;
-                }
-
-                polledGemPQ.add(new PolledGem(gem.m, gem.v));
-            }
-
-            if (polledGemPQ.isEmpty()) { continue; }
-
-            PolledGem polledGem = polledGemPQ.poll();
-            answer += (long) polledGem.v;
+        for (int i = 0; i < N; i++) {
+            if (numPointedList[i] != 0) { continue; }
+            pq.add(i);
         }
 
-        System.out.println(answer);
+        while (!pq.isEmpty()) {
+            int num = pq.poll();
+            sb.append(num + 1 + " ");
+
+            for (int next : graphMap.get(num)) {
+                numPointedList[next] -= 1;
+
+                if (numPointedList[next] == 0) {
+                    pq.add(next);
+                }
+            }
+        }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static void init() throws Exception {
+    public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        gemPQ = new PriorityQueue<>();
-        polledGemPQ = new PriorityQueue<>();
-
+        numPointedList = new int[N];
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
-            int m = Integer.parseInt(st.nextToken());
-            int v = Integer.parseInt(st.nextToken());
-
-            Gem gem = new Gem(m, v);
-            gemPQ.add(gem);
+            graphMap.put(i, new ArrayList<>());
         }
 
-        bagSizeList = new int[K];
-        for (int i = 0; i < K; i++) {
+
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            bagSizeList[i] = Integer.parseInt(st.nextToken());
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
+
+            numPointedList[to] += 1;
+            graphMap.get(from).add(to);
         }
 
-        Arrays.sort(bagSizeList);
+        pq = new PriorityQueue<>();
     }
 }
