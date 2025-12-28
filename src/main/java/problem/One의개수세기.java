@@ -1,15 +1,12 @@
 package problem;
 
-import java.io.*;
-import java.math.BigInteger;
 import java.util.*;
+import java.io.*;
 
-import java.util.*;
-import java.io.*;
 
 
 public class One의개수세기 {
-    static long A, B;
+    static long a, b;
     static List<Long> dpList;
 
     public static void main(String[] args) throws Exception {
@@ -21,39 +18,53 @@ public class One의개수세기 {
         dpList = new ArrayList<>();
         dpList.add((long) 1);
 
-        while (Math.pow(2, dpList.size()) < B) {
-            dpList.add(dpList.get(dpList.size() - 1) * 2 + (long) Math.pow(2, dpList.size()));
+        while (Math.pow(2, dpList.size()) < b) {
+            long dpNum = 2 * dpList.get(dpList.size() - 1) + (long) Math.pow(2, dpList.size());
+            dpList.add(dpNum);
         }
 
-        long bNumOne = getNumOne(B);
-        long aNumOne = getNumOne(A - 1);
-
+        long aNumOne = getNumOne(a);
+        long bNumOne = getNumOne(b);
         System.out.println(bNumOne - aNumOne);
     }
 
     public static long getNumOne(long num) {
-        int numBit = (int) (Math.log(num) / Math.log(2)) + 1;
-
-
-        long numOne = 0;
-        for (int i = numBit - 1; i >= 1; i--) {
-            if ((num & (long) 1 << i) == (long) 0) { continue; }
-
-            numOne += dpList.get(i - 1);
-            num -= (long) 1 << i;
-            numOne += (num + 1);
+        if (num == (long) 1) {
+            return 1;
         }
 
 
+        long numOne = (long) 0;
 
-        return numOne + num;
+        int curBit = 63 - Long.numberOfLeadingZeros(num);
+
+        while (num > (long) 0) {
+            if (num <= (long) 2) {
+                numOne += num;
+                break;
+            }
+
+
+            long isOne = (num & ((long) 1 << curBit));
+            if (isOne == (long) 0) {
+                curBit -= 1;
+                continue;
+            }
+
+            numOne += dpList.get(curBit - 1);
+            num -= ((long) 1 << curBit);
+            numOne += (num + 1);
+            curBit -= 1;
+        }
+
+        return numOne;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
         StringTokenizer st = new StringTokenizer(br.readLine());
-        A = Long.parseLong(st.nextToken());
-        B = Long.parseLong(st.nextToken());
+
+        a = Long.parseLong(st.nextToken()) - 1;
+        b = Long.parseLong(st.nextToken());
     }
 }

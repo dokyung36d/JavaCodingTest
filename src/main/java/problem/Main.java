@@ -3,11 +3,11 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class Main {
-	static int N, M;
-    static int[] numPointedList;
-    static Map<Integer, List<Integer>> graphMap;
-    static PriorityQueue<Integer> pq;
+    static long a, b;
+    static List<Long> dpList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,53 +15,56 @@ public class Main {
     }
 
     public static void solution() {
-        StringBuilder sb = new StringBuilder();
+        dpList = new ArrayList<>();
+        dpList.add((long) 1);
 
-        for (int i = 0; i < N; i++) {
-            if (numPointedList[i] != 0) { continue; }
-            pq.add(i);
+        while (Math.pow(2, dpList.size()) < b) {
+            long dpNum = 2 * dpList.get(dpList.size() - 1) + (long) Math.pow(2, dpList.size());
+            dpList.add(dpNum);
         }
 
-        while (!pq.isEmpty()) {
-            int num = pq.poll();
-            sb.append(num + 1 + " ");
+        long aNumOne = getNumOne(a);
+        long bNumOne = getNumOne(b);
+        System.out.println(bNumOne - aNumOne);
+    }
 
-            for (int next : graphMap.get(num)) {
-                numPointedList[next] -= 1;
+    public static long getNumOne(long num) {
+        if (num == (long) 1) {
+            return 1;
+        }
 
-                if (numPointedList[next] == 0) {
-                    pq.add(next);
-                }
+
+        long numOne = (long) 0;
+
+        int curBit = 63 - Long.numberOfLeadingZeros(num);
+
+        while (num > (long) 0) {
+            if (num <= (long) 2) {
+                numOne += num;
+                break;
             }
+
+
+            long isOne = (num & ((long) 1 << curBit));
+            if (isOne == (long) 0) {
+                curBit -= 1;
+                continue;
+            }
+
+            numOne += dpList.get(curBit - 1);
+            num -= ((long) 1 << curBit);
+            numOne += (num + 1);
+            curBit -= 1;
         }
 
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
+        return numOne;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
-
-        numPointedList = new int[N];
-        graphMap = new HashMap<>();
-        for (int i = 0; i < N; i++) {
-            graphMap.put(i, new ArrayList<>());
-        }
-
-
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int from = Integer.parseInt(st.nextToken()) - 1;
-            int to = Integer.parseInt(st.nextToken()) - 1;
-
-            numPointedList[to] += 1;
-            graphMap.get(from).add(to);
-        }
-
-        pq = new PriorityQueue<>();
+        a = Long.parseLong(st.nextToken()) - 1;
+        b = Long.parseLong(st.nextToken());
     }
 }
