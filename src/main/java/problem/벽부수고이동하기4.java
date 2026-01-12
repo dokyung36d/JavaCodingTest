@@ -4,12 +4,13 @@ import java.util.*;
 import java.io.*;
 
 
+
 public class 벽부수고이동하기4 {
     static int N, M;
-    static int[][] mainMatrix, groupMatrix;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1),
-            new Pos(1, 0), new Pos(0, -1)};
+    static int[][] mainMatrix;
+    static int[][] dpMatrix;
     static Map<Integer, Integer> groupSizeMap;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
 
     public static class Pos {
         int row;
@@ -39,26 +40,32 @@ public class 벽부수고이동하기4 {
     }
 
     public static void solution() {
-        groupMatrix = new int[N][M];
-        int uniqueNum = 2;
+        setDpMatrix();
 
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (mainMatrix[i][j] == 1) { continue; }
-
-                fillGroupMatrix(new Pos(i, j), uniqueNum);
-                uniqueNum += 1;
-            }
-        }
 
         int[][] answerMatrix = new int[N][M];
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < M; j++) {
-                if (mainMatrix[i][j] != 1) { continue; }
+                if (mainMatrix[i][j] == 0) { continue; }
 
-                answerMatrix[i][j] = (getNumMovePossible(new Pos(i, j)) + 1) % 10;
+                Map<Integer, Integer> nearGroupMap = new HashMap<>();
+                for (Pos direction : directions) {
+                    Pos movedPos = new Pos(i, j).addPos(direction);
+                    if (!movedPos.isValidIndex()) { continue; }
+                    if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+
+                    nearGroupMap.put(dpMatrix[movedPos.row][movedPos.col], 1);
+                }
+
+                int totalSize = 0;
+                for (int uniqueNum : nearGroupMap.keySet()) {
+                    totalSize += groupSizeMap.get(uniqueNum);
+                }
+                totalSize += 1;
+                answerMatrix[i][j] = totalSize % 10;
             }
         }
+
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < N; i++) {
@@ -67,53 +74,46 @@ public class 벽부수고이동하기4 {
             }
             sb.append("\n");
         }
-
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int getNumMovePossible(Pos pos) {
-        Map<Integer, Integer> nearGroupMap = new HashMap<>();
+    public static void setDpMatrix() {
+        dpMatrix = new int[N][M];
+        groupSizeMap = new HashMap<>();
 
-//		if (mainMatrix[pos.row][pos.col] == 1) {
-//			return -1;
-//		}
-        for (Pos direction : directions) {
-            Pos movedPos = pos.addPos(direction);
-            if (!movedPos.isValidIndex()) { continue; }
-            if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
+        int[][] visited = new int[N][M];
+        int uniqueNum = 1;
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                if (mainMatrix[i][j] == 1) { continue; }
+                if (visited[i][j] == 1) { continue; }
 
-            nearGroupMap.put(mainMatrix[movedPos.row][movedPos.col], 1);
-        }
+                int groupSize = 0;
 
-        int answer = 0;
-        for (int groupUniqueNum : nearGroupMap.keySet()) {
-            answer += groupSizeMap.get(groupUniqueNum);
-        }
+                Deque<Pos> queue = new ArrayDeque<>();
+                queue.add(new Pos(i, j));
 
-        return answer;
-    }
+                while (!queue.isEmpty()) {
+                    Pos curPos = queue.poll();
+                    if (visited[curPos.row][curPos.col] == 1) { continue; }
+                    visited[curPos.row][curPos.col] = 1;
+                    dpMatrix[curPos.row][curPos.col] = uniqueNum;
+                    groupSize += 1;
 
-    public static void fillGroupMatrix(Pos startPos, int uniqueNum) {
-        Deque<Pos> queue = new ArrayDeque<>();
-        queue.add(startPos);
+                    for (Pos direction : directions) {
+                        Pos movedPos = curPos.addPos(direction);
+                        if (!movedPos.isValidIndex()) { continue; }
+                        if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+                        if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
 
-        int size = 0;
-        while (!queue.isEmpty()) {
-            Pos curPos = queue.pollFirst();
-            if (mainMatrix[curPos.row][curPos.col] != 0) { continue; }
-            mainMatrix[curPos.row][curPos.col] = uniqueNum;
-            size += 1;
+                        queue.addLast(movedPos);
+                    }
+                }
 
-            for (Pos direction : directions) {
-                Pos movedPos = curPos.addPos(direction);
-                if (!movedPos.isValidIndex()) { continue; }
-                if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-                queue.add(movedPos);
+                groupSizeMap.put(uniqueNum, groupSize);
+                uniqueNum += 1;
             }
         }
-
-        groupSizeMap.put(uniqueNum, size);
     }
 
     public static void init() throws IOException {
@@ -128,10 +128,8 @@ public class 벽부수고이동하기4 {
             st = new StringTokenizer(br.readLine());
             String string = st.nextToken();
             for (int j = 0; j < M; j++) {
-                mainMatrix[i][j] = string.charAt(j) - '0';
+                mainMatrix[i][j] = Character.getNumericValue(string.charAt(j));
             }
         }
-
-        groupSizeMap = new HashMap<>();
     }
 }
