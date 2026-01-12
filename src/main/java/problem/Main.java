@@ -6,10 +6,9 @@ import java.io.*;
 
 
 public class Main {
-	static int G, P;
-	static int[] gateList;
-	static int[] parentList;
-
+	static int N;
+	static int[] numList;
+	static List<Integer> dpList;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -17,60 +16,38 @@ public class Main {
 	}
 
 	public static void solution() {
-		int answer = 0;
+		dpList.add(numList[0]);
 
-		for (int i = 0; i < P; i++) {
-			int gate = gateList[i];
+		for (int i = 1; i < N; i++) {
+			int num = numList[i];
 
-			int parent = findParent(gate);
-			if (parent == 0) { break; }
+			int index = Collections.binarySearch(dpList, num);
+			if (index >= 0) { continue; }
 
-			union(parent, parent - 1);
-			answer += 1;
+			int insertIndex = - index - 1;
+			if (insertIndex == dpList.size()) {
+				dpList.add(num);
+				continue;
+			}
+
+			dpList.set(insertIndex, num);
 		}
 
-		System.out.println(answer);
-	}
-
-	public static int findParent(int num) {
-		if (num == parentList[num]) { return num; }
-
-		return parentList[num] = findParent(parentList[num]);
-	}
-
-	public static void union(int num1, int num2) {
-		int num1Parent = findParent(num1);
-		int num2Parent = findParent(num2);
-
-		if (num1Parent == num2Parent) { return; }
-
-		int bigNumGate = Math.max(num1Parent, num2Parent);
-		int smallNumGate = Math.min(num1Parent, num2Parent);
-
-		parentList[bigNumGate] = smallNumGate;
+		System.out.println(dpList.size());
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
 		StringTokenizer st = new StringTokenizer(br.readLine());
-		G = Integer.parseInt(st.nextToken());
+
+		N = Integer.parseInt(st.nextToken());
+		numList = new int[N];
 
 		st = new StringTokenizer(br.readLine());
-		P = Integer.parseInt(st.nextToken());
-
-		gateList = new int[P];
-		for (int i = 0; i < P; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			int gate = Integer.parseInt(st.nextToken());
-			gateList[i] = gate;
+		for (int i = 0; i < N; i++) {
+			numList[i] = Integer.parseInt(st.nextToken());
 		}
 
-
-		parentList = new int[G + 1];
-		for (int i = 0; i < G + 1; i++) {
-			parentList[i] = i;
-		}
+		dpList = new ArrayList<>();
 	}
 }
