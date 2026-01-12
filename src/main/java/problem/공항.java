@@ -4,10 +4,12 @@ import java.util.*;
 import java.io.*;
 
 
+
 public class 공항 {
     static int G, P;
-    static int[] planeList;
+    static int[] gateList;
     static int[] parentList;
+
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,28 +17,25 @@ public class 공항 {
     }
 
     public static void solution() {
-        parentList = new int[G + 1];
-        for (int i = 0; i < G + 1; i++) {
-            parentList[i] = i;
-        }
-
-
         int answer = 0;
-        for (int i = 0; i < P; i++) {
-            int curMaxGate = findParent(planeList[i]);
-            if (curMaxGate == 0) { break; }
 
+        for (int i = 0; i < P; i++) {
+            int gate = gateList[i];
+
+            int parent = findParent(gate);
+            if (parent == 0) { break; }
+
+            union(parent, parent - 1);
             answer += 1;
-            union(curMaxGate, curMaxGate - 1);
         }
 
         System.out.println(answer);
     }
 
-    public static int findParent(int curNum) {
-        if (curNum == parentList[curNum]) { return curNum; }
+    public static int findParent(int num) {
+        if (num == parentList[num]) { return num; }
 
-        return parentList[curNum] = findParent(parentList[curNum]);
+        return parentList[num] = findParent(parentList[num]);
     }
 
     public static void union(int num1, int num2) {
@@ -45,22 +44,33 @@ public class 공항 {
 
         if (num1Parent == num2Parent) { return; }
 
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        int bigNumGate = Math.max(num1Parent, num2Parent);
+        int smallNumGate = Math.min(num1Parent, num2Parent);
+
+        parentList[bigNumGate] = smallNumGate;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
         StringTokenizer st = new StringTokenizer(br.readLine());
         G = Integer.parseInt(st.nextToken());
 
         st = new StringTokenizer(br.readLine());
         P = Integer.parseInt(st.nextToken());
 
-        planeList = new int[P];
+        gateList = new int[P];
         for (int i = 0; i < P; i++) {
             st = new StringTokenizer(br.readLine());
 
-            planeList[i] = Integer.parseInt(st.nextToken());
+            int gate = Integer.parseInt(st.nextToken());
+            gateList[i] = gate;
+        }
+
+
+        parentList = new int[G + 1];
+        for (int i = 0; i < G + 1; i++) {
+            parentList[i] = i;
         }
     }
 }

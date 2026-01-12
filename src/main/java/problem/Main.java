@@ -6,65 +6,71 @@ import java.io.*;
 
 
 public class Main {
-    static long a, b;
-    static List<Long> dpList;
-
-    public static void main(String[] args) throws Exception {
-        init();
-        solution();
-    }
-
-    public static void solution() {
-        dpList = new ArrayList<>();
-        dpList.add((long) 1);
-
-        while (Math.pow(2, dpList.size()) < b) {
-            long dpNum = 2 * dpList.get(dpList.size() - 1) + (long) Math.pow(2, dpList.size());
-            dpList.add(dpNum);
-        }
-
-        long aNumOne = getNumOne(a);
-        long bNumOne = getNumOne(b);
-        System.out.println(bNumOne - aNumOne);
-    }
-
-    public static long getNumOne(long num) {
-        if (num == (long) 1) {
-            return 1;
-        }
+	static int G, P;
+	static int[] gateList;
+	static int[] parentList;
 
 
-        long numOne = (long) 0;
+	public static void main(String[] args) throws Exception {
+		init();
+		solution();
+	}
 
-        int curBit = 63 - Long.numberOfLeadingZeros(num);
+	public static void solution() {
+		int answer = 0;
 
-        while (num > (long) 0) {
-            if (num <= (long) 2) {
-                numOne += num;
-                break;
-            }
+		for (int i = 0; i < P; i++) {
+			int gate = gateList[i];
+
+			int parent = findParent(gate);
+			if (parent == 0) { break; }
+
+			union(parent, parent - 1);
+			answer += 1;
+		}
+
+		System.out.println(answer);
+	}
+
+	public static int findParent(int num) {
+		if (num == parentList[num]) { return num; }
+
+		return parentList[num] = findParent(parentList[num]);
+	}
+
+	public static void union(int num1, int num2) {
+		int num1Parent = findParent(num1);
+		int num2Parent = findParent(num2);
+
+		if (num1Parent == num2Parent) { return; }
+
+		int bigNumGate = Math.max(num1Parent, num2Parent);
+		int smallNumGate = Math.min(num1Parent, num2Parent);
+
+		parentList[bigNumGate] = smallNumGate;
+	}
+
+	public static void init() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		G = Integer.parseInt(st.nextToken());
+
+		st = new StringTokenizer(br.readLine());
+		P = Integer.parseInt(st.nextToken());
+
+		gateList = new int[P];
+		for (int i = 0; i < P; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			int gate = Integer.parseInt(st.nextToken());
+			gateList[i] = gate;
+		}
 
 
-            long isOne = (num & ((long) 1 << curBit));
-            if (isOne == (long) 0) {
-                curBit -= 1;
-                continue;
-            }
-
-            numOne += dpList.get(curBit - 1);
-            num -= ((long) 1 << curBit);
-            numOne += (num + 1);
-            curBit -= 1;
-        }
-
-        return numOne;
-    }
-
-    public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        a = Long.parseLong(st.nextToken()) - 1;
-        b = Long.parseLong(st.nextToken());
-    }
+		parentList = new int[G + 1];
+		for (int i = 0; i < G + 1; i++) {
+			parentList[i] = i;
+		}
+	}
 }
