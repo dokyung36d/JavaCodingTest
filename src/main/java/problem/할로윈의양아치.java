@@ -4,21 +4,13 @@ import java.util.*;
 import java.io.*;
 
 
+
 public class 할로윈의양아치 {
-    static int N, M ,K;
-    static int[] candyList;
-    static Edge[] edgeList;
+    static int N, M, K;
+    static int[] numCandyList;
+    static int[][] graphMatrix;
     static int[] parentList;
-
-    public static class Edge {
-        int num1;
-        int num2;
-
-        public Edge(int num1, int num2) {
-            this.num1 = num1;
-            this.num2 = num2;
-        }
-    }
+    static Map<Integer, Integer> groupMap, groupSizeMap;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -26,44 +18,40 @@ public class 할로윈의양아치 {
     }
 
     public static void solution() {
-        parentList = new int[N];
-        for (int i = 0; i < N; i++) {
-            parentList[i] = i;
+        for (int i = 0; i < M; i++) {
+            union(graphMatrix[i][0], graphMatrix[i][1]);
         }
 
-        for (Edge edge : edgeList) {
-            int num1Parent = findParent(edge.num1);
-            int num2Parent = findParent(edge.num2);
-
-            if (num1Parent == num2Parent) { continue; }
-            union(num1Parent, num2Parent);
-        }
-
-        Map<Integer, Integer> groupSizeMap = new HashMap<>();
-        Map<Integer, Integer> groupValueMap = new HashMap<>();
+        groupMap = new HashMap<>();
+        groupSizeMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
             int parent = findParent(i);
 
+            groupMap.put(parent, groupMap.getOrDefault(parent, 0) + numCandyList[i]);
             groupSizeMap.put(parent, groupSizeMap.getOrDefault(parent, 0) + 1);
-            groupValueMap.put(parent, groupValueMap.getOrDefault(parent, 0) + candyList[i]);
         }
 
+        List<Integer> keyList = new ArrayList<>(groupMap.keySet());
+        int[][] dpMatrix = new int[keyList.size() + 1][K];
+        for (int i = 0; i < keyList.size(); i++) {
+            int uniqueNum = keyList.get(i);
 
-        List<Integer> parentList = new ArrayList<>(groupSizeMap.keySet());
-        int[][] dpMatrix = new int[parentList.size() + 1][K];
+            int numCandy = groupMap.get(uniqueNum);
+            int groupSize = groupSizeMap.get(uniqueNum);
 
-        for (int i = 0; i < parentList.size(); i++) {
-            int groupSize = groupSizeMap.get(parentList.get(i));
-            int groupValue = groupValueMap.get(parentList.get(i));
-            for (int j = 0; j < K; j++) {
-                dpMatrix[i + 1][j] = dpMatrix[i][j];
-                if (groupSize > j) { continue; }
+            for (int size = 0; size < K; size++) {
+                if (size < groupSize) {
+                    dpMatrix[i + 1][size] = dpMatrix[i][size];
+                    continue;
+                }
 
-                dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j], dpMatrix[i][j - groupSize] + groupValue);
+                dpMatrix[i + 1][size] = Math.max(dpMatrix[i][size],
+                        dpMatrix[i][size - groupSize] + numCandy);
             }
+
         }
 
-        System.out.println(dpMatrix[parentList.size()][K - 1]);
+        System.out.println(dpMatrix[keyList.size()][K - 1]);
     }
 
     public static int findParent(int num) {
@@ -78,7 +66,10 @@ public class 할로윈의양아치 {
 
         if (num1Parent == num2Parent) { return; }
 
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        int minParent = Math.min(num1Parent, num2Parent);
+        int maxParent = Math.max(num1Parent, num2Parent);
+
+        parentList[maxParent] = minParent;
     }
 
     public static void init() throws IOException {
@@ -89,21 +80,23 @@ public class 할로윈의양아치 {
         M = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        candyList = new int[N];
-        edgeList = new Edge[M];
+        numCandyList = new int[N];
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            candyList[i] = Integer.parseInt(st.nextToken());
+            numCandyList[i] = Integer.parseInt(st.nextToken());
         }
 
+        graphMatrix = new int[M][2];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
 
-            edgeList[i] = new Edge(num1, num2);
+            graphMatrix[i][0] = Integer.parseInt(st.nextToken()) - 1;
+            graphMatrix[i][1] = Integer.parseInt(st.nextToken()) - 1;
         }
 
+        parentList = new int[N];
+        for (int i = 0; i < N; i++) {
+            parentList[i] = i;
+        }
     }
-
 }
