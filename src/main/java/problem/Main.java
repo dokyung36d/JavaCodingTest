@@ -6,11 +6,9 @@ import java.io.*;
 
 
 public class Main {
-	static int N, M, K;
-	static int[] numCandyList;
-	static int[][] graphMatrix;
-	static int[] parentList;
-	static Map<Integer, Integer> groupMap, groupSizeMap;
+	static String string;
+	static int N;
+	static int[][] dpMatrix;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -18,85 +16,48 @@ public class Main {
 	}
 
 	public static void solution() {
-		for (int i = 0; i < M; i++) {
-			union(graphMatrix[i][0], graphMatrix[i][1]);
-		}
-
-		groupMap = new HashMap<>();
-		groupSizeMap = new HashMap<>();
+		dpMatrix = new int[N][N];
 		for (int i = 0; i < N; i++) {
-			int parent = findParent(i);
-
-			groupMap.put(parent, groupMap.getOrDefault(parent, 0) + numCandyList[i]);
-			groupSizeMap.put(parent, groupSizeMap.getOrDefault(parent, 0) + 1);
+			dpMatrix[i][i] = 1;
 		}
 
-		List<Integer> keyList = new ArrayList<>(groupMap.keySet());
-		int[][] dpMatrix = new int[keyList.size() + 1][K];
-		for (int i = 0; i < keyList.size(); i++) {
-			int uniqueNum = keyList.get(i);
-
-			int numCandy = groupMap.get(uniqueNum);
-			int groupSize = groupSizeMap.get(uniqueNum);
-
-			for (int size = 0; size < K; size++) {
-				if (size < groupSize) {
-					dpMatrix[i + 1][size] = dpMatrix[i][size];
-					continue;
-				}
-
-				dpMatrix[i + 1][size] = Math.max(dpMatrix[i][size],
-												dpMatrix[i][size - groupSize] + numCandy);
+		for (int i = 0; i < N - 1; i++) {
+			if (string.charAt(i) == string.charAt(i + 1)) {
+				dpMatrix[i][i + 1] = 1;
 			}
-
 		}
 
-		System.out.println(dpMatrix[keyList.size()][K - 1]);
-	}
+		for (int gap = 2; gap < N; gap++) {
+			for (int start = 0; start + gap < N; start++) {
+				int end = start + gap;
 
-	public static int findParent(int num) {
-		if (num == parentList[num]) { return num; }
+				if (string.charAt(start) == string.charAt(end) && dpMatrix[start + 1][end - 1] == 1) {
+					dpMatrix[start][end] = 1;
+				}
+			}
+		}
 
-		return parentList[num] = findParent(parentList[num]);
-	}
+		int[] dpList = new int[N + 1];
+		for (int i = 0; i < N + 1; i++) {
+			dpList[i] = i;
+		}
 
-	public static void union(int num1, int num2) {
-		int num1Parent = findParent(num1);
-		int num2Parent = findParent(num2);
+		for (int endIndex = 0; endIndex < N; endIndex++) {
+			for (int startIndex = 0; startIndex <= endIndex; startIndex++) {
+				if (dpMatrix[startIndex][endIndex] == 0) { continue; }
 
-		if (num1Parent == num2Parent) { return; }
+				dpList[endIndex + 1] = Math.min(dpList[endIndex + 1], dpList[startIndex] + 1);
+			}
+		}
 
-		int minParent = Math.min(num1Parent, num2Parent);
-		int maxParent = Math.max(num1Parent, num2Parent);
-
-		parentList[maxParent] = minParent;
+		System.out.println(dpList[N]);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
-		K = Integer.parseInt(st.nextToken());
-
-		numCandyList = new int[N];
-		st = new StringTokenizer(br.readLine());
-		for (int i = 0; i < N; i++) {
-			numCandyList[i] = Integer.parseInt(st.nextToken());
-		}
-
-		graphMatrix = new int[M][2];
-		for (int i = 0; i < M; i++) {
-			st = new StringTokenizer(br.readLine());
-
-			graphMatrix[i][0] = Integer.parseInt(st.nextToken()) - 1;
-			graphMatrix[i][1] = Integer.parseInt(st.nextToken()) - 1;
-		}
-
-		parentList = new int[N];
-		for (int i = 0; i < N; i++) {
-			parentList[i] = i;
-		}
+		string = st.nextToken();
+		N = string.length();
 	}
 }
