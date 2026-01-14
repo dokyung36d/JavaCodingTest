@@ -6,9 +6,8 @@ import java.io.*;
 
 
 public class Main {
-	static String string;
 	static int N;
-	static int[][] dpMatrix;
+	static final int MAX_NUM = 1000000000;
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -16,48 +15,48 @@ public class Main {
 	}
 
 	public static void solution() {
-		dpMatrix = new int[N][N];
-		for (int i = 0; i < N; i++) {
-			dpMatrix[i][i] = 1;
+		int[][][] dpMatrix = new int[N][10][1024];
+		for (int i = 1; i < 10; i++) {
+			dpMatrix[0][i][1 << i] = 1;
 		}
 
-		for (int i = 0; i < N - 1; i++) {
-			if (string.charAt(i) == string.charAt(i + 1)) {
-				dpMatrix[i][i + 1] = 1;
-			}
-		}
+		for (int i = 1; i < N; i++) {
+			for (int curNum = 0; curNum <= 9; curNum++) {
+				for (int visited = 0; visited <= 1023; visited++) {
+					if (curNum == 0) {
+						dpMatrix[i][1][visited | (1 << 1)] += dpMatrix[i - 1][0][visited];
+						dpMatrix[i][1][visited | (1 << 1)] %= MAX_NUM;
+						continue;
+					}
 
-		for (int gap = 2; gap < N; gap++) {
-			for (int start = 0; start + gap < N; start++) {
-				int end = start + gap;
+					if (curNum == 9) {
+						dpMatrix[i][8][visited | (1 << 8)] += dpMatrix[i - 1][9][visited];
+						dpMatrix[i][8][visited | (1 << 8)] %= MAX_NUM;
+						continue;
+					}
 
-				if (string.charAt(start) == string.charAt(end) && dpMatrix[start + 1][end - 1] == 1) {
-					dpMatrix[start][end] = 1;
+					dpMatrix[i][curNum - 1][visited | 1 << (curNum - 1)] += dpMatrix[i - 1][curNum][visited];
+					dpMatrix[i][curNum - 1][visited | 1 << (curNum - 1)] %= MAX_NUM;
+
+					dpMatrix[i][curNum + 1][visited | 1 << (curNum + 1)] += dpMatrix[i - 1][curNum][visited];
+					dpMatrix[i][curNum + 1][visited | 1 << (curNum + 1)] %= MAX_NUM;
 				}
 			}
 		}
 
-		int[] dpList = new int[N + 1];
-		for (int i = 0; i < N + 1; i++) {
-			dpList[i] = i;
+		int answer = 0;
+		for (int i = 0; i < 10; i++) {
+			answer += dpMatrix[N - 1][i][1023];
+			answer %= MAX_NUM;
 		}
 
-		for (int endIndex = 0; endIndex < N; endIndex++) {
-			for (int startIndex = 0; startIndex <= endIndex; startIndex++) {
-				if (dpMatrix[startIndex][endIndex] == 0) { continue; }
-
-				dpList[endIndex + 1] = Math.min(dpList[endIndex + 1], dpList[startIndex] + 1);
-			}
-		}
-
-		System.out.println(dpList[N]);
+		System.out.println(answer);
 	}
 
 	public static void init() throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
-		string = st.nextToken();
-		N = string.length();
+		N = Integer.parseInt(st.nextToken());
 	}
 }
