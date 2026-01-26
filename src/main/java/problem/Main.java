@@ -7,7 +7,25 @@ import java.io.*;
 
 public class Main {
 	static int N;
-	static final int MAX_NUM = 1000000000;
+	static int[][] graphMatrix;
+	static int allVisited;
+
+	public static class Node implements Comparable<Node> {
+		int curPos;
+		int cost;
+		int visited;
+
+		public Node(int curPos, int cost, int visited) {
+			this.curPos = curPos;
+			this.cost = cost;
+			this.visited = visited;
+		}
+
+		@Override
+		public int compareTo(Node anotherNode) {
+			return Integer.compare(this.cost, anotherNode.cost);
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		init();
@@ -15,39 +33,33 @@ public class Main {
 	}
 
 	public static void solution() {
-		int[][][] dpMatrix = new int[N][10][1024];
-		for (int i = 1; i < 10; i++) {
-			dpMatrix[0][i][1 << i] = 1;
-		}
+		int answer = Integer.MAX_VALUE;
 
-		for (int i = 1; i < N; i++) {
-			for (int curNum = 0; curNum <= 9; curNum++) {
-				for (int visited = 0; visited <= 1023; visited++) {
-					if (curNum == 0) {
-						dpMatrix[i][1][visited | (1 << 1)] += dpMatrix[i - 1][0][visited];
-						dpMatrix[i][1][visited | (1 << 1)] %= MAX_NUM;
-						continue;
-					}
+		int[][] visitedMatrix = new int[N][(int) Math.pow(2, N)];
 
-					if (curNum == 9) {
-						dpMatrix[i][8][visited | (1 << 8)] += dpMatrix[i - 1][9][visited];
-						dpMatrix[i][8][visited | (1 << 8)] %= MAX_NUM;
-						continue;
-					}
+		PriorityQueue<Node> pq = new PriorityQueue<>();
+		pq.add(new Node(0, 0, 1));
 
-					dpMatrix[i][curNum - 1][visited | 1 << (curNum - 1)] += dpMatrix[i - 1][curNum][visited];
-					dpMatrix[i][curNum - 1][visited | 1 << (curNum - 1)] %= MAX_NUM;
+		while (!pq.isEmpty()) {
+			Node node = pq.poll();
+			if (visitedMatrix[node.curPos][node.visited] == 1) { continue; }
+			visitedMatrix[node.curPos][node.visited] = 1;
 
-					dpMatrix[i][curNum + 1][visited | 1 << (curNum + 1)] += dpMatrix[i - 1][curNum][visited];
-					dpMatrix[i][curNum + 1][visited | 1 << (curNum + 1)] %= MAX_NUM;
-				}
+			if (node.visited == allVisited) {
+				if (graphMatrix[node.curPos][0] == 0) { continue; }
+
+				int totalCost = node.cost + graphMatrix[node.curPos][0];
+				answer = Math.min(answer, totalCost);
 			}
-		}
 
-		int answer = 0;
-		for (int i = 0; i < 10; i++) {
-			answer += dpMatrix[N - 1][i][1023];
-			answer %= MAX_NUM;
+			for (int nextPos = 0; nextPos < N; nextPos++) {
+				if (graphMatrix[node.curPos][nextPos] == 0 ) { continue; }
+				if ((node.visited & (1 << nextPos)) != 0) { continue; }
+				int updatedVisited = node.visited | (1 << nextPos);
+				if (visitedMatrix[nextPos][updatedVisited] == 1) { continue; }
+
+				pq.add(new Node(nextPos, node.cost + graphMatrix[node.curPos][nextPos], updatedVisited));
+			}
 		}
 
 		System.out.println(answer);
@@ -58,5 +70,17 @@ public class Main {
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		N = Integer.parseInt(st.nextToken());
+		graphMatrix = new int[N][N];
+
+		for (int i = 0; i < N; i++) {
+			st = new StringTokenizer(br.readLine());
+
+			for (int j = 0; j < N; j++) {
+				graphMatrix[i][j] = Integer.parseInt(st.nextToken());
+			}
+		}
+
+		allVisited = (int) Math.pow(2, N) - 1;
+
 	}
 }
