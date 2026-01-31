@@ -5,7 +5,7 @@ import java.io.*;
 
 
 
-public class Main {
+public class 구슬탈출 {
     static int N, M;
     static char[][] mainMatrix;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
