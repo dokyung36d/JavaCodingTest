@@ -4,9 +4,10 @@ import java.util.*;
 import java.io.*;
 
 
+
 public class 배열정렬 {
     static int N, M;
-    static List<Integer> originalList;
+    static List<Integer> numList;
     static Command[] commandList;
 
     public static class Command {
@@ -22,11 +23,11 @@ public class 배열정렬 {
     }
 
     public static class Node implements Comparable<Node> {
-        List<Integer> numList;
+        List<Integer> list;
         int cost;
 
-        public Node(List<Integer> numList, int cost) {
-            this.numList = numList;
+        public Node(List<Integer> list, int cost) {
+            this.list = list;
             this.cost = cost;
         }
 
@@ -36,60 +37,52 @@ public class 배열정렬 {
         }
     }
 
+
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
 
     public static void solution() {
-        Map<String, Integer> stringMap = new HashMap<>();
-
+        Map<String, Integer> visitedMap = new HashMap<>();
         PriorityQueue<Node> pq = new PriorityQueue<>();
-        pq.add(new Node(originalList, 0));
+        pq.add(new Node(numList, 0));
 
         while (!pq.isEmpty()) {
             Node node = pq.poll();
+            if (visitedMap.get(node.list.toString()) != null) { continue; }
+            visitedMap.put(node.list.toString(), 1);
 
-            String stringValue = node.numList.toString().intern();
-            if (stringMap.get(stringValue) != null) { continue; }
-            stringMap.put(stringValue, 1);
-
-            if (isListAscending(node.numList)) {
+            if (isSorted(node.list)) {
                 System.out.println(node.cost);
                 return;
             }
 
             for (Command command : commandList) {
-                List<Integer> swappedNumList = swapList(node.numList, command);
+                List<Integer> swappedList = swapList(node.list, command);
+                if (visitedMap.get(swappedList.toString()) != null) { continue; }
 
-                if (stringMap.get(swappedNumList.toString().intern()) != null) { continue; }
-                pq.add(new Node(swappedNumList, node.cost + command.cost));
+                pq.add(new Node(swappedList, node.cost + command.cost));
             }
         }
 
         System.out.println(-1);
     }
 
-    public static List<Integer> swapList(List<Integer> numList, Command command) {
-        List<Integer> copiedList = new ArrayList<>(numList);
-
-        int firstValue = numList.get(command.firstIndex);
-        int secondValue = numList.get(command.secondIndex);
-
-        copiedList.set(command.firstIndex, secondValue);
-        copiedList.set(command.secondIndex, firstValue);
-
-        return copiedList;
-    }
-
-    public static boolean isListAscending(List<Integer> numList) {
-        for (int i = 0; i < numList.size() - 1; i++) {
-            if (numList.get(i) > numList.get(i + 1)) {
-                return false;
-            }
+    public static boolean isSorted(List<Integer> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) > list.get(i + 1)) { return false; }
         }
 
         return true;
+    }
+
+    public static List<Integer> swapList(List<Integer> list, Command command) {
+        List<Integer> swappedList = new ArrayList<>(list);
+        swappedList.set(command.firstIndex, list.get(command.secondIndex));
+        swappedList.set(command.secondIndex, list.get(command.firstIndex));
+
+        return swappedList;
     }
 
     public static void init() throws IOException {
@@ -98,14 +91,16 @@ public class 배열정렬 {
 
         N = Integer.parseInt(st.nextToken());
 
-        originalList = new ArrayList<>();
         st = new StringTokenizer(br.readLine());
+        numList = new ArrayList<>();
         for (int i = 0; i < N; i++) {
-            originalList.add(Integer.parseInt(st.nextToken()));
+            numList.add(Integer.parseInt(st.nextToken()));
         }
+
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
+
 
         commandList = new Command[M];
         for (int i = 0; i < M; i++) {
@@ -118,6 +113,4 @@ public class 배열정렬 {
             commandList[i] = new Command(firstIndex, secondIndex, cost);
         }
     }
-
-
 }

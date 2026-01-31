@@ -7,175 +7,36 @@ import java.io.*;
 
 public class Main {
     static int N, M;
-    static char[][] mainMatrix;
-    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
-    static Pos redStartPos, blueStartPos, destPos;
-    static Map<Status, Integer> visitedMap;
+    static List<Integer> numList;
+    static Command[] commandList;
 
+    public static class Command {
+        int firstIndex;
+        int secondIndex;
+        int cost;
 
-    public static class Pos {
-        int row;
-        int col;
-
-        public Pos(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public Pos addPos(Pos direction) {
-            return new Pos(this.row + direction.row, this.col + direction.col);
-        }
-
-        public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-                return false;
-            }
-
-            return true;
-        }
-
-        public char getValue() {
-            return mainMatrix[this.row][this.col];
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.row, this.col);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-            Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-
-            return false;
+        public Command(int firstIndex, int secondIndex, int cost) {
+            this.firstIndex = firstIndex;
+            this.secondIndex = secondIndex;
+            this.cost = cost;
         }
     }
 
-    public static class Status {
-        Pos redPos;
-        Pos bluePos;
+    public static class Node implements Comparable<Node> {
+        List<Integer> list;
+        int cost;
 
-        public Status(Pos redPos, Pos bluePos) {
-            this.redPos = redPos;
-            this.bluePos = bluePos;
-        }
-
-        public Status getMovedStatus(int directionIndex) {
-            if (directionIndex == 0) {
-                return moveUp();
-            }
-
-            else if (directionIndex == 1) {
-                return moveRight();
-            }
-
-            else if (directionIndex == 2) {
-                return moveDown();
-            }
-
-            return moveLeft();
-        }
-
-        public Status moveUp() {
-            Pos movedRedPos;
-            Pos movedBluePos;
-
-            if (redPos.row <= bluePos.row) {
-                movedRedPos = move(redPos, directions[0], bluePos);
-                movedBluePos = move(bluePos, directions[0], movedRedPos);
-            }
-
-            else {
-                movedBluePos = move(bluePos, directions[0], redPos);
-                movedRedPos = move(redPos, directions[0], movedBluePos);
-            }
-
-            return new Status(movedRedPos, movedBluePos);
-        }
-
-        public Status moveRight() {
-            Pos movedRedPos;
-            Pos movedBluePos;
-
-            if (redPos.col >= bluePos.col) {
-                movedRedPos = move(redPos, directions[1], bluePos);
-                movedBluePos = move(bluePos, directions[1], movedRedPos);
-            }
-
-            else {
-                movedBluePos = move(bluePos, directions[1], redPos);
-                movedRedPos = move(redPos, directions[1], movedBluePos);
-            }
-
-            return new Status(movedRedPos, movedBluePos);
-        }
-
-        public Status moveDown() {
-            Pos movedRedPos;
-            Pos movedBluePos;
-
-            if (redPos.row >= bluePos.row) {
-                movedRedPos = move(redPos, directions[2], bluePos);
-                movedBluePos = move(bluePos, directions[2], movedRedPos);
-            }
-
-            else {
-                movedBluePos = move(bluePos, directions[2], redPos);
-                movedRedPos = move(redPos, directions[2], movedBluePos);
-            }
-
-            return new Status(movedRedPos, movedBluePos);
-        }
-
-        public Status moveLeft() {
-            Pos movedRedPos;
-            Pos movedBluePos;
-
-            if (redPos.col <= bluePos.col) {
-                movedRedPos = move(redPos, directions[3], bluePos);
-                movedBluePos = move(bluePos, directions[3], movedRedPos);
-            }
-
-            else {
-                movedBluePos = move(bluePos, directions[3], redPos);
-                movedRedPos = move(redPos, directions[3], movedBluePos);
-            }
-
-            return new Status(movedRedPos, movedBluePos);
+        public Node(List<Integer> list, int cost) {
+            this.list = list;
+            this.cost = cost;
         }
 
         @Override
-        public int hashCode() {
-            return Objects.hash(this.redPos, this.bluePos);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-            Status anotherStatus = (Status) obj;
-            if (this.redPos.equals(anotherStatus.redPos) && this.bluePos.equals(anotherStatus.bluePos)) {
-                return true;
-            }
-
-            return false;
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
         }
     }
 
-    public static class Node {
-        Status status;
-        int depth;
-
-        public Node(Status status, int depth) {
-            this.status = status;
-            this.depth = depth;
-        }
-    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -183,53 +44,45 @@ public class Main {
     }
 
     public static void solution() {
-        Queue<Node> queue = new ArrayDeque<>();
-        queue.add(new Node(new Status(redStartPos, blueStartPos), 0));
+        Map<String, Integer> visitedMap = new HashMap<>();
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(numList, 0));
 
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
-            if (visitedMap.get(node.status) != null) { continue; }
-            visitedMap.put(node.status, 1);
-            if (node.depth == 10) { break; }
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+            if (visitedMap.get(node.list.toString()) != null) { continue; }
+            visitedMap.put(node.list.toString(), 1);
 
-            for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
-                Status movedStatus = node.status.getMovedStatus(directionIndex);
-                if (visitedMap.get(movedStatus) != null) { continue; }
-                if (movedStatus.bluePos.getValue() == 'O') { continue; }
-                if (movedStatus.redPos.getValue() == 'O' && movedStatus.bluePos.addPos(directions[directionIndex]).getValue() == 'O') {
-                    continue;
-                }
-                if (movedStatus.redPos.getValue() == 'O' && movedStatus.bluePos.addPos(directions[directionIndex]).getValue() != 'O') {
-                    System.out.println(node.depth + 1);
-                    return;
-                }
+            if (isSorted(node.list)) {
+                System.out.println(node.cost);
+                return;
+            }
 
-                queue.add(new Node(movedStatus, node.depth + 1));
+            for (Command command : commandList) {
+                List<Integer> swappedList = swapList(node.list, command);
+                if (visitedMap.get(swappedList.toString()) != null) { continue; }
+
+                pq.add(new Node(swappedList, node.cost + command.cost));
             }
         }
 
         System.out.println(-1);
     }
 
-    public static Pos move(Pos curPos, Pos direction, Pos anotherColorPos) {
-        while (true) {
-            Pos movedPos = curPos.addPos(direction);
-            if (!movedPos.isValidIndex()) { break; }
-            if (movedPos.equals(anotherColorPos)) { break; }
-            if (movedPos.getValue() == '#') { break; }
-            if (movedPos.getValue() == '.') {
-                curPos = movedPos;
-                continue;
-            }
-            if (movedPos.getValue() == 'O') {
-                curPos = movedPos;
-                break;
-            }
-
-            break;
+    public static boolean isSorted(List<Integer> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) > list.get(i + 1)) { return false; }
         }
 
-        return curPos;
+        return true;
+    }
+
+    public static List<Integer> swapList(List<Integer> list, Command command) {
+        List<Integer> swappedList = new ArrayList<>(list);
+        swappedList.set(command.firstIndex, list.get(command.secondIndex));
+        swappedList.set(command.secondIndex, list.get(command.firstIndex));
+
+        return swappedList;
     }
 
     public static void init() throws IOException {
@@ -237,31 +90,27 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
 
-        mainMatrix = new char[N][M];
+        st = new StringTokenizer(br.readLine());
+        numList = new ArrayList<>();
         for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
-            String string = st.nextToken();
-
-            for (int j = 0; j < M; j++) {
-                mainMatrix[i][j] = string.charAt(j);
-
-                if (mainMatrix[i][j] == 'R') {
-                    redStartPos = new Pos(i, j);
-                    mainMatrix[i][j] = '.';
-                }
-                else if (mainMatrix[i][j] == 'B') {
-                    blueStartPos = new Pos(i, j);
-                    mainMatrix[i][j] = '.';
-                }
-
-                else if (mainMatrix[i][j] == 'O') {
-                    destPos = new Pos(i, j);
-                }
-            }
+            numList.add(Integer.parseInt(st.nextToken()));
         }
 
-        visitedMap = new HashMap<>();
+
+        st = new StringTokenizer(br.readLine());
+        M = Integer.parseInt(st.nextToken());
+
+
+        commandList = new Command[M];
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int firstIndex = Integer.parseInt(st.nextToken()) - 1;
+            int secondIndex = Integer.parseInt(st.nextToken()) - 1;
+            int cost = Integer.parseInt(st.nextToken());
+
+            commandList[i] = new Command(firstIndex, secondIndex, cost);
+        }
     }
 }
