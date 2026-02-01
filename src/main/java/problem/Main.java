@@ -6,37 +6,46 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static List<Integer> numList;
-    static Command[] commandList;
+    static int R, C, M;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static Shark[][] mainMatrix;
+    static int answer;
 
-    public static class Command {
-        int firstIndex;
-        int secondIndex;
-        int cost;
+    public static class Pos {
+        int row;
+        int col;
 
-        public Command(int firstIndex, int secondIndex, int cost) {
-            this.firstIndex = firstIndex;
-            this.secondIndex = secondIndex;
-            this.cost = cost;
+        public Pos(int row, int col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public Pos addPos(Pos direction) {
+            return new Pos(this.row + direction.row, this.col + direction.col);
+        }
+
+        public boolean isValidIndex() {
+            if (this.row < 0 || this.row >= R || this.col < 0 || this.col >= C) {
+                return false;
+            }
+
+            return true;
         }
     }
 
-    public static class Node implements Comparable<Node> {
-        List<Integer> list;
-        int cost;
+    public static class Shark {
+        Pos curPos;
+        int directionIndex;
+        int speed;
+        int size;
 
-        public Node(List<Integer> list, int cost) {
-            this.list = list;
-            this.cost = cost;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.cost, anotherNode.cost);
+        public Shark(Pos curPos, int directionIndex, int speed, int size) {
+            this.curPos = curPos;
+            this.directionIndex = directionIndex;
+            this.speed = speed;
+            this.size = size;
         }
     }
-
 
     public static void main(String[] args) throws Exception {
         init();
@@ -44,73 +53,108 @@ public class Main {
     }
 
     public static void solution() {
-        Map<String, Integer> visitedMap = new HashMap<>();
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        pq.add(new Node(numList, 0));
+        answer = 0;
 
-        while (!pq.isEmpty()) {
-            Node node = pq.poll();
-            if (visitedMap.get(node.list.toString()) != null) { continue; }
-            visitedMap.put(node.list.toString(), 1);
+        for (int i = 0; i < C; i++) {
+            catchShark(i);
+            moveAllSharks();
+        }
 
-            if (isSorted(node.list)) {
-                System.out.println(node.cost);
-                return;
-            }
 
-            for (Command command : commandList) {
-                List<Integer> swappedList = swapList(node.list, command);
-                if (visitedMap.get(swappedList.toString()) != null) { continue; }
+        System.out.println(answer);
+    }
 
-                pq.add(new Node(swappedList, node.cost + command.cost));
+    public static void moveAllSharks() {
+        Shark[][] updatedMainMatrix = new Shark[R][C];
+
+        for (int i = 0; i < R; i++) {
+            for (int j = 0; j < C; j++) {
+                if (mainMatrix[i][j] == null) { continue; }
+
+                Shark movedShark = moveShark(mainMatrix[i][j]);
+                if (updatedMainMatrix[movedShark.curPos.row][movedShark.curPos.col] == null) {
+                    updatedMainMatrix[movedShark.curPos.row][movedShark.curPos.col] = movedShark;
+                    continue;
+                }
+
+                if (updatedMainMatrix[movedShark.curPos.row][movedShark.curPos.col] != null && movedShark.size > updatedMainMatrix[movedShark.curPos.row][movedShark.curPos.col].size) {
+                    updatedMainMatrix[movedShark.curPos.row][movedShark.curPos.col] = movedShark;
+                    continue;
+                }
             }
         }
 
-        System.out.println(-1);
+        mainMatrix = updatedMainMatrix;
     }
 
-    public static boolean isSorted(List<Integer> list) {
-        for (int i = 0; i < list.size() - 1; i++) {
-            if (list.get(i) > list.get(i + 1)) { return false; }
+    public static Shark moveShark(Shark shark) {
+        for (int i = 0; i < shark.speed; i++) {
+            Pos movedPos = shark.curPos.addPos(directions[shark.directionIndex]);
+            if (!movedPos.isValidIndex()) {
+                shark.directionIndex = (shark.directionIndex + 2) % 4;
+                movedPos = shark.curPos.addPos(directions[shark.directionIndex]);
+                shark.curPos = movedPos;
+                continue;
+            }
+
+            shark.curPos = movedPos;
         }
 
-        return true;
+        return shark;
     }
 
-    public static List<Integer> swapList(List<Integer> list, Command command) {
-        List<Integer> swappedList = new ArrayList<>(list);
-        swappedList.set(command.firstIndex, list.get(command.secondIndex));
-        swappedList.set(command.secondIndex, list.get(command.firstIndex));
+    public static void catchShark(int col) {
+        for (int i = 0; i < R; i++) {
+            if (mainMatrix[i][col] == null) { continue; }
 
-        return swappedList;
+            answer += mainMatrix[i][col].size;
+            mainMatrix[i][col] = null;
+
+            return;
+        }
     }
-
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        N = Integer.parseInt(st.nextToken());
-
-        st = new StringTokenizer(br.readLine());
-        numList = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
-            numList.add(Integer.parseInt(st.nextToken()));
-        }
-
-
-        st = new StringTokenizer(br.readLine());
+        R = Integer.parseInt(st.nextToken());
+        C = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-
-        commandList = new Command[M];
+        mainMatrix = new Shark[R][C];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int firstIndex = Integer.parseInt(st.nextToken()) - 1;
-            int secondIndex = Integer.parseInt(st.nextToken()) - 1;
-            int cost = Integer.parseInt(st.nextToken());
+            int row = Integer.parseInt(st.nextToken()) - 1;
+            int col = Integer.parseInt(st.nextToken()) - 1;
 
-            commandList[i] = new Command(firstIndex, secondIndex, cost);
+            int speed = Integer.parseInt(st.nextToken());
+            int direction = Integer.parseInt(st.nextToken());
+            int directionIndex;
+            if (direction == 1) {
+                directionIndex = 0;
+            }
+            else if (direction == 2) {
+                directionIndex = 2;
+            }
+            else if (direction == 3) {
+                directionIndex = 1;
+            }
+            else {
+                directionIndex = 3;
+            }
+
+            int size = Integer.parseInt(st.nextToken());
+
+
+            if (directionIndex == 0 || directionIndex == 2) {
+                speed = speed % (2 * R - 2);
+            }
+            else {
+                speed = speed % (2 * C - 2);
+            }
+
+            mainMatrix[row][col] = new Shark(new Pos(row, col), directionIndex, speed, size);
         }
     }
 }
