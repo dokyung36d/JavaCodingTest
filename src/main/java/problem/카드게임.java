@@ -5,7 +5,7 @@ import java.io.*;
 
 
 
-public class Main {
+public class 카드게임 {
     static int N, M, K;
     static int[] minsuCardList, chulsuCardList;
     static int[] parentList;
