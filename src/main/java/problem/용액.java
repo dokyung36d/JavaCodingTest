@@ -3,6 +3,8 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 용액 {
     static int N;
     static int[] numList;
@@ -13,39 +15,40 @@ public class 용액 {
     }
 
     public static void solution() {
-        int answerLeftNum = numList[0];
-        int answerRightNum = numList[1];
-        int minSumValue = Integer.MAX_VALUE;
+        int leftAnswer = 0;
+        int rightAnswer = 0;
+        int minSum = Integer.MAX_VALUE;
 
         int leftIndex = 0;
         int rightIndex = N - 1;
 
         while (leftIndex < rightIndex) {
-            int leftNum = numList[leftIndex];
-            int rightNum = numList[rightIndex];
+            int sum = numList[leftIndex] + numList[rightIndex];
 
-            int sumValue = leftNum + rightNum;
+            if (Math.abs(sum) < minSum) {
+                leftAnswer = numList[leftIndex];
+                rightAnswer = numList[rightIndex];
 
-            if (sumValue == 0) {
-                System.out.println(leftNum + " " + rightNum);
-                return;
-            }
-            if (Math.abs(sumValue) < minSumValue) {
-                minSumValue = Math.abs(sumValue);
-
-                answerLeftNum = leftNum;
-                answerRightNum = rightNum;
+                minSum = Math.abs(sum);
             }
 
-            if (sumValue < 0) {
+            if (sum < 0) {
                 leftIndex += 1;
+                continue;
             }
-            if (sumValue > 0) {
+
+            if (sum > 0) {
                 rightIndex -= 1;
+                continue;
+            }
+
+            if (sum == 0) {
+                break;
             }
         }
 
-        System.out.println(answerLeftNum + " " + answerRightNum);
+        System.out.println(leftAnswer + " " + rightAnswer);
+
     }
 
     public static void init() throws IOException {
@@ -53,13 +56,12 @@ public class 용액 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
+        numList = new int[N];
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
-
-        Arrays.sort(numList);
     }
+
 }
