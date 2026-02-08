@@ -7,8 +7,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static int[] numList;
+    static int N, R, Q;
+    static int[] numPointedList, queryList, answerList, visitedList;
+    static Map<Integer, List<Integer>> graphMap;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,40 +17,34 @@ public class Main {
     }
 
     public static void solution() {
-        int leftAnswer = 0;
-        int rightAnswer = 0;
-        int minSum = Integer.MAX_VALUE;
+        StringBuilder sb = new StringBuilder();
 
-        int leftIndex = 0;
-        int rightIndex = N - 1;
+        recursive(R);
 
-        while (leftIndex < rightIndex) {
-            int sum = numList[leftIndex] + numList[rightIndex];
-
-            if (Math.abs(sum) < minSum) {
-                leftAnswer = numList[leftIndex];
-                rightAnswer = numList[rightIndex];
-
-                minSum = Math.abs(sum);
-            }
-
-            if (sum < 0) {
-                leftIndex += 1;
-                continue;
-            }
-
-            if (sum > 0) {
-                rightIndex -= 1;
-                continue;
-            }
-
-            if (sum == 0) {
-                break;
-            }
+        for (int query : queryList) {
+            int answer = recursive(query);
+            sb.append(answer + "\n");
         }
 
-        System.out.println(leftAnswer + " " + rightAnswer);
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
+    }
 
+    public static int recursive(int num) {
+        if (answerList[num] != 0) {
+            return answerList[num];
+        }
+
+        visitedList[num] = 1;
+        int answer = 1;
+
+        for (int nearNode : graphMap.get(num)) {
+            if (visitedList[nearNode] == 1) { continue; }
+
+            answer += recursive(nearNode);
+        }
+
+        answerList[num] = answer;
+        return answer;
     }
 
     public static void init() throws IOException {
@@ -57,12 +52,37 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
+        R = Integer.parseInt(st.nextToken()) - 1;
+        Q = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
-        st = new StringTokenizer(br.readLine());
+        numPointedList = new int[N];
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
+            graphMap.put(i, new ArrayList<>());
         }
+
+        for (int i = 0; i < N - 1; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int node1 = Integer.parseInt(st.nextToken()) - 1;
+            int node2 = Integer.parseInt(st.nextToken()) - 1;
+
+            graphMap.get(node1).add(node2);
+            graphMap.get(node2).add(node1);
+
+            numPointedList[node1] += 1;
+            numPointedList[node2] += 1;
+        }
+
+        queryList = new int[Q];
+        for (int i = 0; i < Q; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            queryList[i] = Integer.parseInt(st.nextToken()) - 1;
+        }
+
+        answerList = new int[N];
+        visitedList = new int[N];
     }
 
 }

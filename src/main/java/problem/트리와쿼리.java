@@ -3,11 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
-public class 트리와쿼리 {
+
+
+public class Main {
     static int N, R, Q;
+    static int[] numPointedList, queryList, answerList, visitedList;
     static Map<Integer, List<Integer>> graphMap;
-    static int[] visited, numNodeList;
-    static int[] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,31 +16,34 @@ public class 트리와쿼리 {
     }
 
     public static void solution() {
+        StringBuilder sb = new StringBuilder();
+
         recursive(R);
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Q; i++) {
-            sb.append(numNodeList[queryList[i]]);
-            sb.append("\n");
+        for (int query : queryList) {
+            int answer = recursive(query);
+            sb.append(answer + "\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static int recursive(int num) {
-        if (visited[num] == 1) { return numNodeList[num]; }
-
-        visited[num] = 1;
-        int numNode = 1;
-
-        for (int nearNode : graphMap.get(num)) {
-            if (visited[nearNode] == 1) { continue; }
-
-            numNode += recursive(nearNode);
+        if (answerList[num] != 0) {
+            return answerList[num];
         }
 
-        numNodeList[num] = numNode;
-        return numNodeList[num];
+        visitedList[num] = 1;
+        int answer = 1;
+
+        for (int nearNode : graphMap.get(num)) {
+            if (visitedList[nearNode] == 1) { continue; }
+
+            answer += recursive(nearNode);
+        }
+
+        answerList[num] = answer;
+        return answer;
     }
 
     public static void init() throws IOException {
@@ -50,10 +54,7 @@ public class 트리와쿼리 {
         R = Integer.parseInt(st.nextToken()) - 1;
         Q = Integer.parseInt(st.nextToken());
 
-        visited = new int[N];
-        numNodeList = new int[N];
-        queryList = new int[Q];
-
+        numPointedList = new int[N];
         graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
             graphMap.put(i, new ArrayList<>());
@@ -62,17 +63,25 @@ public class 트리와쿼리 {
         for (int i = 0; i < N - 1; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
+            int node1 = Integer.parseInt(st.nextToken()) - 1;
+            int node2 = Integer.parseInt(st.nextToken()) - 1;
 
-            graphMap.get(num1).add(num2);
-            graphMap.get(num2).add(num1);
+            graphMap.get(node1).add(node2);
+            graphMap.get(node2).add(node1);
+
+            numPointedList[node1] += 1;
+            numPointedList[node2] += 1;
         }
 
-
+        queryList = new int[Q];
         for (int i = 0; i < Q; i++) {
             st = new StringTokenizer(br.readLine());
+
             queryList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
+
+        answerList = new int[N];
+        visitedList = new int[N];
     }
+
 }
