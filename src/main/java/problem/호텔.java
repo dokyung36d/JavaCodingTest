@@ -3,9 +3,11 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 호텔 {
-    static int N, C;
-    static int[][] infoList;
+    static int C, N;
+    static int[][] cityMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,31 +16,30 @@ public class 호텔 {
 
     public static void solution() {
         int[][] dpMatrix = new int[N + 1][C + 1];
-        for (int i = 0; i <= N; i++) {
+        for (int i = 0; i < N + 1; i++) {
             Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
             dpMatrix[i][0] = 0;
         }
 
-        for (int i = 1; i <= N; i++) {
-            int cost = infoList[i - 1][0];
-            int customer = infoList[i - 1][1];
+        for (int i = 0; i < N; i++) {
+            int cost = cityMatrix[i][0];
+            int people = cityMatrix[i][1];
 
-            for (int j = 1; j <= C; j++) {
-                int maxNumMultiply;
-                if (j % customer == 0) {
-                    maxNumMultiply = j / customer;
-                }
-                else {
-                    maxNumMultiply = (j / customer) + 1;
-                }
+            for (int j = 1; j < C + 1; j++) {
 
-                for (int numMultiply = 0; numMultiply <= maxNumMultiply; numMultiply++) {
-                    dpMatrix[i][j] = Math.min(dpMatrix[i][j],
-                            dpMatrix[i - 1][Math.max(0, j - customer * numMultiply)] + cost * numMultiply);
+                for (int curPeople = 0; curPeople <= j; curPeople++) {
+                    int multiply;
+                    if (curPeople % people == 0) {
+                        multiply = curPeople / people;
+                    }
+                    else {
+                        multiply = curPeople / people + 1;
+                    }
+
+                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j], dpMatrix[i][j - curPeople] + cost * multiply);
                 }
             }
         }
-
 
         System.out.println(dpMatrix[N][C]);
     }
@@ -47,18 +48,21 @@ public class 호텔 {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
+
         C = Integer.parseInt(st.nextToken());
         N = Integer.parseInt(st.nextToken());
 
-        infoList = new int[N][2];
+        cityMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
             int cost = Integer.parseInt(st.nextToken());
-            int customer = Integer.parseInt(st.nextToken());
+            int people = Integer.parseInt(st.nextToken());
 
-            infoList[i][0] = cost;
-            infoList[i][1] = customer;
+            cityMatrix[i][0] = cost;
+            cityMatrix[i][1] = people;
         }
     }
+
 }
+
