@@ -6,9 +6,10 @@ import java.io.*;
 
 
 public class Main {
-    static int N, S;
+    static int N, M;
     static int[] numList;
-    static int[] sumList;
+    static int[][] dpMatrix;
+    static int[][] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,30 +17,35 @@ public class Main {
     }
 
     public static void solution() {
-        int leftIndex = 0;
-        int rightIndex = 1;
+        dpMatrix = new int[N][N];
+        for (int i = 0; i < N; i++) {
+            dpMatrix[i][i] = 1;
+        }
 
-        int answer = Integer.MAX_VALUE / 2;
-        while (rightIndex <= N) {
-            int sumValue = sumList[rightIndex] - sumList[leftIndex];
-            if (sumValue >= S) {
-                answer = Math.min(answer, rightIndex - leftIndex);
-                leftIndex += 1;
-                continue;
-            }
-
-            else {
-                rightIndex += 1;
+        for (int i = 0; i < N - 1; i++) {
+            if (numList[i] == numList[i + 1]) {
+                dpMatrix[i][i + 1] = 1;
             }
         }
 
 
-        if (answer == Integer.MAX_VALUE / 2) {
-            System.out.println(0);
+        for (int startCol = 2; startCol < N; startCol++) {
+            for (int row = 0; row + startCol < N; row++) {
+                int col = row + startCol;
+
+                if ((numList[row] == numList[col]) && (dpMatrix[row + 1][col - 1] == 1)) {
+                    dpMatrix[row][col] = 1;
+                }
+            }
         }
-        else {
-            System.out.println(answer);
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < M; i++) {
+            sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
+            sb.append("\n");
         }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -47,15 +53,25 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        S = Integer.parseInt(st.nextToken());
 
         numList = new int[N];
-        sumList = new int[N + 1];
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
+        }
 
-            sumList[i + 1] = sumList[i] + numList[i];
+        st = new StringTokenizer(br.readLine());
+        M = Integer.parseInt(st.nextToken());
+
+        queryList = new int[M][2];
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int startIndex = Integer.parseInt(st.nextToken()) - 1;
+            int endIndex = Integer.parseInt(st.nextToken()) - 1;
+
+            queryList[i][0] = startIndex;
+            queryList[i][1] = endIndex;
         }
     }
 }

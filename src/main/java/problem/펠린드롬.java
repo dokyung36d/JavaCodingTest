@@ -3,6 +3,8 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 펠린드롬 {
     static int N, M;
     static int[] numList;
@@ -15,6 +17,7 @@ public class 펠린드롬 {
     }
 
     public static void solution() {
+        dpMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
             dpMatrix[i][i] = 1;
         }
@@ -25,12 +28,13 @@ public class 펠린드롬 {
             }
         }
 
-        for (int gap = 1; gap < N; gap++) {
-            for (int from = 0; from + gap < N; from++) {
-                int to = from + gap;
 
-                if (dpMatrix[from + 1][to - 1] == 1 && numList[from] == numList[to]) {
-                    dpMatrix[from][to] = 1;
+        for (int startCol = 2; startCol < N; startCol++) {
+            for (int row = 0; row + startCol < N; row++) {
+                int col = row + startCol;
+
+                if ((numList[row] == numList[col]) && (dpMatrix[row + 1][col - 1] == 1)) {
+                    dpMatrix[row][col] = 1;
                 }
             }
         }
@@ -38,7 +42,7 @@ public class 펠린드롬 {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < M; i++) {
             sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
-            sb.append(" ");
+            sb.append("\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
@@ -49,13 +53,12 @@ public class 펠린드롬 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
+        numList = new int[N];
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
-        dpMatrix = new int[N][N];
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
@@ -64,10 +67,11 @@ public class 펠린드롬 {
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int from = Integer.parseInt(st.nextToken()) - 1;
-            int to = Integer.parseInt(st.nextToken()) - 1;
-            queryList[i][0] = from;
-            queryList[i][1] = to;
+            int startIndex = Integer.parseInt(st.nextToken()) - 1;
+            int endIndex = Integer.parseInt(st.nextToken()) - 1;
+
+            queryList[i][0] = startIndex;
+            queryList[i][1] = endIndex;
         }
     }
 }
