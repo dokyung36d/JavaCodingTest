@@ -6,9 +6,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static int[][] colorMatrix;
-    static int answer;
+    static int N, M;
+    static int[] parentList;
+    static int[][] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,43 +16,38 @@ public class Main {
     }
 
     public static void solution() {
-        answer = Integer.MAX_VALUE / 2;
+        int answer = 0;
 
-        for (int i = 0; i < 3; i++) {
-            answer = Math.min(answer, dp(i));
+        for (int i = 0; i < M; i++) {
+            int num1 = queryList[i][0];
+            int num2 = queryList[i][1];
+
+            int num1Parent = findParent(num1);
+            int num2Parent = findParent(num2);
+            if (num1Parent == num2Parent) {
+                System.out.println(i + 1);
+                return;
+            }
+
+            union(num1Parent, num2Parent);
         }
 
         System.out.println(answer);
     }
 
-    public static int dp(int startIndex) {
-        int[][] dpMatrix = new int[N][3];
-        for (int i = 0; i < N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-        }
+    public static int findParent(int num) {
+        if (num == parentList[num]) { return num; }
 
-        dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
+        return parentList[num] = findParent(parentList[num]);
+    }
 
-        for (int i = 1; i < N; i++) {
-            for (int prevColor = 0; prevColor < 3; prevColor++) {
-                int prevCost = dpMatrix[i - 1][prevColor];
-                for (int nextColor = 0; nextColor < 3; nextColor++) {
-                    if (prevColor == nextColor) { continue; }
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
 
-                    dpMatrix[i][nextColor] = Math.min(dpMatrix[i][nextColor], dpMatrix[i - 1][prevColor] + colorMatrix[i][nextColor]);
-                }
-            }
-        }
+        if (num1Parent == num2Parent) { return; }
 
-
-        int minValue = Integer.MAX_VALUE / 2;
-        for (int i = 0; i < 3; i++) {
-            if (i == startIndex) { continue; }
-
-            minValue = Math.min(minValue, dpMatrix[N - 1][i]);
-        }
-
-        return minValue;
+        parentList[Math.min(num1Parent, num2Parent)] = Math.max(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -60,18 +55,20 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        colorMatrix = new int[N][3];
+        parentList = new int[N];
         for (int i = 0; i < N; i++) {
+            parentList[i] = i;
+        }
+
+
+        queryList = new int[M][2];
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int red = Integer.parseInt(st.nextToken());
-            int green = Integer.parseInt(st.nextToken());
-            int blue = Integer.parseInt(st.nextToken());
-
-            colorMatrix[i][0] = red;
-            colorMatrix[i][1] = green;
-            colorMatrix[i][2] = blue;
+            queryList[i][0] = Integer.parseInt(st.nextToken());
+            queryList[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }

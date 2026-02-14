@@ -3,10 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 사이클게임 {
     static int N, M;
     static int[] parentList;
-    static int[][] commadList;
+    static int[][] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,10 +16,14 @@ public class 사이클게임 {
     }
 
     public static void solution() {
-        for (int i = 0; i < M; i++) {
-            int num1Parent = findParent(commadList[i][0]);
-            int num2Parent = findParent(commadList[i][1]);
+        int answer = 0;
 
+        for (int i = 0; i < M; i++) {
+            int num1 = queryList[i][0];
+            int num2 = queryList[i][1];
+
+            int num1Parent = findParent(num1);
+            int num2Parent = findParent(num2);
             if (num1Parent == num2Parent) {
                 System.out.println(i + 1);
                 return;
@@ -26,7 +32,7 @@ public class 사이클게임 {
             union(num1Parent, num2Parent);
         }
 
-        System.out.println(0);
+        System.out.println(answer);
     }
 
     public static int findParent(int num) {
@@ -41,7 +47,7 @@ public class 사이클게임 {
 
         if (num1Parent == num2Parent) { return; }
 
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        parentList[Math.min(num1Parent, num2Parent)] = Math.max(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -56,12 +62,13 @@ public class 사이클게임 {
             parentList[i] = i;
         }
 
-        commadList = new int[M][2];
+
+        queryList = new int[M][2];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            commadList[i][0] = Integer.parseInt(st.nextToken());
-            commadList[i][1] = Integer.parseInt(st.nextToken());
+            queryList[i][0] = Integer.parseInt(st.nextToken());
+            queryList[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }
