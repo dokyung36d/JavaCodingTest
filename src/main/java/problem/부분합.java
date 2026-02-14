@@ -3,9 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 부분합 {
     static int N, S;
-    static int[] numList, sumList;
+    static int[] numList;
+    static int[] sumList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,29 +16,30 @@ public class 부분합 {
     }
 
     public static void solution() {
-        int answer = Integer.MAX_VALUE / 2;
-
         int leftIndex = 0;
         int rightIndex = 1;
 
-        while (rightIndex < N + 1) {
+        int answer = Integer.MAX_VALUE / 2;
+        while (rightIndex <= N) {
             int sumValue = sumList[rightIndex] - sumList[leftIndex];
-
-            if (sumValue < S) {
-                rightIndex += 1;
+            if (sumValue >= S) {
+                answer = Math.min(answer, rightIndex - leftIndex);
+                leftIndex += 1;
                 continue;
             }
 
-            if (rightIndex - leftIndex < answer) {
-                answer = rightIndex - leftIndex;
+            else {
+                rightIndex += 1;
             }
-            leftIndex += 1;
         }
 
+
         if (answer == Integer.MAX_VALUE / 2) {
-            answer = 0;
+            System.out.println(0);
         }
-        System.out.println(answer);
+        else {
+            System.out.println(answer);
+        }
     }
 
     public static void init() throws IOException {
@@ -47,12 +51,12 @@ public class 부분합 {
 
         numList = new int[N];
         sumList = new int[N + 1];
-
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            int num = Integer.parseInt(st.nextToken());
-            numList[i] = num;
-            sumList[i + 1] = num + sumList[i];
+            numList[i] = Integer.parseInt(st.nextToken());
+
+            sumList[i + 1] = sumList[i] + numList[i];
         }
     }
 }
+
