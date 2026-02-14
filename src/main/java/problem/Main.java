@@ -6,16 +6,18 @@ import java.io.*;
 
 
 public class Main {
-    static int V, E;
-    static Map<Integer, List<Node>> graphMap;
+    static int N, M;
     static PriorityQueue<Node> pq;
+    static int[] parentList;
 
     public static class Node implements Comparable<Node> {
-        int node;
+        int home1;
+        int home2;
         int cost;
 
-        public Node(int node, int cost) {
-            this.node = node;
+        public Node(int home1, int home2, int cost) {
+            this.home1 = home1;
+            this.home2 = home2;
             this.cost = cost;
         }
 
@@ -31,53 +33,64 @@ public class Main {
     }
 
     public static void solution() {
-        int[] visited = new int[V];
+        int numGroup = N;
 
         int answer = 0;
-
-        pq = new PriorityQueue<>();
-        pq.add(new Node(0, 0));
-
-        while (!pq.isEmpty()) {
+        while (numGroup > 2) {
             Node node = pq.poll();
-            if (visited[node.node] == 1) { continue; }
-            visited[node.node] = 1;
+
+            int home1Parent = findParent(node.home1);
+            int home2Parent = findParent(node.home2);
+
+            if (home1Parent == home2Parent) { continue; }
+
+            union(home1Parent, home2Parent);
+            numGroup -= 1;
 
             answer += node.cost;
-
-            for (Node nearNode : graphMap.get(node.node)) {
-                if (visited[nearNode.node] == 1) { continue; }
-
-                pq.add(nearNode);
-            }
         }
 
         System.out.println(answer);
+    }
+
+    public static int findParent(int num) {
+        if (num == parentList[num]) { return num; }
+
+        return parentList[num] = findParent(parentList[num]);
+    }
+
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
+
+        if (num1Parent == num2Parent) {
+            return;
+        }
+
+        parentList[Math.min(num1Parent, num2Parent)] = Math.max(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        V = Integer.parseInt(st.nextToken());
-        E = Integer.parseInt(st.nextToken());
+        N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        graphMap = new HashMap<>();
-        for (int i = 0; i < V; i++) {
-            graphMap.put(i, new ArrayList<>());
-        }
-
-        for (int i = 0; i < E; i++) {
+        pq = new PriorityQueue<>();
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int home1 = Integer.parseInt(st.nextToken()) - 1;
+            int home2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            graphMap.get(node1).add(new Node(node2, cost));
-            graphMap.get(node2).add(new Node(node1, cost));
+            pq.add(new Node(home1, home2, cost));
+        }
 
-
+        parentList = new int[N];
+        for (int i = 0; i < N; i++) {
+            parentList[i] = i;
         }
     }
 
