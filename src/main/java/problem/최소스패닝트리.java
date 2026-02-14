@@ -3,19 +3,23 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class 최소스패닝트리 {
     static int V, E;
     static Map<Integer, List<Node>> graphMap;
+    static PriorityQueue<Node> pq;
 
     public static class Node implements Comparable<Node> {
-        int destNum;
+        int node;
         int cost;
 
-        public Node(int destNum, int cost) {
-            this.destNum = destNum;
+        public Node(int node, int cost) {
+            this.node = node;
             this.cost = cost;
         }
 
+        @Override
         public int compareTo(Node anotherNode) {
             return Integer.compare(this.cost, anotherNode.cost);
         }
@@ -27,26 +31,22 @@ public class 최소스패닝트리 {
     }
 
     public static void solution() {
+        int[] visited = new int[V];
+
         int answer = 0;
 
-        int[] visited = new int[V];
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-
-        for (Node node : graphMap.get(0)) {
-            if (visited[node.destNum] == 1) { continue; }
-            pq.add(node);
-        }
-        visited[0] = 1;
+        pq = new PriorityQueue<>();
+        pq.add(new Node(0, 0));
 
         while (!pq.isEmpty()) {
             Node node = pq.poll();
-            if (visited[node.destNum] == 1) { continue; }
-            visited[node.destNum] = 1;
+            if (visited[node.node] == 1) { continue; }
+            visited[node.node] = 1;
 
             answer += node.cost;
 
-            for (Node nearNode : graphMap.get(node.destNum)) {
-                if (visited[nearNode.destNum] == 1) { continue; }
+            for (Node nearNode : graphMap.get(node.node)) {
+                if (visited[nearNode.node] == 1) { continue; }
 
                 pq.add(nearNode);
             }
@@ -70,12 +70,15 @@ public class 최소스패닝트리 {
         for (int i = 0; i < E; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
+            int node1 = Integer.parseInt(st.nextToken()) - 1;
+            int node2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            graphMap.get(num1).add(new Node(num2, cost));
-            graphMap.get(num2).add(new Node(num1, cost));
+            graphMap.get(node1).add(new Node(node2, cost));
+            graphMap.get(node2).add(new Node(node1, cost));
+
+
         }
     }
+
 }
