@@ -3,9 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
+
 public class RGB거리 {
     static int N;
-    static int[][] colorList;
+    static int[][] colorMatrix;
+    static int answer;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,42 +16,43 @@ public class RGB거리 {
     }
 
     public static void solution() {
-        int minCost = Integer.MAX_VALUE / 2;
-
+        answer = Integer.MAX_VALUE / 2;
 
         for (int i = 0; i < 3; i++) {
-            minCost = Math.min(minCost, getMinCost(i));
+            answer = Math.min(answer, dp(i));
         }
 
-        System.out.println(minCost);
+        System.out.println(answer);
     }
 
-    public static int getMinCost(int startIndex) {
+    public static int dp(int startIndex) {
         int[][] dpMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
             Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
         }
-        dpMatrix[0][startIndex] = colorList[0][startIndex];
 
-        for (int i = 0; i < N - 1; i++) {
-            for (int fromColor = 0; fromColor < 3; fromColor++) {
-                for (int toColor = 0; toColor < 3; toColor++) {
-                    if (fromColor == toColor) { continue; }
+        dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
 
-                    dpMatrix[i + 1][toColor] = Math.min(dpMatrix[i + 1][toColor],
-                            dpMatrix[i][fromColor] + colorList[i + 1][toColor]);
+        for (int i = 1; i < N; i++) {
+            for (int prevColor = 0; prevColor < 3; prevColor++) {
+                int prevCost = dpMatrix[i - 1][prevColor];
+                for (int nextColor = 0; nextColor < 3; nextColor++) {
+                    if (prevColor == nextColor) { continue; }
+
+                    dpMatrix[i][nextColor] = Math.min(dpMatrix[i][nextColor], dpMatrix[i - 1][prevColor] + colorMatrix[i][nextColor]);
                 }
             }
         }
 
-        dpMatrix[N - 1][startIndex] = Integer.MAX_VALUE / 2;
-        int minCost = Integer.MAX_VALUE / 2;
+
+        int minValue = Integer.MAX_VALUE / 2;
         for (int i = 0; i < 3; i++) {
-            minCost = Math.min(minCost, dpMatrix[N - 1][i]);
+            if (i == startIndex) { continue; }
+
+            minValue = Math.min(minValue, dpMatrix[N - 1][i]);
         }
 
-
-        return minCost;
+        return minValue;
     }
 
     public static void init() throws IOException {
@@ -56,8 +60,8 @@ public class RGB거리 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        colorList = new int[N][3];
 
+        colorMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
@@ -65,9 +69,9 @@ public class RGB거리 {
             int green = Integer.parseInt(st.nextToken());
             int blue = Integer.parseInt(st.nextToken());
 
-            colorList[i][0] = red;
-            colorList[i][1] = green;
-            colorList[i][2] = blue;
+            colorMatrix[i][0] = red;
+            colorMatrix[i][1] = green;
+            colorMatrix[i][2] = blue;
         }
     }
 }

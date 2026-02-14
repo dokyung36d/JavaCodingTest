@@ -6,10 +6,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static int[] numList;
-    static int[][] dpMatrix;
-    static int[][] queryList;
+    static int N;
+    static int[][] colorMatrix;
+    static int answer;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -17,35 +16,43 @@ public class Main {
     }
 
     public static void solution() {
-        dpMatrix = new int[N][N];
+        answer = Integer.MAX_VALUE / 2;
+
+        for (int i = 0; i < 3; i++) {
+            answer = Math.min(answer, dp(i));
+        }
+
+        System.out.println(answer);
+    }
+
+    public static int dp(int startIndex) {
+        int[][] dpMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
-            dpMatrix[i][i] = 1;
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
         }
 
-        for (int i = 0; i < N - 1; i++) {
-            if (numList[i] == numList[i + 1]) {
-                dpMatrix[i][i + 1] = 1;
-            }
-        }
+        dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
 
+        for (int i = 1; i < N; i++) {
+            for (int prevColor = 0; prevColor < 3; prevColor++) {
+                int prevCost = dpMatrix[i - 1][prevColor];
+                for (int nextColor = 0; nextColor < 3; nextColor++) {
+                    if (prevColor == nextColor) { continue; }
 
-        for (int startCol = 2; startCol < N; startCol++) {
-            for (int row = 0; row + startCol < N; row++) {
-                int col = row + startCol;
-
-                if ((numList[row] == numList[col]) && (dpMatrix[row + 1][col - 1] == 1)) {
-                    dpMatrix[row][col] = 1;
+                    dpMatrix[i][nextColor] = Math.min(dpMatrix[i][nextColor], dpMatrix[i - 1][prevColor] + colorMatrix[i][nextColor]);
                 }
             }
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < M; i++) {
-            sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
-            sb.append("\n");
+
+        int minValue = Integer.MAX_VALUE / 2;
+        for (int i = 0; i < 3; i++) {
+            if (i == startIndex) { continue; }
+
+            minValue = Math.min(minValue, dpMatrix[N - 1][i]);
         }
 
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
+        return minValue;
     }
 
     public static void init() throws IOException {
@@ -54,24 +61,17 @@ public class Main {
 
         N = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
-        st = new StringTokenizer(br.readLine());
+        colorMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
-        }
-
-        st = new StringTokenizer(br.readLine());
-        M = Integer.parseInt(st.nextToken());
-
-        queryList = new int[M][2];
-        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int startIndex = Integer.parseInt(st.nextToken()) - 1;
-            int endIndex = Integer.parseInt(st.nextToken()) - 1;
+            int red = Integer.parseInt(st.nextToken());
+            int green = Integer.parseInt(st.nextToken());
+            int blue = Integer.parseInt(st.nextToken());
 
-            queryList[i][0] = startIndex;
-            queryList[i][1] = endIndex;
+            colorMatrix[i][0] = red;
+            colorMatrix[i][1] = green;
+            colorMatrix[i][2] = blue;
         }
     }
 }
