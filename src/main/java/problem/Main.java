@@ -6,9 +6,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static int[] parentList;
-    static int[][] queryList;
+    static int N;
+    static int[] numList, scoreList;
+    static Map<Integer, Integer> numToIndexMap;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,38 +16,38 @@ public class Main {
     }
 
     public static void solution() {
-        int answer = 0;
 
-        for (int i = 0; i < M; i++) {
-            int num1 = queryList[i][0];
-            int num2 = queryList[i][1];
+        for (int i = 0; i < N; i++) {
+            int num = numList[i];
+            List<Integer> divisorList = getDivisors(num);
 
-            int num1Parent = findParent(num1);
-            int num2Parent = findParent(num2);
-            if (num1Parent == num2Parent) {
-                System.out.println(i + 1);
-                return;
+            for (int divisor : divisorList) {
+                if (numToIndexMap.get(divisor) == null) { continue; }
+
+                scoreList[numToIndexMap.get(divisor)] += 1;
+                scoreList[i] -= 1;
             }
-
-            union(num1Parent, num2Parent);
         }
 
-        System.out.println(answer);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < N; i++) {
+            sb.append(scoreList[i] + " ");
+        }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int findParent(int num) {
-        if (num == parentList[num]) { return num; }
+    public static List<Integer> getDivisors(int num) {
+        Map<Integer, Integer> divisorMap = new HashMap<>();
 
-        return parentList[num] = findParent(parentList[num]);
-    }
+        for (int i = 1; i <= Math.sqrt(num); i++) {
+            if (num % i == 0) {
+                divisorMap.put(i, 1);
+                divisorMap.put(num / i, 1);
+            }
+        }
 
-    public static void union(int num1, int num2) {
-        int num1Parent = findParent(num1);
-        int num2Parent = findParent(num2);
-
-        if (num1Parent == num2Parent) { return; }
-
-        parentList[Math.min(num1Parent, num2Parent)] = Math.max(num1Parent, num2Parent);
+        return new ArrayList<>(divisorMap.keySet());
     }
 
     public static void init() throws IOException {
@@ -55,20 +55,16 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
+        numList = new int[N];
+        scoreList = new int[N];
 
-        parentList = new int[N];
+        numToIndexMap = new HashMap<>();
+
+        st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            parentList[i] = i;
-        }
+            numList[i] = Integer.parseInt(st.nextToken());
 
-
-        queryList = new int[M][2];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            queryList[i][0] = Integer.parseInt(st.nextToken());
-            queryList[i][1] = Integer.parseInt(st.nextToken());
+            numToIndexMap.put(numList[i], i);
         }
     }
 }
