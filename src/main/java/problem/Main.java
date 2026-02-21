@@ -6,8 +6,33 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static List<Integer> primeNumberList;
+    static List<Integer> commandList;
+    static Map<Node, Integer> costMap;
+
+    public static class Node {
+        int left;
+        int right;
+
+        public Node(int left, int right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Node anotherNode = (Node) obj;
+            if (this.left == anotherNode.left && this.right == anotherNode.right) { return true; }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.left, this.right);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,63 +40,73 @@ public class Main {
     }
 
     public static void solution() {
-        setPrimeNumberList();
+        costMap = new HashMap<>();
+        costMap.put(new Node(0, 0), 0);
 
-        List<Integer> sumList = new ArrayList<>();
-        sumList.add(0);
-        for (int i = 0; i < primeNumberList.size(); i++) {
-            sumList.add(sumList.get(sumList.size() - 1) + primeNumberList.get(i));
+        for (int command : commandList) {
+            Map<Node, Integer> updatedCostMap = new HashMap<>();
+
+            for (Node node : costMap.keySet()) {
+                int prevCost = costMap.get(node);
+
+                if (command != node.right) {
+                    int leftMoveCost = getCost(node.left, command);
+                    Node leftMoveNode = new Node(command, node.right);
+
+                    int minCost = updatedCostMap.getOrDefault(leftMoveNode, Integer.MAX_VALUE / 2);
+                    if (prevCost + leftMoveCost < minCost) {
+                        updatedCostMap.put(leftMoveNode, prevCost + leftMoveCost);
+                    }
+                }
+
+
+                if (command != node.left) {
+                    int rightMoveCost = getCost(node.right, command);
+                    Node rightMoveNode = new Node(node.left, command);
+
+                    int minCost = updatedCostMap.getOrDefault(rightMoveNode, Integer.MAX_VALUE / 2);
+                    if (prevCost + rightMoveCost < minCost) {
+                        updatedCostMap.put(rightMoveNode, prevCost + rightMoveCost);
+                    }
+                }
+            }
+
+            costMap = updatedCostMap;
         }
 
 
-        int leftIndex = 0;
-        int rightIndex = 1;
-
-        int answer = 0;
-        while (rightIndex < sumList.size()) {
-            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
-            if (sumValue == N) {
-                answer += 1;
-                leftIndex += 1;
-                continue;
-            }
-
-            if (sumValue > N) {
-                leftIndex += 1;
-                continue;
-            }
-            else {
-                rightIndex += 1;
-                continue;
-            }
+        int answer = Integer.MAX_VALUE / 2;
+        for (Node node : costMap.keySet()) {
+            answer = Math.min(answer, costMap.get(node));
         }
 
-
-        System.out.println(answer);
+        if (answer == Integer.MAX_VALUE / 2) {
+            System.out.println(0);
+        }
+        else {
+            System.out.println(answer);
+        }
     }
 
-    public static void setPrimeNumberList() {
-        primeNumberList = new ArrayList<>();
+    public static int getCost(int from, int to) {
+        if (from == 0) { return 2; }
+        if (from == to) { return 1; }
+        if (Math.abs(from - to) == 2) { return 4;}
 
-        int[] isPrime = new int[N + 1];
-        Arrays.fill(isPrime, 1);
-        isPrime[0] = 0;
-        isPrime[1] = 1;
-
-        for (int i = 2; i < N + 1; i++) {
-            if (isPrime[i] == 0) { continue; }
-            primeNumberList.add(i);
-
-            for (int j = 2 * i; j < N + 1; j += i) {
-                isPrime[j] = 0;
-            }
-        }
+        return 3;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
-        N = Integer.parseInt(st.nextToken());
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        commandList = new ArrayList<>();
+        while (true) {
+            int command = Integer.parseInt(st.nextToken());
+
+            if (command == 0) { break; }
+
+            commandList.add(command);
+        }
     }
 }
