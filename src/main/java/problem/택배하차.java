@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 택배하차 {
     static int N, M;
     static int[][] mainMatrix;
     static Map<Integer, Box> boxMap;
