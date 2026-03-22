@@ -4,15 +4,14 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class AI로봇청소기 {
     static int N, K, L;
     static int[][] mainMatrix;
-    static Cleaner[] cleanerList;
-    static int[][] cleanerPosMatrix;
-    static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0,-1), new Pos(-1, 0)};
+    static Map<Integer, Cleaner> cleanerMap;
+    static Map<Pos, Cleaner> posCleanerMap;
+    static Pos[] directions = {new Pos(0, 1), new Pos(1, 0), new Pos(0, -1), new Pos(-1, 0)};
 
-    public static class Pos implements Comparable<Pos> {
+    public static class Pos {
         int row;
         int col;
 
@@ -33,30 +32,10 @@ public class AI로봇청소기 {
             return true;
         }
 
-        public void clean() {
-            if (mainMatrix[this.row][this.col] < 0) {
-                return;
-            }
-
-            else if (mainMatrix[this.row][this.col] <= 20) {
-                mainMatrix[this.row][this.col] = 0;
-                return;
-            }
-
-            mainMatrix[this.row][this.col] -= 20;
+        public int calcDistance(Pos anotherPos) {
+            return Math.abs(this.row - anotherPos.row) + Math.abs(this.col - anotherPos.col);
         }
 
-        public int getNumDustRemoved() {
-            if (mainMatrix[this.row][this.col] < 0) {
-                return 0;
-            }
-
-            else if (mainMatrix[this.row][this.col] <= 20) {
-                return mainMatrix[this.row][this.col];
-            }
-
-            return 20;
-        }
 
         @Override
         public boolean equals(Object obj) {
@@ -65,171 +44,48 @@ public class AI로봇청소기 {
 
             Pos anotherPos = (Pos) obj;
             if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
-
             return false;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.row * N + this.col);
+            return Objects.hash(this.row, this.col);
+        }
+    }
+
+    public static class MoveNode implements Comparable<MoveNode> {
+        int distance;
+        Pos destPos;
+
+        public MoveNode(int distance, Pos destPos) {
+            this.distance = distance;
+            this.destPos = destPos;
         }
 
         @Override
-        public int compareTo(Pos anotherPos) {
-            if (this.row != anotherPos.row) {
-                return Integer.compare(this.row, anotherPos.row);
+        public int compareTo(MoveNode anotherMoveNode) {
+            if (this.distance != anotherMoveNode.distance) {
+                return Integer.compare(this.distance, anotherMoveNode.distance);
             }
 
-            return Integer.compare(this.col, anotherPos.col);
+            if (this.destPos.row != anotherMoveNode.destPos.row) {
+                return Integer.compare(this.destPos.row, anotherMoveNode.destPos.row);
+            }
+
+            return Integer.compare(this.destPos.col, anotherMoveNode.destPos.col);
         }
     }
 
     public static class Cleaner {
-        int uniqueNum;
-        Pos curPos;
+        int pk;
+        Pos pos;
 
-        public Cleaner(int uniqueNum, Pos curPos) {
-            this.uniqueNum = uniqueNum;
-            this.curPos = curPos;
-        }
-
-
-        public void move() {
-            if (mainMatrix[curPos.row][curPos.col] > 0) { return; }
-
-            Deque<MoveNode> queue = new ArrayDeque<>();
-            queue.add(new MoveNode(curPos, 0));
-
-
-            MoveNode minMoveNode = new MoveNode(new Pos(0, 0), Integer.MAX_VALUE / 2);
-
-            int[][] visited = new int[N][N];
-            visited[curPos.row][curPos.col] = 1;
-            while (!queue.isEmpty()) {
-                MoveNode moveNode = queue.poll();
-                if (moveNode.depth > minMoveNode.depth) {
-                    break;
-                }
-
-                for (Pos direction : directions) {
-                    Pos movedPos = moveNode.dustPos.addPos(direction);
-                    if (!movedPos.isValidIndex()) { continue; }
-                    if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-                    if (mainMatrix[movedPos.row][movedPos.col] == -1) { continue; }
-                    if (cleanerPosMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-                    if (mainMatrix[movedPos.row][movedPos.col] == 0) {
-                        queue.addLast(new MoveNode(movedPos, moveNode.depth + 1));
-                        visited[movedPos.row][movedPos.col] = 1;
-                        continue;
-                    }
-
-                    MoveNode moveNode1 = new MoveNode(movedPos, moveNode.depth + 1);
-                    if (moveNode1.compareTo(minMoveNode) < 0) {
-                        minMoveNode = moveNode1;
-                    }
-                }
-            }
-
-
-            if (minMoveNode.depth == Integer.MAX_VALUE / 2) { return; }
-            cleanerPosMatrix[curPos.row][curPos.col] = 0;
-
-            this.curPos = minMoveNode.dustPos;
-            cleanerPosMatrix[this.curPos.row][this.curPos.col] = 1;
-        }
-
-        public void clean() {
-            CleanNode minCleanNode = new CleanNode(0);
-            minCleanNode.numDustRemoved = 0;
-
-            for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
-                CleanNode cleanNode = new CleanNode(directionIndex);
-
-                if (cleanNode.compareTo(minCleanNode) > 0) { continue; }
-                minCleanNode = cleanNode;
-            }
-
-
-            int reverseDirectionIndex = (minCleanNode.directionIndex + 2) % 4;
-
-            this.curPos.clean();
-            for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
-                if (directionIndex == reverseDirectionIndex) { continue; }
-
-                Pos movedPos = curPos.addPos(directions[directionIndex]);
-                if (!movedPos.isValidIndex()) { continue; }
-
-                movedPos.clean();
-            }
-        }
-
-        public class MoveNode implements Comparable<MoveNode> {
-            int depth;
-            Pos dustPos;
-
-            public MoveNode(Pos dustPos, int depth) {
-                this.dustPos = dustPos;
-                this.depth = depth;
-            }
-
-            @Override
-            public int compareTo(MoveNode anotherMoveNode) {
-                if (this.depth != anotherMoveNode.depth) {
-                    return Integer.compare(this.depth, anotherMoveNode.depth);
-                }
-
-                return this.dustPos.compareTo(anotherMoveNode.dustPos);
-            }
-        }
-
-        public class CleanNode implements Comparable<CleanNode> {
-            int directionIndex;
-            int numDustRemoved;
-
-            public CleanNode(int directionIndex) {
-                this.directionIndex = directionIndex;
-
-                numDustRemoved = 0;
-                numDustRemoved += curPos.getNumDustRemoved();
-                for (int i = 0; i < 4; i++) {
-                    Pos movedPos = curPos.addPos(directions[i]);
-                    if (!movedPos.isValidIndex()) { continue; }
-
-                    numDustRemoved += movedPos.getNumDustRemoved();
-                }
-
-                int reverseDirectionIndex = (directionIndex + 2) % 4;
-                Pos reverseMovedPos = curPos.addPos(directions[reverseDirectionIndex]);
-                if (reverseMovedPos.isValidIndex()) {
-                    numDustRemoved -= reverseMovedPos.getNumDustRemoved();
-                }
-            }
-
-            @Override
-            public int compareTo(CleanNode anotherCleanNode) {
-                if (this.numDustRemoved != anotherCleanNode.numDustRemoved) {
-                    return Integer.compare(-this.numDustRemoved, -anotherCleanNode.numDustRemoved);
-                }
-
-                return Integer.compare(this.directionIndex, anotherCleanNode.directionIndex);
-            }
-        }
-
-        public class PathNode implements Comparable<PathNode> {
-            int depth;
-            Pos curPos;
-
-            public PathNode(int depth, Pos curPos) {
-                this.depth = depth;
-                this.curPos = curPos;
-            }
-
-            @Override
-            public int compareTo(PathNode anotherPathNode) {
-                return Integer.compare(this.depth, anotherPathNode.depth);
-            }
+        public Cleaner(int pk, Pos pos) {
+            this.pk = pk;
+            this.pos = pos;
         }
     }
+
 
     public static void main(String[] args) throws Exception {
         init();
@@ -237,73 +93,180 @@ public class AI로봇청소기 {
     }
 
     public static void solution() {
-        // StringBuilder sb = new StringBuilder();
+        List<Integer> uniqueNumList = new ArrayList<>(cleanerMap.keySet());
+        Collections.sort(uniqueNumList);
 
-        for (int turn = 0; turn < L; turn++) {
-            for (int i = 0; i < K; i++) {
-                Cleaner cleaner = cleanerList[i];
-                cleaner.move();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < L; i++) {
+            for (int uniqueNum : uniqueNumList) {
+                Cleaner cleaner = cleanerMap.get(uniqueNum);
+
+                Pos movedPos = getClosestPos(uniqueNum);
+                updateCleanerPos(uniqueNum, movedPos);
             }
 
-            for (int i = 0; i < K; i++) {
-                Cleaner cleaner = cleanerList[i];
-                cleaner.clean();
+            for (int uniqueNum : uniqueNumList) {
+                doBestClean(uniqueNum);
             }
 
             accumulateDust();
-            spread();
+            spreadDust();
 
-            int numDust = getNumDust();
-            System.out.println(numDust);
-            // sb.append(numDust + "\n");
+            sb.append(getNumDust() + "\n");
         }
 
-        // System.out.println(sb.toString().substring(0, sb.length() - 1));
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
+    }
+
+    public static Pos getClosestPos(int uniqueNum) {
+        Cleaner cleaner = cleanerMap.get(uniqueNum);
+
+        Deque<MoveNode> queue = new ArrayDeque<>();
+        queue.add(new MoveNode(0, cleaner.pos));
+
+        MoveNode answerMoveNode = new MoveNode(Integer.MAX_VALUE / 2, cleaner.pos);
+
+        int[][] visited = new int[N][N];
+        while (!queue.isEmpty()) {
+            MoveNode moveNode = queue.poll();
+            if (visited[moveNode.destPos.row][moveNode.destPos.col] == 1) { continue; }
+            visited[moveNode.destPos.row][moveNode.destPos.col] = 1;
+
+            if (moveNode.compareTo(answerMoveNode) < 0 && mainMatrix[moveNode.destPos.row][moveNode.destPos.col] > 0) {
+                answerMoveNode = moveNode;
+            }
+
+            for (Pos direction : directions) {
+                Pos movedPos = moveNode.destPos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
+                if (visited[movedPos.row][movedPos.col] != 0) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] == -1) { continue; }
+                if (posCleanerMap.get(movedPos) != null) { continue; }
+                if (moveNode.distance + 1 > answerMoveNode.distance) { continue; }
+
+                queue.add(new MoveNode(moveNode.distance + 1, movedPos));
+            }
+        }
+
+        return answerMoveNode.destPos;
+    }
+
+    public static void doBestClean(int uniqueNum) {
+        class CleanNode {
+            int directionIndex;
+            int numClean;
+
+            CleanNode(int directionIndex, int numClean) {
+                this.directionIndex = directionIndex;
+                this.numClean = numClean;
+            }
+        }
+
+        Cleaner cleaner = cleanerMap.get(uniqueNum);
+        CleanNode bestCleanNode = new CleanNode(0, 0);
+
+        for (int i = 0; i < 4; i++) {
+            int cleanNum = getCleanNum(cleaner.pos, i);
+
+            if (cleanNum > bestCleanNode.numClean) {
+                bestCleanNode = new CleanNode(i, cleanNum);
+            }
+        }
+
+        clean(cleaner.pos, bestCleanNode.directionIndex);
+    }
+
+    public static int getCleanNum(Pos centerPos, int directionIndex) {
+        int reverseDirectionIndex = (directionIndex + 2) % 4;
+
+        int numClean = 0;
+        for (int i = 0; i < 4; i++) {
+            if (i == reverseDirectionIndex) { continue; }
+
+            Pos movedPos = centerPos.addPos(directions[i]);
+            if (!movedPos.isValidIndex()) { continue; }
+            if (mainMatrix[movedPos.row][movedPos.col] == -1) { continue; }
+            if (mainMatrix[movedPos.row][movedPos.col] == 0) { continue; }
+
+            numClean += Math.min(20, mainMatrix[movedPos.row][movedPos.col]);
+        }
+        numClean += Math.min(20, mainMatrix[centerPos.row][centerPos.col]);
+
+
+        return numClean;
+    }
+
+    public static void clean(Pos centerPos, int directionIndex) {
+        int reverseDirectionIndex = (directionIndex + 2) % 4;
+
+        for (int i = 0; i < 4; i++) {
+            if (i == reverseDirectionIndex) { continue; }
+
+            Pos movedPos = centerPos.addPos(directions[i]);
+            if (!movedPos.isValidIndex()) { continue; }
+            if (mainMatrix[movedPos.row][movedPos.col] == -1) { continue; }
+
+            if (mainMatrix[movedPos.row][movedPos.col] <= 20) {
+                mainMatrix[movedPos.row][movedPos.col] = 0;
+            }
+            else {
+                mainMatrix[movedPos.row][movedPos.col] -= 20;
+            }
+        }
+
+        if (mainMatrix[centerPos.row][centerPos.col] <= 20) {
+            mainMatrix[centerPos.row][centerPos.col] = 0;
+        }
+
+        else {
+            mainMatrix[centerPos.row][centerPos.col] -= 20;
+        }
     }
 
     public static void accumulateDust() {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (mainMatrix[i][j] > 0) {
-                    mainMatrix[i][j] += 5;
-                }
+                if (mainMatrix[i][j] <= 0) { continue; }
+
+                mainMatrix[i][j] += 5;
             }
         }
     }
 
-    public static void spread() {
+    public static void spreadDust() {
         int[][] spreadMatrix = new int[N][N];
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (mainMatrix[i][j] != 0) {
-                    continue;
-                }
+                if (mainMatrix[i][j] != 0) { continue; }
 
-                Pos curPos = new Pos(i, j);
-
-                int numNearDust = 0;
                 for (Pos direction : directions) {
-                    Pos movedPos = curPos.addPos(direction);
-                    if (!movedPos.isValidIndex()) {
-                        continue;
-                    }
-                    if (mainMatrix[movedPos.row][movedPos.col] == -1) {
-                        continue;
-                    }
+                    Pos movedPos = new Pos(i, j).addPos(direction);
 
-                    numNearDust += mainMatrix[movedPos.row][movedPos.col];
+                    if (!movedPos.isValidIndex()) { continue; }
+                    if (mainMatrix[movedPos.row][movedPos.col] <= 0) { continue; }
+
+                    spreadMatrix[i][j] += mainMatrix[movedPos.row][movedPos.col];
                 }
-
-                spreadMatrix[curPos.row][curPos.col] = numNearDust / 10;
             }
         }
+
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                mainMatrix[i][j] += spreadMatrix[i][j];
+                if (mainMatrix[i][j] != 0) { continue; }
+
+                mainMatrix[i][j] += (spreadMatrix[i][j] / 10);
             }
         }
+    }
+
+    public static void updateCleanerPos(int uniqueNum, Pos movedPos) {
+        posCleanerMap.remove(cleanerMap.get(uniqueNum).pos);
+        posCleanerMap.put(movedPos, cleanerMap.get(uniqueNum));
+
+        cleanerMap.put(uniqueNum, new Cleaner(uniqueNum, movedPos));
     }
 
     public static int getNumDust() {
@@ -337,17 +300,16 @@ public class AI로봇청소기 {
             }
         }
 
-
-        cleanerList = new Cleaner[K];
-        cleanerPosMatrix = new int[N][N];
+        cleanerMap = new HashMap<>();
+        posCleanerMap = new HashMap<>();
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
 
             int row = Integer.parseInt(st.nextToken()) - 1;
             int col = Integer.parseInt(st.nextToken()) - 1;
 
-            cleanerList[i] = new Cleaner(i + 1, new Pos(row, col));
-            cleanerPosMatrix[row][col] = 1;
+            cleanerMap.put(i + 1, new Cleaner(i + 1, new Pos(row, col)));
+            posCleanerMap.put(new Pos(row, col), new Cleaner(i + 1, new Pos(row, col)));
         }
     }
 
