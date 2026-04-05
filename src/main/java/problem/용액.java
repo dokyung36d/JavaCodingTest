@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 용액 {
     static int N;
     static int[] numList;
@@ -15,40 +14,35 @@ public class 용액 {
     }
 
     public static void solution() {
-        int leftAnswer = 0;
-        int rightAnswer = 0;
-        int minSum = Integer.MAX_VALUE;
+        int answerLeftNum = 0;
+        int answerRightNum = 0;
 
         int leftIndex = 0;
         int rightIndex = N - 1;
 
+        int minSumValue = Integer.MAX_VALUE;
+
         while (leftIndex < rightIndex) {
-            int sum = numList[leftIndex] + numList[rightIndex];
+            int sumValue = numList[leftIndex] + numList[rightIndex];
 
-            if (Math.abs(sum) < minSum) {
-                leftAnswer = numList[leftIndex];
-                rightAnswer = numList[rightIndex];
+            if (Math.abs(sumValue) < minSumValue) {
+                minSumValue = Math.abs(sumValue);
 
-                minSum = Math.abs(sum);
+                answerLeftNum = numList[leftIndex];
+                answerRightNum = numList[rightIndex];
             }
 
-            if (sum < 0) {
+
+            if (sumValue < 0) {
                 leftIndex += 1;
-                continue;
             }
 
-            if (sum > 0) {
+            else {
                 rightIndex -= 1;
-                continue;
-            }
-
-            if (sum == 0) {
-                break;
             }
         }
 
-        System.out.println(leftAnswer + " " + rightAnswer);
-
+        System.out.println(answerLeftNum + " " + answerRightNum);
     }
 
     public static void init() throws IOException {
@@ -56,12 +50,14 @@ public class 용액 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-
         numList = new int[N];
+
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
+
+        Arrays.sort(numList);
     }
 
 }
