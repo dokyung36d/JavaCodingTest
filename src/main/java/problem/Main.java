@@ -5,20 +5,8 @@ import java.io.*;
 
 
 public class Main {
-    static int N, R, Q;
-    static int[] queryList;
-    static int[] visited, answerList;
-    static Map<Integer, List<Integer>> graphMap;
-
-    public static class Node {
-        int num;
-        int numNode;
-
-        public Node(int num, int numNode) {
-            this.num = num;
-            this.numNode = numNode;
-        }
-    }
+    static int N, C;
+    static int[][] cityInfo;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -26,67 +14,56 @@ public class Main {
     }
 
     public static void solution() {
-        recursive(R);
+        int[][] dpMatrix = new int[N + 1][C + 1];
 
-
-        StringBuilder sb = new StringBuilder();
-        for (int query : queryList) {
-            sb.append(answerList[query] + "\n");
+        for (int i = 0; i < N + 1; i++) {
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+            dpMatrix[i][0] = 0;
         }
 
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
-    }
 
-    public static int recursive(int num) {
-        if (visited[num] == 1) { return answerList[num]; }
-        visited[num] = 1;
+        for (int i = 0; i < N; i++) {
+            int cost = cityInfo[i][0];
+            int customer = cityInfo[i][1];
 
-        answerList[num] += 1;
+            for (int j = 1; j < C + 1; j++) {
+                int maxNumMultiply;
+                if (j % customer == 0) {
+                    maxNumMultiply = j / customer;
+                }
+                else {
+                    maxNumMultiply = j / customer + 1;
+                }
 
-        for (int nearNum : graphMap.get(num)) {
-            if (visited[nearNum] == 1) { continue; }
+                for (int numMultiply = 0; numMultiply <= maxNumMultiply; numMultiply++) {
+                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
+                            dpMatrix[i][Math.max(0, j - customer * numMultiply)] + cost * numMultiply);
+                }
+            }
 
-            answerList[num] += recursive(nearNum);
         }
 
-        return answerList[num];
+        System.out.println(dpMatrix[N][C]);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
+        C = Integer.parseInt(st.nextToken());
         N = Integer.parseInt(st.nextToken());
-        R = Integer.parseInt(st.nextToken()) - 1;
-        Q = Integer.parseInt(st.nextToken());
 
-        graphMap = new HashMap<>();
+        cityInfo = new int[N][2];
         for (int i = 0; i < N; i++) {
-            graphMap.put(i, new ArrayList<>());
-        }
-
-        for (int i = 0; i < N - 1; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int cost = Integer.parseInt(st.nextToken());
+            int customer = Integer.parseInt(st.nextToken());
 
-
-            graphMap.get(node1).add(node2);
-            graphMap.get(node2).add(node1);
+            cityInfo[i][0] = cost;
+            cityInfo[i][1] = customer;
         }
-
-        queryList = new int[Q];
-        for (int i = 0; i < Q; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            queryList[i] = Integer.parseInt(st.nextToken()) - 1;
-        }
-
-        visited = new int[N];
-        answerList = new int[N];
     }
-
 
 
 }
