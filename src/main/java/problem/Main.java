@@ -7,6 +7,7 @@ import java.io.*;
 public class Main {
     static int N, R, Q;
     static int[] queryList;
+    static int[] visited, answerList;
     static Map<Integer, List<Integer>> graphMap;
 
     public static class Node {
@@ -25,60 +26,30 @@ public class Main {
     }
 
     public static void solution() {
-        int[] visited = new int[N];
-        int[] numChildList = new int[N];
+        recursive(R);
 
-        Deque<Integer> queue = new ArrayDeque<>();
-        queue.add(R);
-
-        while (!queue.isEmpty()) {
-            int num = queue.pollFirst();
-            int numChild = 0;
-            visited[num] = 1;
-
-            for (int nearNum : graphMap.get(num)) {
-                if (visited[nearNum] == 1) { continue; }
-
-                numChild += 1;
-                queue.add(nearNum);
-            }
-
-            numChildList[num] = numChild;
-        }
-
-        queue = new ArrayDeque<>();
-        for (int i = 0; i < N; i++) {
-            if (numChildList[i] == 0) {
-                queue.add(i);
-            }
-        }
-
-        int[] answerList = new int[N];
-        visited = new int[N];
-
-        while (!queue.isEmpty()) {
-            int num = queue.pollFirst();
-            visited[num] = 1;
-            answerList[num] += 1;
-
-            for (int parentNum : graphMap.get(num)) {
-                if (visited[parentNum] == 1) { continue; }
-
-                answerList[parentNum] += answerList[num];
-                numChildList[parentNum] -= 1;
-
-                if (numChildList[parentNum] == 0) {
-                    queue.add(parentNum);
-                }
-            }
-        }
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Q; i++) {
-            sb.append(answerList[queryList[i]] + "\n");
+        for (int query : queryList) {
+            sb.append(answerList[query] + "\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
+    }
+
+    public static int recursive(int num) {
+        if (visited[num] == 1) { return answerList[num]; }
+        visited[num] = 1;
+
+        answerList[num] += 1;
+
+        for (int nearNum : graphMap.get(num)) {
+            if (visited[nearNum] == 1) { continue; }
+
+            answerList[num] += recursive(nearNum);
+        }
+
+        return answerList[num];
     }
 
     public static void init() throws IOException {
@@ -112,7 +83,8 @@ public class Main {
             queryList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
 
-
+        visited = new int[N];
+        answerList = new int[N];
     }
 
 
