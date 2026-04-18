@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 아기고래의첫항해 {
     static int N, r, c, d;
     static int[][] mainMatrix, visited;
     static Pos[] directions = {new Pos(0, -1), new Pos(1, 0), new Pos(0, 1), new Pos(-1, 0)};
