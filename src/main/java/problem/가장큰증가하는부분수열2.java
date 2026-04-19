@@ -8,7 +8,6 @@ import java.io.*;
 public class 가장큰증가하는부분수열2 {
     static int N;
     static int[] numList;
-    static List<Integer> dpList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,21 +15,20 @@ public class 가장큰증가하는부분수열2 {
     }
 
     public static void solution() {
+        List<Integer> dpList = new ArrayList<>();
         dpList.add(numList[0]);
 
         for (int i = 1; i < N; i++) {
-            int num = numList[i];
+            int insertIndex = Collections.binarySearch(dpList, numList[i]);
+            if (insertIndex >= 0) { continue; }
 
-            int index = Collections.binarySearch(dpList, num);
-            if (index >= 0) { continue; }
-
-            int insertIndex = - index - 1;
+            insertIndex = - insertIndex - 1;
             if (insertIndex == dpList.size()) {
-                dpList.add(num);
-                continue;
+                dpList.add(numList[i]);
             }
-
-            dpList.set(insertIndex, num);
+            else {
+                dpList.set(insertIndex, numList[i]);
+            }
         }
 
         System.out.println(dpList.size());
@@ -41,13 +39,12 @@ public class 가장큰증가하는부분수열2 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
+        numList = new int[N];
         st = new StringTokenizer(br.readLine());
+
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
-
-        dpList = new ArrayList<>();
     }
 }
