@@ -6,8 +6,25 @@ import java.io.*;
 
 public class Main {
     static int N;
-    static String string;
-    static Character[] charList;
+    static int[][] infoMatrix;
+
+    public static class Node implements Comparable<Node> {
+        int curPos;
+        int visited;
+        int cost;
+
+        public Node(int curPos, int visited, int cost) {
+            this.curPos = curPos;
+            this.visited = visited;
+            this.cost = cost;
+        }
+
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,56 +32,54 @@ public class Main {
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N][N];
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(0, 1, 0));
 
-        for (int i = 0; i < N; i++) {
-            dpMatrix[i][i] = 1;
-        }
+        int allVisited = (int) Math.pow(2, N);
+        int[][] visitedMatrix = new int[N][allVisited];
 
-        for (int i = 0; i < N - 1; i++) {
-            if (charList[i] == charList[i + 1]) {
-                dpMatrix[i][i + 1] = 1;
+        int answer = Integer.MAX_VALUE;
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+            if (node.visited == allVisited - 1) {
+                if (infoMatrix[node.curPos][0] == 0 ) { continue; }
+
+                answer = Math.min(node.cost + infoMatrix[node.curPos][0], answer);
+                continue;
+            }
+
+            if (visitedMatrix[node.curPos][node.visited] == 1) { continue; }
+            visitedMatrix[node.curPos][node.visited] = 1;
+
+            for (int next = 1; next < N; next++) {
+                if ((node.visited & (1 << next)) != 0) { continue; }
+                if (infoMatrix[node.curPos][next] == 0) { continue; }
+
+                int updatedVisited = (node.visited | (1 << next));
+                if (visitedMatrix[next][updatedVisited] != 0) { continue; }
+
+                pq.add(new Node(next, updatedVisited, node.cost + infoMatrix[node.curPos][next]));
             }
         }
 
 
-
-        for (int gap = 2; gap < N; gap++) {
-            for (int startIndex = 0; startIndex + gap < N; startIndex++) {
-                int endIndex = startIndex + gap;
-                if (charList[startIndex] == charList[endIndex] && dpMatrix[startIndex + 1][endIndex - 1] == 1) {
-                    dpMatrix[startIndex][endIndex] = 1;
-                }
-            }
-        }
-
-
-        int[] dpList = new int[N + 1];
-        for (int i = 0; i < N + 1; i++) {
-            dpList[i] = i;
-        }
-
-        for (int endIndex = 0; endIndex < N; endIndex++) {
-            for (int startIndex = 0; startIndex <= endIndex; startIndex++) {
-                if (dpMatrix[startIndex][endIndex] == 0) { continue; }
-
-                dpList[endIndex + 1] = Math.min(dpList[endIndex + 1], dpList[startIndex] + 1);
-            }
-        }
-
-        System.out.println(dpList[N]);
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        string = st.nextToken();
-        N = string.length();
+        N = Integer.parseInt(st.nextToken());
 
-        charList = new Character[N];
+        infoMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
-            charList[i] = string.charAt(i);
+            st = new StringTokenizer(br.readLine());
+
+            for (int j = 0; j < N; j++) {
+                infoMatrix[i][j] = Integer.parseInt(st.nextToken());
+            }
         }
     }
 }

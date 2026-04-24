@@ -4,22 +4,21 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 외판원순회 {
     static int N;
-    static int[][] graphMatrix;
-    static int allVisited;
+    static int[][] infoMatrix;
 
     public static class Node implements Comparable<Node> {
         int curPos;
-        int cost;
         int visited;
+        int cost;
 
-        public Node(int curPos, int cost, int visited) {
+        public Node(int curPos, int visited, int cost) {
             this.curPos = curPos;
-            this.cost = cost;
             this.visited = visited;
+            this.cost = cost;
         }
+
 
         @Override
         public int compareTo(Node anotherNode) {
@@ -33,34 +32,37 @@ public class 외판원순회 {
     }
 
     public static void solution() {
-        int answer = Integer.MAX_VALUE;
-
-        int[][] visitedMatrix = new int[N][(int) Math.pow(2, N)];
-
         PriorityQueue<Node> pq = new PriorityQueue<>();
-        pq.add(new Node(0, 0, 1));
+        pq.add(new Node(0, 1, 0));
 
+        int allVisited = (int) Math.pow(2, N);
+        int[][] visitedMatrix = new int[N][allVisited];
+
+        int answer = Integer.MAX_VALUE;
         while (!pq.isEmpty()) {
             Node node = pq.poll();
+
+            if (node.visited == allVisited - 1) {
+                if (infoMatrix[node.curPos][0] == 0 ) { continue; }
+
+                answer = Math.min(node.cost + infoMatrix[node.curPos][0], answer);
+                continue;
+            }
+
             if (visitedMatrix[node.curPos][node.visited] == 1) { continue; }
             visitedMatrix[node.curPos][node.visited] = 1;
 
-            if (node.visited == allVisited) {
-                if (graphMatrix[node.curPos][0] == 0) { continue; }
+            for (int next = 1; next < N; next++) {
+                if ((node.visited & (1 << next)) != 0) { continue; }
+                if (infoMatrix[node.curPos][next] == 0) { continue; }
 
-                int totalCost = node.cost + graphMatrix[node.curPos][0];
-                answer = Math.min(answer, totalCost);
-            }
+                int updatedVisited = (node.visited | (1 << next));
+                if (visitedMatrix[next][updatedVisited] != 0) { continue; }
 
-            for (int nextPos = 0; nextPos < N; nextPos++) {
-                if (graphMatrix[node.curPos][nextPos] == 0 ) { continue; }
-                if ((node.visited & (1 << nextPos)) != 0) { continue; }
-                int updatedVisited = node.visited | (1 << nextPos);
-                if (visitedMatrix[nextPos][updatedVisited] == 1) { continue; }
-
-                pq.add(new Node(nextPos, node.cost + graphMatrix[node.curPos][nextPos], updatedVisited));
+                pq.add(new Node(next, updatedVisited, node.cost + infoMatrix[node.curPos][next]));
             }
         }
+
 
         System.out.println(answer);
     }
@@ -70,17 +72,14 @@ public class 외판원순회 {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        graphMatrix = new int[N][N];
 
+        infoMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
             for (int j = 0; j < N; j++) {
-                graphMatrix[i][j] = Integer.parseInt(st.nextToken());
+                infoMatrix[i][j] = Integer.parseInt(st.nextToken());
             }
         }
-
-        allVisited = (int) Math.pow(2, N) - 1;
-
     }
 }
