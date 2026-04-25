@@ -4,30 +4,18 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 배열정렬 {
     static int N, M;
-    static List<Integer> numList;
-    static Command[] commandList;
-
-    public static class Command {
-        int firstIndex;
-        int secondIndex;
-        int cost;
-
-        public Command(int firstIndex, int secondIndex, int cost) {
-            this.firstIndex = firstIndex;
-            this.secondIndex = secondIndex;
-            this.cost = cost;
-        }
-    }
+    static int[][] commandList;
+    static PriorityQueue<Node> pq;
+    static List<Integer> sortedList;
 
     public static class Node implements Comparable<Node> {
-        List<Integer> list;
+        List<Integer> numList;
         int cost;
 
-        public Node(List<Integer> list, int cost) {
-            this.list = list;
+        public Node(List<Integer> numList, int cost) {
+            this.numList = numList;
             this.cost = cost;
         }
 
@@ -37,80 +25,85 @@ public class 배열정렬 {
         }
     }
 
-
     public static void main(String[] args) throws Exception {
+
         init();
         solution();
     }
 
     public static void solution() {
-        Map<String, Integer> visitedMap = new HashMap<>();
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        pq.add(new Node(numList, 0));
+        Map<List<Integer>, Integer> visitedMap = new HashMap<>();
+
 
         while (!pq.isEmpty()) {
             Node node = pq.poll();
-            if (visitedMap.get(node.list.toString()) != null) { continue; }
-            visitedMap.put(node.list.toString(), 1);
 
-            if (isSorted(node.list)) {
+            if (visitedMap.get(node.numList) != null) { continue; }
+            visitedMap.put(node.numList, 1);
+
+            if (node.numList.equals(sortedList)) {
                 System.out.println(node.cost);
+
                 return;
             }
 
-            for (Command command : commandList) {
-                List<Integer> swappedList = swapList(node.list, command);
-                if (visitedMap.get(swappedList.toString()) != null) { continue; }
 
-                pq.add(new Node(swappedList, node.cost + command.cost));
+            for (int[] command : commandList) {
+                List<Integer> swappedList = swap(node.numList, command);
+
+                if (visitedMap.get(swappedList) != null) { continue; }
+                pq.add(new Node(swappedList, node.cost + command[2]));
             }
         }
 
         System.out.println(-1);
     }
 
-    public static boolean isSorted(List<Integer> list) {
-        for (int i = 0; i < list.size() - 1; i++) {
-            if (list.get(i) > list.get(i + 1)) { return false; }
-        }
+    public static List<Integer> swap(List<Integer> list, int[] command) {
+        List<Integer> copiedList = new ArrayList<>(list);
 
-        return true;
-    }
+        copiedList.set(command[0], list.get(command[1]));
+        copiedList.set(command[1], list.get(command[0]));
 
-    public static List<Integer> swapList(List<Integer> list, Command command) {
-        List<Integer> swappedList = new ArrayList<>(list);
-        swappedList.set(command.firstIndex, list.get(command.secondIndex));
-        swappedList.set(command.secondIndex, list.get(command.firstIndex));
-
-        return swappedList;
+        return copiedList;
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
+        pq = new PriorityQueue<>();
+
         N = Integer.parseInt(st.nextToken());
+        List<Integer> numList = new ArrayList<>();
+        sortedList = new ArrayList<>();
 
         st = new StringTokenizer(br.readLine());
-        numList = new ArrayList<>();
         for (int i = 0; i < N; i++) {
-            numList.add(Integer.parseInt(st.nextToken()));
+            int num = Integer.parseInt(st.nextToken());
+
+            numList.add(num);
+            sortedList.add(num);
         }
+        Collections.sort(sortedList);
+
+        pq.add(new Node(numList, 0));
 
 
         st = new StringTokenizer(br.readLine());
         M = Integer.parseInt(st.nextToken());
 
-
-        commandList = new Command[M];
+        commandList = new int[M][3];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int firstIndex = Integer.parseInt(st.nextToken()) - 1;
-            int secondIndex = Integer.parseInt(st.nextToken()) - 1;
+            int index1 = Integer.parseInt(st.nextToken()) - 1;
+            int index2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            commandList[i] = new Command(firstIndex, secondIndex, cost);
+            commandList[i][0] = index1;
+            commandList[i][1] = index2;
+            commandList[i][2] = cost;
         }
     }
 }
