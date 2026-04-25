@@ -4,12 +4,9 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 공항 {
     static int G, P;
-    static int[] gateList;
-    static int[] parentList;
-
+    static int[] gateList, parentList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -18,11 +15,8 @@ public class 공항 {
 
     public static void solution() {
         int answer = 0;
-
         for (int i = 0; i < P; i++) {
-            int gate = gateList[i];
-
-            int parent = findParent(gate);
+            int parent = findParent(gateList[i]);
             if (parent == 0) { break; }
 
             union(parent, parent - 1);
@@ -44,31 +38,26 @@ public class 공항 {
 
         if (num1Parent == num2Parent) { return; }
 
-        int bigNumGate = Math.max(num1Parent, num2Parent);
-        int smallNumGate = Math.min(num1Parent, num2Parent);
-
-        parentList[bigNumGate] = smallNumGate;
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         G = Integer.parseInt(st.nextToken());
 
         st = new StringTokenizer(br.readLine());
         P = Integer.parseInt(st.nextToken());
 
         gateList = new int[P];
+        parentList = new int[G + 1];
         for (int i = 0; i < P; i++) {
             st = new StringTokenizer(br.readLine());
+            gateList[i] = Integer.parseInt(st.nextToken());
 
-            int gate = Integer.parseInt(st.nextToken());
-            gateList[i] = gate;
         }
 
-
-        parentList = new int[G + 1];
         for (int i = 0; i < G + 1; i++) {
             parentList[i] = i;
         }
