@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-class Solution {
+class LongestSubstringWithoutRepeatingCharacters {
     static int N;
     static Map<Character, Integer> dpMap;
     public static void main(String[] args) throws Exception {
