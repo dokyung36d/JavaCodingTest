@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-class Solution {
+class MedianofTwoSortedArrays {
     static int N;
 
     public static void main(String[] args) throws Exception {
