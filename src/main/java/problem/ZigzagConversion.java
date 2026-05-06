@@ -3,7 +3,7 @@ package problem;
 import java.io.*;
 import java.util.*;
 
-class Solution {
+class ZigzagConversion {
     static int N;
 
     public static class Pos implements Comparable<Pos> {
