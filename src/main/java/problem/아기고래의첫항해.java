@@ -7,9 +7,10 @@ import java.io.*;
 public class 아기고래의첫항해 {
     static int N, r, c, d;
     static int[][] mainMatrix, visited;
-    static Pos[] directions = {new Pos(0, -1), new Pos(1, 0), new Pos(0, 1), new Pos(-1, 0)};
-    static Dolphin dolphin;
-    static int numRemain;
+    static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static int[] moveDirectionIndices = {3, 2, 1, 0};
+    static Whale whale;
+    static int numSea;
 
     public static class Pos implements Comparable<Pos> {
         int row;
@@ -25,18 +26,31 @@ public class 아기고래의첫항해 {
         }
 
         public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) { return false; }
+            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= N) {
+                return false;
+            }
+
+            return true;
+        }
+
+        public boolean canMove() {
+            if (!isValidIndex()) { return false; }
+            if (visited[this.row][this.col] == 1) { return false; }
+            if (mainMatrix[this.row][this.col] == 1) { return false; }
 
             return true;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) { return true; }
+            if (this == obj) { return true;}
             if (obj == null || this.getClass() != obj.getClass()) { return false; }
 
             Pos anotherPos = (Pos) obj;
-            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+            if (this.row == anotherPos.row && this.col == anotherPos.col) {
+                return true;
+            }
+
             return false;
         }
 
@@ -56,15 +70,16 @@ public class 아기고래의첫항해 {
     }
 
     public static class Node implements Comparable<Node> {
-        Pos curPos;
+        Pos pos;
         int depth;
-        int prevMoveDirectionIndex;
+        int directionIndex;
 
-        public Node(Pos curPos, int depth, int prevMoveDirectionIndex) {
-            this.curPos = curPos;
+        public Node(Pos pos, int depth, int directionIndex) {
+            this.pos = pos;
             this.depth = depth;
-            this.prevMoveDirectionIndex = prevMoveDirectionIndex;
+            this.directionIndex = directionIndex;
         }
+
 
         @Override
         public int compareTo(Node anotherNode) {
@@ -72,56 +87,26 @@ public class 아기고래의첫항해 {
                 return Integer.compare(this.depth, anotherNode.depth);
             }
 
-            return this.curPos.compareTo(anotherNode.curPos);
+            return this.pos.compareTo(anotherNode.pos);
         }
     }
 
-    public static class Dolphin {
-        Pos pos;
+    public static class Whale {
+        Pos curPos;
         int directionIndex;
 
-        public Dolphin(Pos pos, int directionIndex) {
-            this.pos = pos;
+        public Whale(Pos curPos, int directionIndex) {
+            this.curPos = curPos;
             this.directionIndex = directionIndex;
         }
 
-        public boolean firstMove() {
-            Pos movedPos;
+        public boolean canNearMove() {
+            for (Pos direction : directions) {
+                Pos movedPos = this.curPos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
 
-            movedPos = this.pos.addPos(directions[this.directionIndex]);
-            if (canMove(movedPos)) {
-                this.pos = movedPos;
-                visited[movedPos.row][movedPos.col] = 1;
-
-                return true;
-            }
-
-
-            movedPos = this.pos.addPos(directions[(this.directionIndex + 1) % 4]);
-            if (canMove(movedPos)) {
-                this.pos = movedPos;
-                visited[movedPos.row][movedPos.col] = 1;
-                this.directionIndex = (this.directionIndex + 1) % 4;
-
-                return true;
-            }
-
-
-            movedPos = this.pos.addPos(directions[(this.directionIndex + 3) % 4]);
-            if (canMove(movedPos)) {
-                this.pos = movedPos;
-                visited[movedPos.row][movedPos.col] = 1;
-                this.directionIndex = (this.directionIndex + 3) % 4;
-
-                return true;
-            }
-
-
-            movedPos = this.pos.addPos(directions[(this.directionIndex + 2) % 4]);
-            if (canMove(movedPos)) {
-                this.pos = movedPos;
-                visited[movedPos.row][movedPos.col] = 1;
-                this.directionIndex = (this.directionIndex + 2) % 4;
+                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
 
                 return true;
             }
@@ -129,70 +114,86 @@ public class 아기고래의첫항해 {
             return false;
         }
 
+        public void move() {
+            if (canNearMove()) {
+                firstMove();
+            }
+            else {
+                secondMove();
+            }
+        }
 
-        public Pos getSecondMovePos() {
-            Deque<Node> queue = new ArrayDeque<>();
-            queue.add(new Node(this.pos, 0, 0));
+        public void firstMove() {
+            Pos movedPos;
 
-            int[][] visitedWhenMove = new int[N][N];
+            movedPos = this.curPos.addPos(directions[directionIndex]);
+            if (movedPos.canMove()) {
+                this.curPos = movedPos;
 
-            Node minNode = new Node(new Pos(0, 0), Integer.MAX_VALUE / 2, 0);
-            while (!queue.isEmpty()) {
-                Node node = queue.poll();
-
-                if (visitedWhenMove[node.curPos.row][node.curPos.col] == 1) { continue; }
-                visitedWhenMove[node.curPos.row][node.curPos.col] = 1;
-
-                if (visited[node.curPos.row][node.curPos.col] == 0 && node.compareTo(minNode) < 0) {
-                    minNode = node;
-                }
-
-
-                for (Pos direction : directions) {
-                    Pos movedPos = node.curPos.addPos(direction);
-                    if (!movedPos.isValidIndex()) { continue; }
-                    if (visitedWhenMove[movedPos.row][movedPos.col] == 1) { continue; }
-                    if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-                    if (node.depth + 1 > minNode.depth) { continue; }
-
-                    queue.add(new Node(movedPos, node.depth + 1, 0));
-
-                }
+                return;
             }
 
 
-            return minNode.curPos;
+            movedPos = this.curPos.addPos(directions[(directionIndex + 3) % 4]);
+            if (movedPos.canMove()) {
+                this.curPos = movedPos;
+                this.directionIndex = (directionIndex + 3) % 4;
+
+                return;
+            }
+
+
+            movedPos = this.curPos.addPos(directions[(directionIndex + 1) % 4]);
+            if (movedPos.canMove()) {
+                this.curPos = movedPos;
+                this.directionIndex = (directionIndex + 1) % 4;
+
+                return;
+            }
+
+            movedPos = this.curPos.addPos(directions[(directionIndex + 2) % 4]);
+            if (movedPos.canMove()) {
+                this.curPos = movedPos;
+                this.directionIndex = (directionIndex + 2) % 4;
+
+                return;
+            }
         }
 
-        public void secondMove(Pos destPos) {
-            Deque<Node> queue = new ArrayDeque<>();
-            queue.add(new Node(this.pos, 0, 0));
 
-            int[][] visitedWhenMove = new int[N][N];
+        public void secondMove() {
+            Deque<Node> queue = new ArrayDeque<>();
+            queue.add(new Node(this.curPos, 0, 0));
+
+            int[][] moved = new int[N][N];
+
+            Node minNode = new Node(new Pos(0, 0), Integer.MAX_VALUE / 2, 0);
 
             while (!queue.isEmpty()) {
                 Node node = queue.pollFirst();
+                if (moved[node.pos.row][node.pos.col] == 1) { continue; }
+                moved[node.pos.row][node.pos.col] = 1;
 
-                if (visitedWhenMove[node.curPos.row][node.curPos.col] == 1) { continue; }
-                visitedWhenMove[node.curPos.row][node.curPos.col] = 1;
-
-                if (node.curPos.equals(destPos)) {
-                    this.pos = node.curPos;
-                    this.directionIndex = node.prevMoveDirectionIndex;
-
-                    return;
+                if (node.compareTo(minNode) < 0 && visited[node.pos.row][node.pos.col] == 0) {
+                    minNode = node;
                 }
 
-                for (int i = 0; i < 4; i++) {
-                    Pos movedPos = node.curPos.addPos(directions[i]);
+                for (int moveDirectionIndex : moveDirectionIndices) {
+                    Pos direction = directions[moveDirectionIndex];
+
+                    Pos movedPos = node.pos.addPos(direction);
                     if (!movedPos.isValidIndex()) { continue; }
-                    if (visitedWhenMove[movedPos.row][movedPos.col] == 1) { continue; }
+                    if (moved[movedPos.row][movedPos.col] == 1) { continue; }
                     if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
 
-                    queue.add(new Node(movedPos, node.depth + 1, i));
+
+                    queue.add(new Node(movedPos, node.depth + 1, moveDirectionIndex));
                 }
             }
 
+
+            this.curPos = minNode.pos;
+            this.directionIndex = minNode.directionIndex;
         }
     }
 
@@ -203,33 +204,19 @@ public class 아기고래의첫항해 {
     }
 
     public static void solution() {
-
         StringBuilder sb = new StringBuilder();
+        sb.append(whale.curPos.row + 1 + " " + (whale.curPos.col + 1));
+        sb.append("\n");
 
-        sb.append(dolphin.pos.row + 1 + " " + (dolphin.pos.col + 1) + "\n");
-        for (int i = 0; i < numRemain - 1; i++) {
-            boolean moved = dolphin.firstMove();
-            if (moved) {
-                sb.append(dolphin.pos.row + 1 + " " + (dolphin.pos.col + 1) + "\n");
-                visited[dolphin.pos.row][dolphin.pos.col] = 1;
-                continue; }
+        for (int i = 0; i < numSea; i++) {
+            whale.move();
+            visited[whale.curPos.row][whale.curPos.col] = 1;
 
-            Pos destPos = dolphin.getSecondMovePos();
-            dolphin.secondMove(destPos);
-            visited[dolphin.pos.row][dolphin.pos.col] = 1;
-            sb.append(dolphin.pos.row + 1 + " " + (dolphin.pos.col + 1) + "\n");
+            sb.append(whale.curPos.row + 1 + " " + (whale.curPos.col + 1));
+            sb.append("\n");
         }
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
-    }
-
-    public static boolean canMove(Pos movedPos) {
-        if (!movedPos.isValidIndex()) { return false; }
-        if (visited[movedPos.row][movedPos.col] == 1) { return false; }
-        if (mainMatrix[movedPos.row][movedPos.col] == 1) { return false; }
-
-
-        return true;
     }
 
     public static void init() throws IOException {
@@ -243,26 +230,26 @@ public class 아기고래의첫항해 {
 
         int directionIndex;
         if (d == 1) {
-            directionIndex = 3;
-        }
-        else if (d == 2) {
-            directionIndex = 1;
-        }
-        else if (d == 3) {
             directionIndex = 0;
         }
-        else {
+        else if (d == 2) {
             directionIndex = 2;
         }
+        else if (d == 3) {
+            directionIndex = 3;
+        }
+        else {
+            directionIndex = 1;
+        }
 
-        dolphin = new Dolphin(new Pos(r, c), directionIndex);
 
+        Pos startPos = new Pos(r, c);
+        whale = new Whale(startPos, directionIndex);
 
         visited = new int[N][N];
-        visited[r][c] = 1;
-
         mainMatrix = new int[N][N];
-        numRemain = 0;
+
+        numSea = 0;
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
@@ -270,10 +257,12 @@ public class 아기고래의첫항해 {
                 mainMatrix[i][j] = Integer.parseInt(st.nextToken());
 
                 if (mainMatrix[i][j] == 0) {
-                    numRemain += 1;
+                    numSea += 1;
                 }
             }
         }
 
+        numSea -= 1;
+        visited[r][c] = 1;
     }
 }
