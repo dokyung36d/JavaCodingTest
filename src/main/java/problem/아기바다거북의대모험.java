@@ -1,11 +1,10 @@
 package problem;
 
-import javax.print.attribute.IntegerSyntax;
 import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 아기바다거북의대모험 {
     static int N, M, K;
     static int[][] mainMatrix;
     static Map<Pos, Turtle> posTurtleMap;
