@@ -5,8 +5,11 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static int[] numList;
+    static int N, R, Q;
+    static Map<Integer, List<Integer>> graphMap;
+    static int[] queryList;
+    static int[] visited;
+    static int[] answerList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,51 +17,66 @@ public class Main {
     }
 
     public static void solution() {
-        int leftIndex = 0;
-        int rightIndex = N - 1;
-
-        int leftAnswer = numList[leftIndex];
-        int rightAnswer = numList[rightIndex];
-
-        int minSumValue = Integer.MAX_VALUE;
-
-        while (leftIndex < rightIndex) {
-            int leftNum = numList[leftIndex];
-            int rightNum = numList[rightIndex];
-
-            int sumValue = leftNum + rightNum;
-            if (Math.abs(sumValue) < minSumValue) {
-                minSumValue = Math.abs(sumValue);
-
-                leftAnswer = numList[leftIndex];
-                rightAnswer = numList[rightIndex];
-            }
+        recursive(R);
 
 
-            if (sumValue >= 0) {
-                rightIndex -= 1;
-            }
-            else {
-                leftIndex += 1;
-            }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Q; i++) {
+            sb.append(answerList[queryList[i]]);
+            sb.append("\n");
+        }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
+    }
+
+    public static int recursive(int num) {
+        visited[num] = 1;
+
+
+        answerList[num] += 1;
+        for (int nearNum : graphMap.get(num)) {
+            if (visited[nearNum] == 1) { continue; }
+
+            answerList[num] += recursive(nearNum);
         }
 
 
-        System.out.println(leftAnswer + " " + rightAnswer);
+        return answerList[num];
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
-        st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        R = Integer.parseInt(st.nextToken()) - 1;
+        Q = Integer.parseInt(st.nextToken());
+
+        visited = new int[N];
+        answerList = new int[N];
+
+        graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
+            graphMap.put(i, new ArrayList<>());
         }
 
-        Arrays.sort(numList);
+
+        for (int i = 0; i < N - 1; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
+
+            graphMap.get(num1).add(num2);
+            graphMap.get(num2).add(num1);
+        }
+
+
+        queryList = new int[Q];
+        for (int i = 0; i < Q; i++) {
+            st = new StringTokenizer(br.readLine());
+            queryList[i] = Integer.parseInt(st.nextToken()) - 1;
+        }
     }
 }
