@@ -1,7 +1,8 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 
 public class 용액 {
@@ -14,35 +15,37 @@ public class 용액 {
     }
 
     public static void solution() {
-        int answerLeftNum = 0;
-        int answerRightNum = 0;
-
         int leftIndex = 0;
         int rightIndex = N - 1;
+
+        int leftAnswer = numList[leftIndex];
+        int rightAnswer = numList[rightIndex];
 
         int minSumValue = Integer.MAX_VALUE;
 
         while (leftIndex < rightIndex) {
-            int sumValue = numList[leftIndex] + numList[rightIndex];
+            int leftNum = numList[leftIndex];
+            int rightNum = numList[rightIndex];
 
+            int sumValue = leftNum + rightNum;
             if (Math.abs(sumValue) < minSumValue) {
                 minSumValue = Math.abs(sumValue);
 
-                answerLeftNum = numList[leftIndex];
-                answerRightNum = numList[rightIndex];
+                leftAnswer = numList[leftIndex];
+                rightAnswer = numList[rightIndex];
             }
 
 
-            if (sumValue < 0) {
-                leftIndex += 1;
-            }
-
-            else {
+            if (sumValue >= 0) {
                 rightIndex -= 1;
+            }
+            else {
+                leftIndex += 1;
             }
         }
 
-        System.out.println(answerLeftNum + " " + answerRightNum);
+
+        System.out.println(leftAnswer + " " + rightAnswer);
     }
 
     public static void init() throws IOException {
@@ -59,5 +62,4 @@ public class 용액 {
 
         Arrays.sort(numList);
     }
-
 }
