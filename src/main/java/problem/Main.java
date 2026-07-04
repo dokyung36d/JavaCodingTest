@@ -5,11 +5,8 @@ import java.io.*;
 
 
 public class Main {
-    static int N, R, Q;
-    static Map<Integer, List<Integer>> graphMap;
-    static int[] queryList;
-    static int[] visited;
-    static int[] answerList;
+    static int N, C;
+    static int[][] infoMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -17,66 +14,59 @@ public class Main {
     }
 
     public static void solution() {
-        recursive(R);
+        int[][] dpMatrix = new int[N + 1][C + 1];
 
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Q; i++) {
-            sb.append(answerList[queryList[i]]);
-            sb.append("\n");
-        }
-
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
-    }
-
-    public static int recursive(int num) {
-        visited[num] = 1;
-
-
-        answerList[num] += 1;
-        for (int nearNum : graphMap.get(num)) {
-            if (visited[nearNum] == 1) { continue; }
-
-            answerList[num] += recursive(nearNum);
+        for (int i = 0; i < N + 1; i++) {
+            for (int j = 1; j < C + 1; j++) {
+                dpMatrix[i][j] = Integer.MAX_VALUE / 2;
+            }
         }
 
 
-        return answerList[num];
+        for (int i = 0; i < N; i++) {
+            int cost = infoMatrix[i][0];
+            int people = infoMatrix[i][1];
+
+            for (int j = 0; j < C + 1; j++) {
+                for (int prevPeople = 0; prevPeople <= j; prevPeople++) {
+                    int difference = j - prevPeople;
+                    int numMultiply;
+
+                    if (difference == 0) {
+                        numMultiply = 0;
+                    }
+                    else if (difference % people == 0) {
+                        numMultiply = difference / people;
+                    }
+                    else {
+                        numMultiply = difference / people + 1;
+                    }
+
+
+                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j], dpMatrix[i][prevPeople] + cost * numMultiply);
+                }
+            }
+        }
+
+        System.out.println(dpMatrix[N][C]);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-
+        C = Integer.parseInt(st.nextToken());
         N = Integer.parseInt(st.nextToken());
-        R = Integer.parseInt(st.nextToken()) - 1;
-        Q = Integer.parseInt(st.nextToken());
 
-        visited = new int[N];
-        answerList = new int[N];
 
-        graphMap = new HashMap<>();
+        infoMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
-            graphMap.put(i, new ArrayList<>());
-        }
-
-
-        for (int i = 0; i < N - 1; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
-
-            graphMap.get(num1).add(num2);
-            graphMap.get(num2).add(num1);
-        }
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
 
 
-        queryList = new int[Q];
-        for (int i = 0; i < Q; i++) {
-            st = new StringTokenizer(br.readLine());
-            queryList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
     }
 }
