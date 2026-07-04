@@ -5,26 +5,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static PriorityQueue<Node> pq;
-    static int[] parentList;
-
-    public static class Node implements Comparable<Node> {
-        int num1;
-        int num2;
-        int cost;
-
-        public Node(int num1, int num2, int cost) {
-            this.num1 = Math.min(num1, num2);
-            this.num2 = Math.max(num1, num2);
-            this.cost = cost;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.cost, anotherNode.cost);
-        }
-    }
+    static int N, S;
+    static int[] numList;
+    static List<Integer> sumList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -32,40 +15,29 @@ public class Main {
     }
 
     public static void solution() {
-        int answer = 0;
+        int leftIndex = 0;
+        int rightIndex = 1;
 
-        int numParent = N;
+        int answer = Integer.MAX_VALUE / 2;
+        while (rightIndex < sumList.size()) {
+            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
 
-        while (numParent != 2) {
-            Node node = pq.poll();
+            if (sumValue >= S) {
+                int length = rightIndex - leftIndex;
+                answer = Math.min(answer, length);
 
-            int num1Parent = findParent(node.num1);
-            int num2Parent = findParent(node.num2);
-
-            if (num1Parent == num2Parent) { continue; }
-
-            answer += node.cost;
-            numParent -= 1;
-            union(num1Parent, num2Parent);
+                leftIndex += 1;
+            }
+            else {
+                rightIndex += 1;
+            }
         }
 
-
+        if (answer == Integer.MAX_VALUE / 2) {
+            System.out.println(0);
+            return;
+        }
         System.out.println(answer);
-    }
-
-    public static int findParent(int num) {
-        if (num == parentList[num]) { return num; }
-
-        return parentList[num] = findParent(parentList[num]);
-    }
-
-    public static void union(int num1, int num2) {
-        int num1Parent = findParent(num1);
-        int num2Parent = findParent(num2);
-
-        if (num1Parent == num2Parent) { return; }
-
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -73,22 +45,16 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
+        S = Integer.parseInt(st.nextToken());
 
+        numList = new int[N];
+        sumList = new ArrayList<>();
+        sumList.add(0);
 
-        parentList = new int[N];
+        st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            parentList[i] = i;
-        }
-
-        pq = new PriorityQueue<>();
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
-            int cost = Integer.parseInt(st.nextToken());
-
-            pq.add(new Node(num1, num2, cost));
+            numList[i] = Integer.parseInt(st.nextToken());
+            sumList.add(sumList.get(sumList.size() - 1) + numList[i]);
         }
     }
 }

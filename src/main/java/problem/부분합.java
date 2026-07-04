@@ -6,28 +6,26 @@ import java.io.*;
 
 public class 부분합 {
     static int N, S;
-    static int[] numList, sumList;
+    static int[] numList;
+    static List<Integer> sumList;
 
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
 
-
     public static void solution() {
-        int answer = Integer.MAX_VALUE / 2;
-
         int leftIndex = 0;
         int rightIndex = 1;
 
-        while (rightIndex <= N) {
-            int sumValue = sumList[rightIndex] - sumList[leftIndex];
-            if (sumValue >= S) {
-                answer = Math.min(answer, rightIndex - leftIndex);
-            }
-
+        int answer = Integer.MAX_VALUE / 2;
+        while (rightIndex < sumList.size()) {
+            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
 
             if (sumValue >= S) {
+                int length = rightIndex - leftIndex;
+                answer = Math.min(answer, length);
+
                 leftIndex += 1;
             }
             else {
@@ -35,13 +33,11 @@ public class 부분합 {
             }
         }
 
-
         if (answer == Integer.MAX_VALUE / 2) {
             System.out.println(0);
+            return;
         }
-        else {
-            System.out.println(answer);
-        }
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
@@ -51,14 +47,14 @@ public class 부분합 {
         N = Integer.parseInt(st.nextToken());
         S = Integer.parseInt(st.nextToken());
 
+        numList = new int[N];
+        sumList = new ArrayList<>();
+        sumList.add(0);
 
         st = new StringTokenizer(br.readLine());
-        sumList = new int[N + 1];
         for (int i = 0; i < N; i++) {
-            sumList[i + 1] = sumList[i] + Integer.parseInt(st.nextToken());
+            numList[i] = Integer.parseInt(st.nextToken());
+            sumList.add(sumList.get(sumList.size() - 1) + numList[i]);
         }
-
     }
-
 }
-
