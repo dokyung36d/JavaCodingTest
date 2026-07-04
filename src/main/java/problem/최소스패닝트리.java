@@ -8,6 +8,7 @@ public class 최소스패닝트리 {
     static int V, E;
     static Map<Integer, List<Node>> graphMap;
 
+
     public static class Node implements Comparable<Node> {
         int from;
         int to;
@@ -18,6 +19,7 @@ public class 최소스패닝트리 {
             this.to = to;
             this.cost = cost;
         }
+
 
         @Override
         public int compareTo(Node anotherNode) {
@@ -32,31 +34,28 @@ public class 최소스패닝트리 {
 
     public static void solution() {
         int[] visited = new int[V];
-        int answer = 0;
-
+        visited[0] = 1;
         PriorityQueue<Node> pq = new PriorityQueue<>();
         for (Node node : graphMap.get(0)) {
             pq.add(node);
         }
-        visited[0] = 1;
 
+
+        int answer = 0;
         while (!pq.isEmpty()) {
             Node node = pq.poll();
             if (visited[node.to] == 1) { continue; }
-            visited[node.to] += 1;
-
+            visited[node.to] = 1;
             answer += node.cost;
 
             for (Node nearNode : graphMap.get(node.to)) {
                 if (visited[nearNode.to] == 1) { continue; }
-
                 pq.add(nearNode);
             }
         }
 
 
         System.out.println(answer);
-
     }
 
     public static void init() throws IOException {
@@ -76,12 +75,12 @@ public class 최소스패닝트리 {
         for (int i = 0; i < E; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int node1 = Integer.parseInt(st.nextToken()) - 1;
-            int node2 = Integer.parseInt(st.nextToken()) - 1;
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            graphMap.get(node1).add(new Node(node1, node2, cost));
-            graphMap.get(node2).add(new Node(node2, node1, cost));
+            graphMap.get(num1).add(new Node(num1, num2, cost));
+            graphMap.get(num2).add(new Node(num2, num1, cost));
         }
     }
 
