@@ -4,11 +4,9 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class RGB거리 {
     static int N;
-    static int[][] colorMatrix;
-    static int answer;
+    static int[][] infoMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,8 +14,7 @@ public class RGB거리 {
     }
 
     public static void solution() {
-        answer = Integer.MAX_VALUE / 2;
-
+        int answer = Integer.MAX_VALUE / 2;
         for (int i = 0; i < 3; i++) {
             answer = Math.min(answer, dp(i));
         }
@@ -31,28 +28,26 @@ public class RGB거리 {
             Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
         }
 
-        dpMatrix[0][startIndex] = colorMatrix[0][startIndex];
 
+        dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
         for (int i = 1; i < N; i++) {
-            for (int prevColor = 0; prevColor < 3; prevColor++) {
-                int prevCost = dpMatrix[i - 1][prevColor];
-                for (int nextColor = 0; nextColor < 3; nextColor++) {
-                    if (prevColor == nextColor) { continue; }
+            for (int curIndex = 0; curIndex < 3; curIndex++) {
+                for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
+                    if (curIndex == prevIndex) { continue; }
 
-                    dpMatrix[i][nextColor] = Math.min(dpMatrix[i][nextColor], dpMatrix[i - 1][prevColor] + colorMatrix[i][nextColor]);
+                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex], dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
                 }
             }
         }
 
 
-        int minValue = Integer.MAX_VALUE / 2;
+        int answer = Integer.MAX_VALUE / 2;
         for (int i = 0; i < 3; i++) {
             if (i == startIndex) { continue; }
 
-            minValue = Math.min(minValue, dpMatrix[N - 1][i]);
+            answer = Math.min(answer, dpMatrix[N - 1][i]);
         }
-
-        return minValue;
+        return answer;
     }
 
     public static void init() throws IOException {
@@ -61,17 +56,13 @@ public class RGB거리 {
 
         N = Integer.parseInt(st.nextToken());
 
-        colorMatrix = new int[N][3];
+        infoMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int red = Integer.parseInt(st.nextToken());
-            int green = Integer.parseInt(st.nextToken());
-            int blue = Integer.parseInt(st.nextToken());
-
-            colorMatrix[i][0] = red;
-            colorMatrix[i][1] = green;
-            colorMatrix[i][2] = blue;
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][2] = Integer.parseInt(st.nextToken());
         }
     }
 }

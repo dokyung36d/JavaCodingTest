@@ -5,10 +5,8 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static int[] numList;
-    static int[][] dpMatrix;
-    static int[][] queryMatrix;
+    static int N;
+    static int[][] infoMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,37 +14,40 @@ public class Main {
     }
 
     public static void solution() {
+        int answer = Integer.MAX_VALUE / 2;
+        for (int i = 0; i < 3; i++) {
+            answer = Math.min(answer, dp(i));
+        }
+
+        System.out.println(answer);
+    }
+
+    public static int dp(int startIndex) {
+        int[][] dpMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
-            dpMatrix[i][i] = 1;
-        }
-
-        for (int i = 0; i < N - 1; i++) {
-            if (numList[i] != numList[i + 1]) { continue; }
-
-            dpMatrix[i][i + 1] = 1;
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
         }
 
 
+        dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
+        for (int i = 1; i < N; i++) {
+            for (int curIndex = 0; curIndex < 3; curIndex++) {
+                for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
+                    if (curIndex == prevIndex) { continue; }
 
-        for (int gap = 2; gap < N; gap++) {
-            for (int startIndex = 0; startIndex + gap < N; startIndex++) {
-                int endIndex = startIndex + gap;
-
-                if (numList[startIndex] == numList[endIndex] && dpMatrix[startIndex + 1][endIndex - 1] == 1) {
-                    dpMatrix[startIndex][endIndex] = 1;
+                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex], dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
                 }
             }
         }
 
 
+        int answer = Integer.MAX_VALUE / 2;
+        for (int i = 0; i < 3; i++) {
+            if (i == startIndex) { continue; }
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < M; i++) {
-            sb.append(dpMatrix[queryMatrix[i][0]][queryMatrix[i][1]]);
-            sb.append("\n");
+            answer = Math.min(answer, dpMatrix[N - 1][i]);
         }
-
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
+        return answer;
     }
 
     public static void init() throws IOException {
@@ -55,24 +56,13 @@ public class Main {
 
         N = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
-        st = new StringTokenizer(br.readLine());
+        infoMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
-        }
-
-        st = new StringTokenizer(br.readLine());
-        M = Integer.parseInt(st.nextToken());
-
-
-        dpMatrix = new int[N][N];
-        queryMatrix = new int[M][2];
-
-        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            queryMatrix[i][0] = Integer.parseInt(st.nextToken()) - 1;
-            queryMatrix[i][1] = Integer.parseInt(st.nextToken()) - 1;
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][2] = Integer.parseInt(st.nextToken());
         }
     }
 }
