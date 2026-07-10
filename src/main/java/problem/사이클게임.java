@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 사이클게임 {
     static int N, M;
     static int[] parentList;
@@ -16,14 +15,13 @@ public class 사이클게임 {
     }
 
     public static void solution() {
-        int answer = 0;
-
         for (int i = 0; i < M; i++) {
             int num1 = queryList[i][0];
             int num2 = queryList[i][1];
 
             int num1Parent = findParent(num1);
             int num2Parent = findParent(num2);
+
             if (num1Parent == num2Parent) {
                 System.out.println(i + 1);
                 return;
@@ -32,11 +30,11 @@ public class 사이클게임 {
             union(num1Parent, num2Parent);
         }
 
-        System.out.println(answer);
+        System.out.println(0);
     }
 
     public static int findParent(int num) {
-        if (num == parentList[num]) { return num; }
+        if (parentList[num] == num) { return num; }
 
         return parentList[num] = findParent(parentList[num]);
     }
@@ -47,7 +45,7 @@ public class 사이클게임 {
 
         if (num1Parent == num2Parent) { return; }
 
-        parentList[Math.min(num1Parent, num2Parent)] = Math.max(num1Parent, num2Parent);
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -56,6 +54,7 @@ public class 사이클게임 {
 
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
+
 
         parentList = new int[N];
         for (int i = 0; i < N; i++) {

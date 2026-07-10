@@ -5,8 +5,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static int[][] infoMatrix;
+    static int N, M;
+    static int[] parentList;
+    static int[][] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,40 +15,37 @@ public class Main {
     }
 
     public static void solution() {
-        int answer = Integer.MAX_VALUE / 2;
-        for (int i = 0; i < 3; i++) {
-            answer = Math.min(answer, dp(i));
+        for (int i = 0; i < M; i++) {
+            int num1 = queryList[i][0];
+            int num2 = queryList[i][1];
+
+            int num1Parent = findParent(num1);
+            int num2Parent = findParent(num2);
+
+            if (num1Parent == num2Parent) {
+                System.out.println(i + 1);
+                return;
+            }
+
+            union(num1Parent, num2Parent);
         }
 
-        System.out.println(answer);
+        System.out.println(0);
     }
 
-    public static int dp(int startIndex) {
-        int[][] dpMatrix = new int[N][3];
-        for (int i = 0; i < N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-        }
+    public static int findParent(int num) {
+        if (parentList[num] == num) { return num; }
 
+        return parentList[num] = findParent(parentList[num]);
+    }
 
-        dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
-        for (int i = 1; i < N; i++) {
-            for (int curIndex = 0; curIndex < 3; curIndex++) {
-                for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
-                    if (curIndex == prevIndex) { continue; }
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
 
-                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex], dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
-                }
-            }
-        }
+        if (num1Parent == num2Parent) { return; }
 
-
-        int answer = Integer.MAX_VALUE / 2;
-        for (int i = 0; i < 3; i++) {
-            if (i == startIndex) { continue; }
-
-            answer = Math.min(answer, dpMatrix[N - 1][i]);
-        }
-        return answer;
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -55,14 +53,21 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        infoMatrix = new int[N][3];
+
+        parentList = new int[N];
         for (int i = 0; i < N; i++) {
+            parentList[i] = i;
+        }
+
+
+        queryList = new int[M][2];
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
-            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
-            infoMatrix[i][2] = Integer.parseInt(st.nextToken());
+            queryList[i][0] = Integer.parseInt(st.nextToken());
+            queryList[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }
