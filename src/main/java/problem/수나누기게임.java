@@ -7,8 +7,8 @@ import java.io.*;
 public class 수나누기게임 {
     static int N;
     static int[] numList;
-    static final int MAX_NUM = 1000001;
-
+    static Map<Integer, Integer> numMap, answerMap;
+    static int maxNum;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,31 +16,23 @@ public class 수나누기게임 {
     }
 
     public static void solution() {
-        Map<Integer, Integer> numToIndexMap = new HashMap<>();
+        int[] dpMatrix = new int[maxNum + 1];
 
-        for (int i = 0; i < N; i++) {
-            numToIndexMap.put(numList[i], i);
-        }
+        for (int num : numList) {
+            for (int multipliedNum = 2 * num; multipliedNum <= maxNum; multipliedNum += num) {
+                if (numMap.get(multipliedNum) == null) { continue; }
 
-
-        int[] scoreList = new int[MAX_NUM];
-
-        for (int i = 0; i < N; i++) {
-            for (int multipliedNum = 2 * numList[i]; multipliedNum < MAX_NUM; multipliedNum += numList[i]) {
-                if (numToIndexMap.get(multipliedNum) == null) { continue; }
-
-                scoreList[numList[i]] += 1;
-                scoreList[multipliedNum] -= 1;
+                answerMap.put(num, answerMap.get(num) + 1);
+                answerMap.put(multipliedNum, answerMap.get(multipliedNum) - 1);
             }
         }
 
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < N; i++) {
-            sb.append(scoreList[numList[i]]);
+            sb.append(answerMap.get(numList[i]));
             sb.append(" ");
         }
-
 
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
@@ -51,11 +43,17 @@ public class 수나누기게임 {
 
         N = Integer.parseInt(st.nextToken());
         numList = new int[N];
+        numMap = new HashMap<>();
+        answerMap = new HashMap<>();
 
         st = new StringTokenizer(br.readLine());
+        maxNum = 0;
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
+
+            numMap.put(numList[i], 1);
+            answerMap.put(numList[i], 0);
+            maxNum = Math.max(maxNum, numList[i]);
         }
     }
-
 }

@@ -5,9 +5,10 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static int[] parentList;
-    static int[][] queryList;
+    static int N;
+    static int[] numList;
+    static Map<Integer, Integer> numMap, answerMap;
+    static int maxNum;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,37 +16,25 @@ public class Main {
     }
 
     public static void solution() {
-        for (int i = 0; i < M; i++) {
-            int num1 = queryList[i][0];
-            int num2 = queryList[i][1];
+        int[] dpMatrix = new int[maxNum + 1];
 
-            int num1Parent = findParent(num1);
-            int num2Parent = findParent(num2);
+        for (int num : numList) {
+            for (int multipliedNum = 2 * num; multipliedNum <= maxNum; multipliedNum += num) {
+                if (numMap.get(multipliedNum) == null) { continue; }
 
-            if (num1Parent == num2Parent) {
-                System.out.println(i + 1);
-                return;
+                answerMap.put(num, answerMap.get(num) + 1);
+                answerMap.put(multipliedNum, answerMap.get(multipliedNum) - 1);
             }
-
-            union(num1Parent, num2Parent);
         }
 
-        System.out.println(0);
-    }
 
-    public static int findParent(int num) {
-        if (parentList[num] == num) { return num; }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < N; i++) {
+            sb.append(answerMap.get(numList[i]));
+            sb.append(" ");
+        }
 
-        return parentList[num] = findParent(parentList[num]);
-    }
-
-    public static void union(int num1, int num2) {
-        int num1Parent = findParent(num1);
-        int num2Parent = findParent(num2);
-
-        if (num1Parent == num2Parent) { return; }
-
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -53,21 +42,18 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
+        numList = new int[N];
+        numMap = new HashMap<>();
+        answerMap = new HashMap<>();
 
-
-        parentList = new int[N];
+        st = new StringTokenizer(br.readLine());
+        maxNum = 0;
         for (int i = 0; i < N; i++) {
-            parentList[i] = i;
-        }
+            numList[i] = Integer.parseInt(st.nextToken());
 
-
-        queryList = new int[M][2];
-        for (int i = 0; i < M; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            queryList[i][0] = Integer.parseInt(st.nextToken());
-            queryList[i][1] = Integer.parseInt(st.nextToken());
+            numMap.put(numList[i], 1);
+            answerMap.put(numList[i], 0);
+            maxNum = Math.max(maxNum, numList[i]);
         }
     }
 }
