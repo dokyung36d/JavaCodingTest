@@ -5,102 +5,65 @@ import java.io.*;
 
 
 public class Main {
-    static int N, K, W;
-    static int[] timeList, numPointedList;
-    static Map<Integer, List<Integer>> graphMap;
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-    public static class Node implements Comparable<Node> {
-        int curNum;
-        int cost;
-
-        public Node(int curNum, int cost) {
-            this.curNum = curNum;
-            this.cost = cost;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.cost, anotherNode.cost);
-        }
-    }
+    static int N;
 
     public static void main(String[] args) throws Exception {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-
-        int T = Integer.parseInt(st.nextToken());
-        for (int i = 0; i < T; i++) {
-            init();
-            solution();
-        }
+        init();
+        solution();
     }
 
     public static void solution() {
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        for (int i = 0; i < N; i++) {
-            if (numPointedList[i] != 0) { continue; }
+        int[] isPrime = new int[N + 1];
+        Arrays.fill(isPrime, 1);
+        List<Integer> primeList = new ArrayList<>();
 
-            pq.add(new Node(i, timeList[i]));
+        for (int i = 2; i < N + 1; i++) {
+            if (isPrime[i] == 0) { continue; }
+            primeList.add(i);
+
+            for (int num = i * 2; num < N + 1; num += i) {
+                isPrime[num] = 0;
+            }
         }
+
+
+        List<Integer> sumList = new ArrayList<>();
+        sumList.add(0);
+        for (int i = 0; i < primeList.size(); i++) {
+            sumList.add(sumList.get(sumList.size() - 1) + primeList.get(i));
+        }
+
 
         int answer = 0;
-        while (!pq.isEmpty()) {
-            Node node = pq.poll();
 
+        int leftIndex = 0;
+        int rightIndex = 1;
+        while (rightIndex < sumList.size()) {
+            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
 
-            if (node.curNum == W) {
-                System.out.println(node.cost);
-                return;
+            if (sumValue == N) {
+                answer += 1;
+                leftIndex += 1;
             }
 
-            answer = Math.max(answer, node.cost);
-            for (int nearNum : graphMap.get(node.curNum)) {
-                numPointedList[nearNum] -= 1;
+            if (sumValue < N) {
+                rightIndex += 1;
+                continue;
+            }
 
-                if (numPointedList[nearNum] == 0) {
-                    pq.add(new Node(nearNum, node.cost + timeList[nearNum]));
-                }
+            if (sumValue > N) {
+                leftIndex += 1;
+                continue;
             }
         }
 
-        System.out.println(0);
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
-
-        timeList = new int[N];
-        numPointedList = new int[N];
-
-        st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < N; i++) {
-            timeList[i] = Integer.parseInt(st.nextToken());
-        }
-
-
-        graphMap = new HashMap<>();
-        for (int i = 0; i < N; i++) {
-            graphMap.put(i, new ArrayList<>());
-        }
-
-
-
-        for (int i = 0; i < K; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int from = Integer.parseInt(st.nextToken()) - 1;
-            int to = Integer.parseInt(st.nextToken()) - 1;
-
-            graphMap.get(from).add(to);
-            numPointedList[to] += 1;
-        }
-
-
-        st = new StringTokenizer(br.readLine());
-        W = Integer.parseInt(st.nextToken()) - 1;
-
     }
 }

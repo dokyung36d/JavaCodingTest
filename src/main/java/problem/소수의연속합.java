@@ -4,10 +4,8 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class 소수의연속합 {
     static int N;
-    static List<Integer> primeNumberList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,24 +13,41 @@ public class 소수의연속합 {
     }
 
     public static void solution() {
-        setPrimeNumberList();
+        int[] isPrime = new int[N + 1];
+        Arrays.fill(isPrime, 1);
+        List<Integer> primeList = new ArrayList<>();
 
-        List<Integer> sumList = new ArrayList<>();
-        sumList.add(0);
-        for (int i = 0; i < primeNumberList.size(); i++) {
-            sumList.add(sumList.get(sumList.size() - 1) + primeNumberList.get(i));
+        for (int i = 2; i < N + 1; i++) {
+            if (isPrime[i] == 0) { continue; }
+            primeList.add(i);
+
+            for (int num = i * 2; num < N + 1; num += i) {
+                isPrime[num] = 0;
+            }
         }
 
 
-        int leftIndex = 0;
-        int rightIndex = 1;
+        List<Integer> sumList = new ArrayList<>();
+        sumList.add(0);
+        for (int i = 0; i < primeList.size(); i++) {
+            sumList.add(sumList.get(sumList.size() - 1) + primeList.get(i));
+        }
+
 
         int answer = 0;
+
+        int leftIndex = 0;
+        int rightIndex = 1;
         while (rightIndex < sumList.size()) {
             int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
+
             if (sumValue == N) {
                 answer += 1;
                 leftIndex += 1;
+            }
+
+            if (sumValue < N) {
+                rightIndex += 1;
                 continue;
             }
 
@@ -40,32 +55,9 @@ public class 소수의연속합 {
                 leftIndex += 1;
                 continue;
             }
-            else {
-                rightIndex += 1;
-                continue;
-            }
         }
-
 
         System.out.println(answer);
-    }
-
-    public static void setPrimeNumberList() {
-        primeNumberList = new ArrayList<>();
-
-        int[] isPrime = new int[N + 1];
-        Arrays.fill(isPrime, 1);
-        isPrime[0] = 0;
-        isPrime[1] = 1;
-
-        for (int i = 2; i < N + 1; i++) {
-            if (isPrime[i] == 0) { continue; }
-            primeNumberList.add(i);
-
-            for (int j = 2 * i; j < N + 1; j += i) {
-                isPrime[j] = 0;
-            }
-        }
     }
 
     public static void init() throws IOException {
