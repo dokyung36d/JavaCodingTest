@@ -5,55 +5,102 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
-    static int[] numList;
-    static Map<Integer, Integer> numMap, answerMap;
-    static int maxNum;
+    static int N, K, W;
+    static int[] timeList, numPointedList;
+    static Map<Integer, List<Integer>> graphMap;
+    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+    public static class Node implements Comparable<Node> {
+        int curNum;
+        int cost;
+
+        public Node(int curNum, int cost) {
+            this.curNum = curNum;
+            this.cost = cost;
+        }
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
-        init();
-        solution();
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        int T = Integer.parseInt(st.nextToken());
+        for (int i = 0; i < T; i++) {
+            init();
+            solution();
+        }
     }
 
     public static void solution() {
-        int[] dpMatrix = new int[maxNum + 1];
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        for (int i = 0; i < N; i++) {
+            if (numPointedList[i] != 0) { continue; }
 
-        for (int num : numList) {
-            for (int multipliedNum = 2 * num; multipliedNum <= maxNum; multipliedNum += num) {
-                if (numMap.get(multipliedNum) == null) { continue; }
+            pq.add(new Node(i, timeList[i]));
+        }
 
-                answerMap.put(num, answerMap.get(num) + 1);
-                answerMap.put(multipliedNum, answerMap.get(multipliedNum) - 1);
+        int answer = 0;
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+
+            if (node.curNum == W) {
+                System.out.println(node.cost);
+                return;
+            }
+
+            answer = Math.max(answer, node.cost);
+            for (int nearNum : graphMap.get(node.curNum)) {
+                numPointedList[nearNum] -= 1;
+
+                if (numPointedList[nearNum] == 0) {
+                    pq.add(new Node(nearNum, node.cost + timeList[nearNum]));
+                }
             }
         }
 
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < N; i++) {
-            sb.append(answerMap.get(numList[i]));
-            sb.append(" ");
-        }
-
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
+        System.out.println(0);
     }
 
     public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
-        numMap = new HashMap<>();
-        answerMap = new HashMap<>();
+        K = Integer.parseInt(st.nextToken());
+
+        timeList = new int[N];
+        numPointedList = new int[N];
 
         st = new StringTokenizer(br.readLine());
-        maxNum = 0;
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
-
-            numMap.put(numList[i], 1);
-            answerMap.put(numList[i], 0);
-            maxNum = Math.max(maxNum, numList[i]);
+            timeList[i] = Integer.parseInt(st.nextToken());
         }
+
+
+        graphMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
+
+
+        for (int i = 0; i < K; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
+
+            graphMap.get(from).add(to);
+            numPointedList[to] += 1;
+        }
+
+
+        st = new StringTokenizer(br.readLine());
+        W = Integer.parseInt(st.nextToken()) - 1;
+
     }
 }

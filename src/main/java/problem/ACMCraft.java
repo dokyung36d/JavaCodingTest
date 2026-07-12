@@ -4,20 +4,18 @@ import java.util.*;
 import java.io.*;
 
 
-
 public class ACMCraft {
     static int N, K, W;
-    static int[] costList;
+    static int[] timeList, numPointedList;
     static Map<Integer, List<Integer>> graphMap;
-    static int[] numPointedList;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
     public static class Node implements Comparable<Node> {
-        int num;
+        int curNum;
         int cost;
 
-        public Node(int num, int cost) {
-            this.num = num;
+        public Node(int curNum, int cost) {
+            this.curNum = curNum;
             this.cost = cost;
         }
 
@@ -29,43 +27,43 @@ public class ACMCraft {
 
     public static void main(String[] args) throws Exception {
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         int T = Integer.parseInt(st.nextToken());
-
-
-        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < T; i++) {
             init();
-
-            sb.append(solution() + "\n");
+            solution();
         }
-
-        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static int solution() {
+    public static void solution() {
         PriorityQueue<Node> pq = new PriorityQueue<>();
         for (int i = 0; i < N; i++) {
             if (numPointedList[i] != 0) { continue; }
 
-            pq.add(new Node(i, costList[i]));
+            pq.add(new Node(i, timeList[i]));
         }
 
-
+        int answer = 0;
         while (!pq.isEmpty()) {
             Node node = pq.poll();
-            if (node.num == W) {
-                return node.cost;
+
+
+            if (node.curNum == W) {
+                System.out.println(node.cost);
+                return;
             }
 
-            for (int nearNum : graphMap.get(node.num)) {
+            answer = Math.max(answer, node.cost);
+            for (int nearNum : graphMap.get(node.curNum)) {
                 numPointedList[nearNum] -= 1;
+
                 if (numPointedList[nearNum] == 0) {
-                    pq.add(new Node(nearNum, node.cost + costList[nearNum]));
+                    pq.add(new Node(nearNum, node.cost + timeList[nearNum]));
                 }
             }
         }
 
-        return 0;
+        System.out.println(0);
     }
 
     public static void init() throws IOException {
@@ -74,10 +72,12 @@ public class ACMCraft {
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        costList = new int[N];
+        timeList = new int[N];
+        numPointedList = new int[N];
+
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            costList[i] = Integer.parseInt(st.nextToken());
+            timeList[i] = Integer.parseInt(st.nextToken());
         }
 
 
@@ -85,7 +85,8 @@ public class ACMCraft {
         for (int i = 0; i < N; i++) {
             graphMap.put(i, new ArrayList<>());
         }
-        numPointedList = new int[N];
+
+
 
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
@@ -100,5 +101,6 @@ public class ACMCraft {
 
         st = new StringTokenizer(br.readLine());
         W = Integer.parseInt(st.nextToken()) - 1;
+
     }
 }
