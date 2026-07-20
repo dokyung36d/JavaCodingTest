@@ -5,7 +5,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N;
+    static int N, M;
+    static Map<Integer, List<Integer>> graphMap;
+    static int[] numPointedList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,51 +15,31 @@ public class Main {
     }
 
     public static void solution() {
-        int[] isPrime = new int[N + 1];
-        Arrays.fill(isPrime, 1);
-        List<Integer> primeList = new ArrayList<>();
+        ArrayDeque<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < N; i++) {
+            if (numPointedList[i] != 0) { continue; }
 
-        for (int i = 2; i < N + 1; i++) {
-            if (isPrime[i] == 0) { continue; }
-            primeList.add(i);
-
-            for (int num = i * 2; num < N + 1; num += i) {
-                isPrime[num] = 0;
-            }
+            queue.add(i);
         }
 
 
-        List<Integer> sumList = new ArrayList<>();
-        sumList.add(0);
-        for (int i = 0; i < primeList.size(); i++) {
-            sumList.add(sumList.get(sumList.size() - 1) + primeList.get(i));
-        }
+        StringBuilder sb = new StringBuilder();
+        while (!queue.isEmpty()) {
+            int num = queue.pollFirst();
+            sb.append(num + 1);
+            sb.append(" ");
 
 
-        int answer = 0;
+            for (int nearNum : graphMap.get(num)) {
+                numPointedList[nearNum] -= 1;
 
-        int leftIndex = 0;
-        int rightIndex = 1;
-        while (rightIndex < sumList.size()) {
-            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
-
-            if (sumValue == N) {
-                answer += 1;
-                leftIndex += 1;
-            }
-
-            if (sumValue < N) {
-                rightIndex += 1;
-                continue;
-            }
-
-            if (sumValue > N) {
-                leftIndex += 1;
-                continue;
+                if (numPointedList[nearNum] == 0) {
+                    queue.add(nearNum);
+                }
             }
         }
 
-        System.out.println(answer);
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -65,5 +47,25 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
+
+
+        numPointedList = new int[N];
+
+        graphMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
+
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int from = Integer.parseInt(st.nextToken()) - 1;
+            int to = Integer.parseInt(st.nextToken()) - 1;
+
+            graphMap.get(from).add(to);
+            numPointedList[to] += 1;
+        }
     }
 }
