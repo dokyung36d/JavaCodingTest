@@ -5,111 +5,85 @@ import java.io.*;
 
 
 public class Main {
-    static List<Integer> commandList;
-
-    public static class Node {
-        int left;
-        int right;
-
-        public Node(int left, int right) {
-            this.left = left;
-            this.right = right;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) { return true; }
-            if (obj == null || this.getClass() != obj.getClass()) { return false; }
-
-            Node anotherNode = (Node) obj;
-            if (this.left == anotherNode.left && this.right == anotherNode.right) { return true; }
-            return false;
-        }
-
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.left, this.right);
-        }
-    }
+    static int N, M;
+    static Map<Integer, List<Integer>> graphMap;
+    static int[] numPointedList;
 
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
 
-
     public static void solution() {
-        Map<Node, Integer> costMap = new HashMap<>();
-        costMap.put(new Node(0, 0), 0);
+        Deque<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < N; i++) {
+            if (numPointedList[i] != 0) { continue; }
 
-
-        for (int command : commandList) {
-            Map<Node, Integer> updatedCostMap = new HashMap<>();
-
-            // Left Move
-            for (Node node : costMap.keySet()) {
-                if (command == node.right) { continue; }
-
-                int cost = getCost(node.left, command);
-
-
-                Node updatedNode = new Node(command, node.right);
-                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
-
-                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
-            }
-
-
-            // Right Move
-            for (Node node : costMap.keySet()) {
-                if (command == node.left) { continue; }
-
-                int cost = getCost(node.right, command);
-
-
-                Node updatedNode = new Node(node.left, command);
-                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
-
-                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
-            }
-
-
-            costMap = updatedCostMap;
+            queue.add(i);
         }
 
 
-        int answer = Integer.MAX_VALUE / 2;
-        for (Node node : costMap.keySet()) {
-            answer = Math.min(answer, costMap.get(node));
+        int numOut = 0;
+        StringBuilder sb = new StringBuilder();
+        while (!queue.isEmpty()) {
+            int curNum = queue.pollFirst();
+
+            sb.append(curNum + 1);
+            sb.append("\n");
+
+            numOut += 1;
+
+
+            for (int nearNum : graphMap.get(curNum)) {
+                numPointedList[nearNum] -= 1;
+
+                if (numPointedList[nearNum] == 0) {
+                    queue.add(nearNum);
+                }
+            }
         }
 
 
-        System.out.println(answer);
+        if (numOut == N) {
+            System.out.println(sb.toString().substring(0, sb.length() - 1));
+        }
+        else {
+            System.out.println(0);
+        }
     }
-
-
-    public static int getCost(int from, int to) {
-        if (from == 0) { return 2; }
-        if (Math.abs(from - to) == 2) { return 4; }
-        if (from == to) { return 1; }
-
-        return 3;
-    }
-
 
     public static void init() throws IOException {
-        commandList = new ArrayList<>();
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(br.readLine());
 
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(bufferedReader.readLine());
 
-        while (true) {
-            int command = Integer.parseInt(st.nextToken());
-            if (command == 0) { break; }
+        N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-            commandList.add(command);
+        numPointedList = new int[N];
+        graphMap = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
+
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            int length = Integer.parseInt(st.nextToken());
+            int[] orderList = new int[length];
+
+            for (int j = 0; j < length; j++) {
+                orderList[j] = Integer.parseInt(st.nextToken()) - 1;
+            }
+
+
+            for (int from = 0; from < length; from++) {
+                for (int to = from + 1; to < length; to++) {
+                    graphMap.get(orderList[from]).add(orderList[to]);
+                    numPointedList[orderList[to]] += 1;
+                }
+            }
         }
     }
-
 }
