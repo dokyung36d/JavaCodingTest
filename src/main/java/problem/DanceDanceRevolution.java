@@ -23,9 +23,9 @@ public class DanceDanceRevolution {
 
             Node anotherNode = (Node) obj;
             if (this.left == anotherNode.left && this.right == anotherNode.right) { return true; }
-
             return false;
         }
+
 
         @Override
         public int hashCode() {
@@ -38,32 +38,40 @@ public class DanceDanceRevolution {
         solution();
     }
 
+
     public static void solution() {
         Map<Node, Integer> costMap = new HashMap<>();
         costMap.put(new Node(0, 0), 0);
 
+
         for (int command : commandList) {
             Map<Node, Integer> updatedCostMap = new HashMap<>();
 
+            // Left Move
             for (Node node : costMap.keySet()) {
-                int prevCost = costMap.get(node);
+                if (command == node.right) { continue; }
 
-                if (command != node.right) {
-                    int leftMoveCost = calcCost(node.left, command);
-                    Node leftMoveNode = new Node(command, node.right);
-                    if (updatedCostMap.get(leftMoveNode) == null ||  prevCost + leftMoveCost < updatedCostMap.get(leftMoveNode)) {
-                        updatedCostMap.put(leftMoveNode, prevCost + leftMoveCost);
-                    }
-                }
+                int cost = getCost(node.left, command);
 
 
-                if (command != node.left) {
-                    int rightMoveCost = calcCost(node.right, command);
-                    Node rightMoveNode = new Node(node.left, command);
-                    if (updatedCostMap.get(rightMoveNode) == null || prevCost + rightMoveCost < updatedCostMap.get(rightMoveNode)) {
-                        updatedCostMap.put(rightMoveNode, prevCost + rightMoveCost);
-                    }
-                }
+                Node updatedNode = new Node(command, node.right);
+                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
+
+                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
+            }
+
+
+            // Right Move
+            for (Node node : costMap.keySet()) {
+                if (command == node.left) { continue; }
+
+                int cost = getCost(node.right, command);
+
+
+                Node updatedNode = new Node(node.left, command);
+                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
+
+                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
             }
 
 
@@ -71,33 +79,30 @@ public class DanceDanceRevolution {
         }
 
 
-        int answer = Integer.MAX_VALUE;
+        int answer = Integer.MAX_VALUE / 2;
         for (Node node : costMap.keySet()) {
             answer = Math.min(answer, costMap.get(node));
         }
 
-        if (answer == Integer.MAX_VALUE) {
-            System.out.println(0);
-        }
-        else {
-            System.out.println(answer);
-        }
+
+        System.out.println(answer);
     }
 
 
-    public static int calcCost(int from, int to) {
+    public static int getCost(int from, int to) {
         if (from == 0) { return 2; }
-        if (from == to) { return 1; }
         if (Math.abs(from - to) == 2) { return 4; }
+        if (from == to) { return 1; }
 
         return 3;
     }
 
-    public static void init() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
 
+    public static void init() throws IOException {
         commandList = new ArrayList<>();
+
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(bufferedReader.readLine());
 
         while (true) {
             int command = Integer.parseInt(st.nextToken());
