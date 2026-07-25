@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 가장긴증가하는부분수열4 {
     static int N;
     static int[] numList;
     static Map<Integer, Node> indexNodeMap;
