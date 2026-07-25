@@ -7,23 +7,7 @@ import java.io.*;
 public class 가장긴증가하는부분수열4 {
     static int N;
     static int[] numList;
-    static Map<Integer, Node> indexNodeMap;
 
-    public static class Node implements Comparable<Node> {
-        int index;
-        int num;
-        int prevNumIndex;
-
-        public Node(int index) {
-            this.index = index;
-            this.num = numList[index];
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.num, anotherNode.num);
-        }
-    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -31,54 +15,51 @@ public class 가장긴증가하는부분수열4 {
     }
 
     public static void solution() {
-        indexNodeMap = new HashMap<>();
+        List<Integer> dpList = new ArrayList<>();
+        int[] lengthList = new int[N];
 
-        List<Node> dpList = new ArrayList<>();
-        dpList.add(new Node(0));
-        indexNodeMap.put(0, new Node(0));
 
-        for (int i = 1; i < N; i++) {
-            Node node = new Node(i);
+        for (int i = 0; i < N; i++) {
+            int num = numList[i];
 
-            int index = Collections.binarySearch(dpList, node);
-            if (index >= 0) { continue; }
+            int index = Collections.binarySearch(dpList, num);
+            if (index >= 0) {
+                lengthList[i] = index + 1;
+                continue;
+            }
 
 
             index = - index - 1;
-            if (index != 0) {
-                node.prevNumIndex = dpList.get(index - 1).index;
-            }
-            indexNodeMap.put(i, node);
-
             if (index == dpList.size()) {
-                dpList.add(node);
+                lengthList[i] = dpList.size() + 1;
+                dpList.add(num);
+
                 continue;
-            } else {
-                dpList.set(index, node);
             }
-        }
 
 
+            dpList.set(index, num);
+            lengthList[i] = index + 1;
 
-        System.out.println(dpList.size());
-
-
-        List<Integer> answerList = new ArrayList<>();
-        Node curNode = dpList.get(dpList.size() - 1);
-        answerList.add(curNode.num);
-
-        for (int i = 0; i < dpList.size() - 1; i++) {
-            int prevIndex = curNode.prevNumIndex;
-
-            curNode = indexNodeMap.get(prevIndex);
-            answerList.add(curNode.num);
         }
 
 
         StringBuilder sb = new StringBuilder();
+        int curLength = dpList.size();
+        List<Integer> answerList = new ArrayList<>();
+        for (int i = N - 1; i >= 0; i--) {
+            if (lengthList[i] == curLength) {
+                answerList.add(numList[i]);
+                curLength -= 1;
+            }
+        }
+
+
         for (int i = answerList.size() - 1; i >= 0; i--) {
             sb.append(answerList.get(i) + " ");
         }
+
+        System.out.println(answerList.size());
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
@@ -88,9 +69,9 @@ public class 가장긴증가하는부분수열4 {
 
         N = Integer.parseInt(st.nextToken());
 
+
         numList = new int[N];
         st = new StringTokenizer(br.readLine());
-
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }

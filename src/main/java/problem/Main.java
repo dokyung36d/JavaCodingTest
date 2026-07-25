@@ -5,8 +5,9 @@ import java.io.*;
 
 
 public class Main {
-    static int N, K;
-    static int[] coinList;
+    static int N;
+    static int[] numList;
+
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,32 +15,52 @@ public class Main {
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N + 1][K + 1];
-        for (int i = 0; i < N + 1; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-            dpMatrix[i][0] = 0;
-        }
+        List<Integer> dpList = new ArrayList<>();
+        int[] lengthList = new int[N];
 
 
         for (int i = 0; i < N; i++) {
-            int coinValue = coinList[i];
-            for (int j = 1; j < K + 1; j++) {
-                for (int numCoin = 0; coinValue * numCoin <= j; numCoin++) {
-                    int cost = numCoin * coinValue;
+            int num = numList[i];
 
-                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
-                            dpMatrix[i][j - cost] + numCoin);
-                }
+            int index = Collections.binarySearch(dpList, num);
+            if (index >= 0) {
+                lengthList[i] = index + 1;
+                continue;
+            }
+
+
+            index = - index - 1;
+            if (index == dpList.size()) {
+                lengthList[i] = dpList.size() + 1;
+                dpList.add(num);
+
+                continue;
+            }
+
+
+            dpList.set(index, num);
+            lengthList[i] = index + 1;
+
+        }
+
+
+        StringBuilder sb = new StringBuilder();
+        int curLength = dpList.size();
+        List<Integer> answerList = new ArrayList<>();
+        for (int i = N - 1; i >= 0; i--) {
+            if (lengthList[i] == curLength) {
+                answerList.add(numList[i]);
+                curLength -= 1;
             }
         }
 
 
-        if (dpMatrix[N][K] == Integer.MAX_VALUE / 2) {
-            System.out.println(-1);
+        for (int i = answerList.size() - 1; i >= 0; i--) {
+            sb.append(answerList.get(i) + " ");
         }
-        else {
-            System.out.println(dpMatrix[N][K]);
-        }
+
+        System.out.println(answerList.size());
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -47,14 +68,12 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
 
 
-        coinList = new int[N];
+        numList = new int[N];
+        st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            coinList[i] = Integer.parseInt(st.nextToken());
+            numList[i] = Integer.parseInt(st.nextToken());
         }
     }
 }
