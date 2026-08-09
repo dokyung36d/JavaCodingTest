@@ -3,10 +3,11 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
 public class 텀프로젝트 {
     static int T;
     static int N;
-    static int[] numList, numPointedList;
+    static int[] graphList;
     static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws Exception {
@@ -20,57 +21,54 @@ public class 텀프로젝트 {
     }
 
     public static void solution() {
-        int answer = 0;
         int[] visited = new int[N];
+        int numCycleNode = 0;
 
         for (int i = 0; i < N; i++) {
             if (visited[i] == 1) { continue; }
-            if (numPointedList[i] != 0) { continue; }
 
+            int visitOrder = 0;
+            Map<Integer, Integer> visitOrderMap = new HashMap<>();
+            visitOrderMap.put(i, visitOrder);
 
-            int[] visitedInThisCycle = new int[N];
-            int visitOrder = 1;
             int curNum = i;
             while (true) {
-                visited[curNum] = 1;
-                visitedInThisCycle[curNum] = visitOrder;
+                visitOrder++;
 
-                int nextNum = numList[curNum];
-                visitOrder += 1;
-
-                if (visitedInThisCycle[nextNum] != 0) {
-                    int numInCycle = visitOrder - visitedInThisCycle[nextNum];
-                    int numVisitedInThisCycle = visitOrder - 1;
-                    answer += (numVisitedInThisCycle - numInCycle);
-
-                    break;
-                }
-
+                int nextNum = graphList[curNum];
                 if (visited[nextNum] == 1) {
-                    answer += (visitOrder - 1);
                     break;
                 }
+
+                if (visitOrderMap.get(nextNum) != null) {
+                    numCycleNode += visitOrder - visitOrderMap.get(nextNum);
+                    break;
+                }
+
+
+                visitOrderMap.put(nextNum, visitOrder);
 
                 curNum = nextNum;
+            }
 
+
+            for (int visitedNum : visitOrderMap.keySet()) {
+                visited[visitedNum] = 1;
             }
         }
-        System.out.println(answer);
 
+        System.out.println(N - numCycleNode);
     }
 
     public static void init() throws IOException {
         StringTokenizer st = new StringTokenizer(br.readLine());
         N = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
-        numPointedList = new int[N];
 
         st = new StringTokenizer(br.readLine());
+        graphList = new int[N];
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken()) - 1;
-            numPointedList[numList[i]] += 1;
+            graphList[i] = Integer.parseInt(st.nextToken()) - 1;
         }
     }
-
 }
