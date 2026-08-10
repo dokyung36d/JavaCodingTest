@@ -3,9 +3,11 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
 public class 행렬곱셈순서 {
     static int N;
-    static int[][] infoList;
+    static int[][] infoMatrix;
+
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,17 +17,18 @@ public class 행렬곱셈순서 {
     public static void solution() {
         int[][] dpMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE);
             dpMatrix[i][i] = 0;
         }
 
         for (int gap = 1; gap < N; gap++) {
             for (int startIndex = 0; startIndex + gap < N; startIndex++) {
                 int endIndex = startIndex + gap;
+
                 for (int midIndex = startIndex; midIndex < endIndex; midIndex++) {
                     dpMatrix[startIndex][endIndex] = Math.min(dpMatrix[startIndex][endIndex],
                             dpMatrix[startIndex][midIndex] + dpMatrix[midIndex + 1][endIndex] +
-                                    infoList[startIndex][0] * infoList[midIndex][1] * infoList[endIndex][1]);
+                                    infoMatrix[startIndex][0] * infoMatrix[midIndex][1] * infoMatrix[endIndex][1]);
                 }
             }
         }
@@ -39,12 +42,12 @@ public class 행렬곱셈순서 {
 
         N = Integer.parseInt(st.nextToken());
 
-        infoList = new int[N][2];
+        infoMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
-            infoList[i][0] = Integer.parseInt(st.nextToken());
-            infoList[i][1] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }

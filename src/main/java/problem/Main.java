@@ -5,70 +5,49 @@ import java.io.*;
 
 
 public class Main {
-    static int T;
     static int N;
-    static int[] graphList;
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    static int[][] infoMatrix;
+
 
     public static void main(String[] args) throws Exception {
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        T = Integer.parseInt(st.nextToken());
-
-        for (int i = 0; i < T; i++) {
-            init();
-            solution();
-        }
+        init();
+        solution();
     }
 
     public static void solution() {
-        int[] visited = new int[N];
-        int numCycleNode = 0;
-
+        int[][] dpMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
-            if (visited[i] == 1) { continue; }
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE);
+            dpMatrix[i][i] = 0;
+        }
 
-            int visitOrder = 0;
-            Map<Integer, Integer> visitOrderMap = new HashMap<>();
-            visitOrderMap.put(i, visitOrder);
+        for (int gap = 1; gap < N; gap++) {
+            for (int startIndex = 0; startIndex + gap < N; startIndex++) {
+                int endIndex = startIndex + gap;
 
-            int curNum = i;
-            while (true) {
-                visitOrder++;
-
-                int nextNum = graphList[curNum];
-                if (visited[nextNum] == 1) {
-                    break;
+                for (int midIndex = startIndex; midIndex < endIndex; midIndex++) {
+                    dpMatrix[startIndex][endIndex] = Math.min(dpMatrix[startIndex][endIndex],
+                            dpMatrix[startIndex][midIndex] + dpMatrix[midIndex + 1][endIndex] +
+                            infoMatrix[startIndex][0] * infoMatrix[midIndex][1] * infoMatrix[endIndex][1]);
                 }
-
-                if (visitOrderMap.get(nextNum) != null) {
-                    numCycleNode += visitOrder - visitOrderMap.get(nextNum);
-                    break;
-                }
-
-
-                visitOrderMap.put(nextNum, visitOrder);
-
-                curNum = nextNum;
-            }
-
-
-            for (int visitedNum : visitOrderMap.keySet()) {
-                visited[visitedNum] = 1;
             }
         }
 
-        System.out.println(N - numCycleNode);
+        System.out.println(dpMatrix[0][N - 1]);
     }
 
     public static void init() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         N = Integer.parseInt(st.nextToken());
 
-
-        st = new StringTokenizer(br.readLine());
-        graphList = new int[N];
+        infoMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
-            graphList[i] = Integer.parseInt(st.nextToken()) - 1;
+            st = new StringTokenizer(br.readLine());
+
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }
