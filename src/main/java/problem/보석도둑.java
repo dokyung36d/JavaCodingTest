@@ -3,11 +3,12 @@ package problem;
 import java.util.*;
 import java.io.*;
 
+
 public class 보석도둑 {
     static int N, K;
-    static PriorityQueue<Gem> gemPQ;
-    static PriorityQueue<PolledGem> polledGemPQ;
-    static int[] bagSizeList;
+    static PriorityQueue<Gem> gemPq;
+    static PriorityQueue<PolledGem> polledGemPq;
+    static int[] bagList;
 
     public static class Gem implements Comparable<Gem> {
         int m;
@@ -45,57 +46,59 @@ public class 보석도둑 {
     }
 
     public static void solution() {
-        long answer = 0;
-        for (int i = 0; i < K; i++) {
-            int bagSize = bagSizeList[i];
+        long answer = (long) 0;
 
-            while (true) {
-                if (gemPQ.isEmpty()) { break; }
+        for (int bag : bagList) {
+            while (!gemPq.isEmpty()) {
+                Gem gem = gemPq.poll();
 
-                Gem gem = gemPQ.poll();
-                if (gem.m > bagSize) {
-                    gemPQ.add(gem);
+                if (gem.m > bag) {
+                    gemPq.add(gem);
                     break;
                 }
 
-                polledGemPQ.add(new PolledGem(gem.m, gem.v));
+                polledGemPq.add(new PolledGem(gem.m, gem.v));
             }
 
-            if (polledGemPQ.isEmpty()) { continue; }
 
-            PolledGem polledGem = polledGemPQ.poll();
-            answer += (long) polledGem.v;
+            if (!polledGemPq.isEmpty()) {
+                PolledGem polledGem = polledGemPq.poll();
+
+                answer += (long) polledGem.v;
+            }
         }
+
 
         System.out.println(answer);
     }
 
-    public static void init() throws Exception {
+    public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        gemPQ = new PriorityQueue<>();
-        polledGemPQ = new PriorityQueue<>();
-
+        gemPq = new PriorityQueue<>();
+        polledGemPq = new PriorityQueue<>();
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
+
             int m = Integer.parseInt(st.nextToken());
             int v = Integer.parseInt(st.nextToken());
 
-            Gem gem = new Gem(m, v);
-            gemPQ.add(gem);
+
+            gemPq.add(new Gem(m, v));
         }
 
-        bagSizeList = new int[K];
+
+        bagList = new int[K];
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
 
-            bagSizeList[i] = Integer.parseInt(st.nextToken());
+            bagList[i] = Integer.parseInt(st.nextToken());
         }
 
-        Arrays.sort(bagSizeList);
+        Arrays.sort(bagList);
     }
 }
