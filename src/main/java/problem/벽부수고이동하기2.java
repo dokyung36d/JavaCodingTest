@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 
-public class Main {
+public class 벽부수고이동하기2 {
     static int N, M, K;
     static int[][] mainMatrix;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
@@ -96,7 +96,7 @@ public class Main {
                 }
 
                 if (mainMatrix[movedPos.row][movedPos.col] == 1 && node.canBreakNum >= 1
-                    && visited[movedPos.row][movedPos.col][node.canBreakNum - 1] == 0) {
+                        && visited[movedPos.row][movedPos.col][node.canBreakNum - 1] == 0) {
                     queue.add(new Node(movedPos, node.canBreakNum - 1, node.numMoved + 1));
                 }
             }
