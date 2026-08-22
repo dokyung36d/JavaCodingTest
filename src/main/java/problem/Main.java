@@ -5,45 +5,64 @@ import java.io.*;
 
 
 public class Main {
-    static long A, B;
-    static List<Long> dpList;
-    
+    static int G, P;
+    static int[] planeList, parentList;
+
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
-    
-    public static void solution() {
-        dpList = new ArrayList<>();
-        dpList.add((long) 1);
 
-        while (Math.pow(2, dpList.size()) < B) {
-            dpList.add((long) Math.pow(2, dpList.size()) + (long) 2 * dpList.get(dpList.size() - 1));
+    public static void solution() {
+        int answer = 0;
+
+        for (int i = 0; i < P; i++) {
+            int parentNum = findParent(planeList[i]);
+            if (parentNum == 0) { break; }
+
+            union(parentNum, parentNum - 1);
+            answer += 1;
         }
 
 
-        long bNum = recursive(B);
-        long aNum = recursive(A - 1);
-        System.out.println((long) recursive(B) - (long) recursive(A - 1));
+        System.out.println(answer);
     }
 
+    public static int findParent(int num) {
+        if (parentList[num] == num) { return num; }
 
-    public static long recursive(long num) {
-        int logValue = (int) (Math.log(num) / Math.log(2));
-        if (num == 0) { return 0; }
-        if (num == 1) { return 1; }
-        if (Math.pow(2, logValue) == num) { return 1 + dpList.get(logValue - 1); }
-
-
-        return dpList.get(logValue - 1) + (long) recursive((long) (num - (long) Math.pow(2, logValue))) + (long) (num - Math.pow(2, logValue) + 1);
+        return parentList[num] = findParent(parentList[num]);
     }
 
-    
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
+
+
+        if (num1Parent == num2Parent) { return; }
+
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+    }
+
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
-        
-        A = Long.parseLong(st.nextToken());
-        B = Long.parseLong(st.nextToken());
+        G = Integer.parseInt(st.nextToken());
+
+        parentList = new int[G + 1];
+        for (int i = 0; i < G + 1; i++) {
+            parentList[i] = i;
+        }
+
+
+        st = new StringTokenizer(br.readLine());
+        P = Integer.parseInt(st.nextToken());
+
+        planeList = new int[P];
+        for (int i = 0; i < P; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            planeList[i] = Integer.parseInt(st.nextToken());
+        }
     }
 }
