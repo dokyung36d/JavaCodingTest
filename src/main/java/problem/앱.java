@@ -6,8 +6,7 @@ import java.io.*;
 
 public class 앱 {
     static int N, M;
-    static int maxCost;
-    static int[] memorySizeList, costList;
+    static int[] sizeList, costList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,46 +14,45 @@ public class 앱 {
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N + 1][maxCost + 1];
+        int[][] dpMatrix = new int[N + 1][M + 1];
+        for (int i = 0; i < N + 1; i++) {
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+            dpMatrix[i][0] = 0;
+        }
+
 
         for (int i = 0; i < N; i++) {
-            for (int j = 0; j < maxCost + 1; j++) {
-                dpMatrix[i + 1][j] = dpMatrix[i][j];
-                if (costList[i] > j) { continue; }
+            int memorySize = sizeList[i];
+            int cost = costList[i];
 
-                dpMatrix[i + 1][j] = Math.max(dpMatrix[i + 1][j],
-                        dpMatrix[i][j - costList[i]] + memorySizeList[i]);
+            for (int j = 0; j <= M; j++) {
+                dpMatrix[i + 1][j] = Math.min(dpMatrix[i][j], dpMatrix[i][Math.max(0, j - memorySize)] + cost);
             }
         }
 
-        for (int i = 0; i < maxCost + 1; i++) {
-            if (dpMatrix[N][i] >= M) {
-                System.out.println(i);
-                return;
-            }
-        }
+
+        System.out.println(dpMatrix[N][M]);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
         StringTokenizer st = new StringTokenizer(br.readLine());
+
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-        memorySizeList = new int[N];
+
+        sizeList = new int[N];
         costList = new int[N];
 
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            memorySizeList[i] = Integer.parseInt(st.nextToken());
+            sizeList[i] = Integer.parseInt(st.nextToken());
         }
 
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
             costList[i] = Integer.parseInt(st.nextToken());
-            maxCost += costList[i];
         }
     }
-
 }
