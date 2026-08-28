@@ -6,8 +6,10 @@ import java.io.*;
 
 public class 할로윈의양아치 {
     static int N, M, K;
-    static int[] numCandyList, parentList;
-    static int[][] friendMatrix;
+    static int[] parentList;
+    static int[] numCandyList;
+    static int[][] relationMatrix;
+
 
     public static void main(String[] args) throws Exception {
         init();
@@ -16,38 +18,37 @@ public class 할로윈의양아치 {
 
     public static void solution() {
         for (int i = 0; i < M; i++) {
-            union(friendMatrix[i][0], friendMatrix[i][1]);
+            union(relationMatrix[i][0], relationMatrix[i][1]);
         }
 
-
-        Map<Integer, Integer> costMap = new HashMap<>();
         Map<Integer, Integer> groupSizeMap = new HashMap<>();
+        Map<Integer, Integer> groupCandyMap = new HashMap<>();
+
         for (int i = 0; i < N; i++) {
             int parent = findParent(i);
 
-            costMap.put(parent, costMap.getOrDefault(parent, 0) + numCandyList[i]);
             groupSizeMap.put(parent, groupSizeMap.getOrDefault(parent, 0) + 1);
+            groupCandyMap.put(parent, groupCandyMap.getOrDefault(parent, 0) + numCandyList[i]);
         }
 
+        int numGroup = groupSizeMap.keySet().size();
+        int[][] dpMatrix = new int[numGroup + 1][K];
 
-        List<Integer> parentList = new ArrayList<>(costMap.keySet());
-        int[][] dpMatrix = new int[parentList.size() + 1][K];
+        List<Integer> parentList = new ArrayList<>(groupSizeMap.keySet());
 
+        for (int i = 1; i <= numGroup; i++) {
+            int parent = parentList.get(i - 1);
 
-        for (int i = 0; i < parentList.size(); i++) {
-            int numChild = groupSizeMap.get(parentList.get(i));
-            int cost = costMap.get(parentList.get(i));
+            int groupSize = groupSizeMap.get(parent);
+            int groupNumCandy = groupCandyMap.get(parent);
 
-            for (int j = 0; j < K; j++) {
-                if (numChild > j) {
-                    dpMatrix[i + 1][j] = dpMatrix[i][j];
-                    continue; }
-
-                dpMatrix[i + 1][j] = Math.max(dpMatrix[i][j], dpMatrix[i][j - numChild] + cost);
+            for (int j = 1; j < K; j++) {
+                if (groupSize > j) { continue; }
+                dpMatrix[i][j] = Math.max(dpMatrix[i - 1][j], dpMatrix[i - 1][j - groupSize] + groupNumCandy);
             }
         }
 
-        System.out.println(dpMatrix[parentList.size()][K - 1]);
+        System.out.println("hello world");
     }
 
     public static int findParent(int num) {
@@ -60,9 +61,9 @@ public class 할로윈의양아치 {
         int num1Parent = findParent(num1);
         int num2Parent = findParent(num2);
 
-        if (num1Parent != num2Parent) {
-            parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
-        }
+        if (num1Parent == num2Parent) { return; }
+
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
     public static void init() throws IOException {
@@ -73,26 +74,23 @@ public class 할로윈의양아치 {
         M = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-
-        numCandyList = new int[N];
         parentList = new int[N];
-        st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            numCandyList[i] = Integer.parseInt(st.nextToken());
-
             parentList[i] = i;
         }
 
+        numCandyList = new int[N];
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            numCandyList[i] = Integer.parseInt(st.nextToken());
+        }
 
-        friendMatrix = new int[M][2];
+        relationMatrix = new int[M][2];
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int num1 = Integer.parseInt(st.nextToken()) - 1;
-            int num2 = Integer.parseInt(st.nextToken()) - 1;
-
-            friendMatrix[i][0] = num1;
-            friendMatrix[i][1] = num2;
+            relationMatrix[i][0] = Integer.parseInt(st.nextToken()) - 1;
+            relationMatrix[i][1] = Integer.parseInt(st.nextToken()) - 1;
         }
     }
 }
