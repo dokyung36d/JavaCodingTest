@@ -6,7 +6,7 @@ import java.io.*;
 
 public class 앱 {
     static int N, M;
-    static int[] sizeList, costList;
+    static int[] memoryList, costList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -15,6 +15,7 @@ public class 앱 {
 
     public static void solution() {
         int[][] dpMatrix = new int[N + 1][M + 1];
+
         for (int i = 0; i < N + 1; i++) {
             Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
             dpMatrix[i][0] = 0;
@@ -22,14 +23,15 @@ public class 앱 {
 
 
         for (int i = 0; i < N; i++) {
-            int memorySize = sizeList[i];
-            int cost = costList[i];
+            int memory = memoryList[i];
+            int cost =  costList[i];
 
-            for (int j = 0; j <= M; j++) {
-                dpMatrix[i + 1][j] = Math.min(dpMatrix[i][j], dpMatrix[i][Math.max(0, j - memorySize)] + cost);
+            for (int j = 0; j < M + 1; j++) {
+                dpMatrix[i + 1][j] = dpMatrix[i][j];
+
+                dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j], dpMatrix[i][Math.max(j - memory, 0)] + cost);
             }
         }
-
 
         System.out.println(dpMatrix[N][M]);
     }
@@ -41,13 +43,13 @@ public class 앱 {
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-
-        sizeList = new int[N];
+        memoryList = new int[N];
         costList = new int[N];
+
 
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            sizeList[i] = Integer.parseInt(st.nextToken());
+            memoryList[i] = Integer.parseInt(st.nextToken());
         }
 
         st = new StringTokenizer(br.readLine());
