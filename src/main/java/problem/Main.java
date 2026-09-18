@@ -5,8 +5,28 @@ import java.io.*;
 
 
 public class Main {
-    static int N, M;
-    static int[] sizeList, costList;
+    static int N;
+    static int[][] graphMatrix;
+    static int allVisited;
+    static int[][] visitedMatrix;
+
+    public static class Node implements Comparable<Node> {
+        int curPos;
+        int visited;
+        int cost;
+
+        public Node(int curPos, int visited, int cost) {
+            this.curPos = curPos;
+            this.visited = visited;
+            this.cost = cost;
+        }
+
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -14,24 +34,36 @@ public class Main {
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N + 1][M + 1];
-        for (int i = 0; i < N + 1; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-            dpMatrix[i][0] = 0;
-        }
+        PriorityQueue<Node> queue = new PriorityQueue<>();
+        queue.add(new Node(0, 1, 0));
+
+        int answer = Integer.MAX_VALUE / 2;
+        while (!queue.isEmpty()) {
+            Node node = queue.poll();
+
+            if (node.visited == allVisited && graphMatrix[node.curPos][0] != 0) {
+                answer = Math.min(answer, node.cost + graphMatrix[node.curPos][0]);
+                continue;
+            }
+
+            if (visitedMatrix[node.curPos][node.visited] == 1) { continue; }
+            visitedMatrix[node.curPos][node.visited] = 1;
+
+            for (int i = 0; i < N; i++) {
+                if (graphMatrix[node.curPos][i] == 0) { continue; }
+
+                int updatedVisited = node.visited | (1 << i);
+                if (node.visited == updatedVisited) { continue; }
+
+                if (visitedMatrix[i][updatedVisited] == 1) { continue; }
 
 
-        for (int i = 0; i < N; i++) {
-            int memorySize = sizeList[i];
-            int cost = costList[i];
-
-            for (int j = 0; j <= M; j++) {
-                dpMatrix[i + 1][j] = Math.min(dpMatrix[i][j], dpMatrix[i][Math.max(0, j - memorySize)] + cost);
+                queue.add(new Node(i, updatedVisited, node.cost + graphMatrix[node.curPos][i]));
             }
         }
 
 
-        System.out.println(dpMatrix[N][M]);
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
@@ -39,20 +71,19 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        M = Integer.parseInt(st.nextToken());
+        allVisited = (int) Math.pow(2, N) - 1;
 
+        graphMatrix = new int[N][N];
 
-        sizeList = new int[N];
-        costList = new int[N];
-
-        st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            sizeList[i] = Integer.parseInt(st.nextToken());
+            st = new StringTokenizer(br.readLine());
+
+            for (int j = 0; j < N; j++) {
+                graphMatrix[i][j] = Integer.parseInt(st.nextToken());
+            }
         }
 
-        st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < N; i++) {
-            costList[i] = Integer.parseInt(st.nextToken());
-        }
+
+        visitedMatrix = new int[N][(int) Math.pow(2, N)];
     }
 }
