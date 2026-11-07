@@ -4,8 +4,23 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int N, C;
-    static int[][] infoMatrix;
+    static int V, E;
+    static Map<Integer, List<Node>> graphMap;
+
+    public static class Node implements Comparable<Node> {
+        int dest;
+        int cost;
+
+        public Node(int dest, int cost) {
+            this.dest = dest;
+            this.cost = cost;
+        }
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.cost, anotherNode.cost);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,52 +28,54 @@ public class Main {
     }
 
     public static void solution() {
-        int[][] dpMatrix = new int[N + 1][C + 1];
-        for (int i = 0; i < N + 1; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-            dpMatrix[i][0] = 0;
+        int[] visited = new int[V];
+
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        for (Node node : graphMap.get(0)) {
+            pq.add(node);
         }
 
+        visited[0] = 1;
+        int totalCost = 0;
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
 
-        for (int i = 0; i < N; i++) {
-            int price = infoMatrix[i][0];
-            int numPeople = infoMatrix[i][1];
+            if (visited[node.dest] == 1) { continue; }
+            visited[node.dest] = 1;
+            totalCost += node.cost;
 
-            for (int j = 1; j < C + 1; j++) {
-                int numMultiply;
-                if (j % numPeople == 0) {
-                    numMultiply = j / numPeople;
-                }
-                else {
-                    numMultiply = j / numPeople + 1;
-                }
-
-                dpMatrix[i + 1][j] = dpMatrix[i][j];
-                for (int multiply = 1; multiply <= numMultiply; multiply++) {
-                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
-                            dpMatrix[i][Math.max(0, j - multiply * numPeople)] + multiply * price);
-                }
+            for (Node nearNode : graphMap.get(node.dest)) {
+                if (visited[nearNode.dest] == 1) { continue; }
+                pq.add(nearNode);
             }
         }
 
 
-
-        System.out.println(dpMatrix[N][C]);
+        System.out.println(totalCost);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        C = Integer.parseInt(st.nextToken());
-        N = Integer.parseInt(st.nextToken());
+        V = Integer.parseInt(st.nextToken());
+        E = Integer.parseInt(st.nextToken());
 
-        infoMatrix = new int[N][2];
-        for (int i = 0; i < N; i++) {
+        graphMap = new HashMap<>();
+        for (int i = 0; i < V; i++) {
+            graphMap.put(i, new ArrayList<>());
+        }
+
+
+        for (int i = 0; i < E; i++) {
             st = new StringTokenizer(br.readLine());
 
-            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
-            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
+            int cost = Integer.parseInt(st.nextToken());
+
+            graphMap.get(num1).add(new Node(num2, cost));
+            graphMap.get(num2).add(new Node(num1, cost));
         }
     }
 }
