@@ -1,13 +1,30 @@
 package problem;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.StringTokenizer;
-
+import java.util.*;
 
 public class 용액 {
     static int N;
     static int[] numList;
+
+    public static class Node implements Comparable<Node> {
+        int leftIndex;
+        int rightIndex;
+
+        public Node(int leftIndex, int rightIndex) {
+            this.leftIndex = leftIndex;
+            this.rightIndex = rightIndex;
+        }
+
+        public int getSumValue() {
+            return numList[this.leftIndex] + numList[this.rightIndex];
+        }
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(Math.abs(this.getSumValue()), Math.abs(anotherNode.getSumValue()));
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -18,34 +35,29 @@ public class 용액 {
         int leftIndex = 0;
         int rightIndex = N - 1;
 
-        int leftAnswer = numList[leftIndex];
-        int rightAnswer = numList[rightIndex];
-
-        int minSumValue = Integer.MAX_VALUE;
+        Node bestNode = null;
 
         while (leftIndex < rightIndex) {
-            int leftNum = numList[leftIndex];
-            int rightNum = numList[rightIndex];
+            Node node = new Node(leftIndex, rightIndex);
 
-            int sumValue = leftNum + rightNum;
-            if (Math.abs(sumValue) < minSumValue) {
-                minSumValue = Math.abs(sumValue);
-
-                leftAnswer = numList[leftIndex];
-                rightAnswer = numList[rightIndex];
+            if (bestNode == null || node.compareTo(bestNode) < 0) {
+                bestNode = node;
             }
 
+            if (node.getSumValue() == 0) {
+                System.out.println(numList[node.leftIndex] + " " + numList[node.rightIndex]);
+                return;
+            }
 
-            if (sumValue >= 0) {
-                rightIndex -= 1;
+            if (node.getSumValue() < 0) {
+                leftIndex += 1;
             }
             else {
-                leftIndex += 1;
+                rightIndex -= 1;
             }
         }
 
-
-        System.out.println(leftAnswer + " " + rightAnswer);
+        System.out.println(numList[bestNode.leftIndex] + " " + numList[bestNode.rightIndex]);
     }
 
     public static void init() throws IOException {
@@ -59,7 +71,5 @@ public class 용액 {
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
-
-        Arrays.sort(numList);
     }
 }
