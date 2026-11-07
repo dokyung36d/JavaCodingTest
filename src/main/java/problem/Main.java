@@ -4,15 +4,18 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int V, E;
-    static Map<Integer, List<Node>> graphMap;
+    static int N, M;
+    static int[] parentList;
+    static PriorityQueue<Node> pq;
 
     public static class Node implements Comparable<Node> {
-        int dest;
+        int num1;
+        int num2;
         int cost;
 
-        public Node(int dest, int cost) {
-            this.dest = dest;
+        public Node(int num1, int num2, int cost) {
+            this.num1 = num1;
+            this.num2 = num2;
             this.cost = cost;
         }
 
@@ -28,54 +31,63 @@ public class Main {
     }
 
     public static void solution() {
-        int[] visited = new int[V];
+        int numParent = N;
 
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        for (Node node : graphMap.get(0)) {
-            pq.add(node);
-        }
-
-        visited[0] = 1;
         int totalCost = 0;
-        while (!pq.isEmpty()) {
+        while (numParent > 2) {
             Node node = pq.poll();
 
-            if (visited[node.dest] == 1) { continue; }
-            visited[node.dest] = 1;
-            totalCost += node.cost;
+            int num1Parent = findParent(node.num1);
+            int num2Parent = findParent(node.num2);
 
-            for (Node nearNode : graphMap.get(node.dest)) {
-                if (visited[nearNode.dest] == 1) { continue; }
-                pq.add(nearNode);
-            }
+            if (num1Parent == num2Parent) { continue; }
+            union(node.num1, node.num2);
+            numParent -= 1;
+
+            totalCost += node.cost;
         }
 
 
         System.out.println(totalCost);
     }
 
+    public static int findParent(int num) {
+        if (parentList[num] == num) { return num; }
+
+        return parentList[num] = findParent(parentList[num]);
+    }
+
+    public static void union(int num1, int num2) {
+        int num1Parent = findParent(num1);
+        int num2Parent = findParent(num2);
+
+        if (num1Parent == num2Parent) { return; }
+        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+    }
+
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        V = Integer.parseInt(st.nextToken());
-        E = Integer.parseInt(st.nextToken());
+        N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-        graphMap = new HashMap<>();
-        for (int i = 0; i < V; i++) {
-            graphMap.put(i, new ArrayList<>());
+        parentList = new int[N];
+        for (int i = 0; i < N; i++) {
+            parentList[i] = i;
         }
 
 
-        for (int i = 0; i < E; i++) {
+        pq = new PriorityQueue<>();
+        for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
             int num1 = Integer.parseInt(st.nextToken()) - 1;
             int num2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
-            graphMap.get(num1).add(new Node(num2, cost));
-            graphMap.get(num2).add(new Node(num1, cost));
+            pq.add(new Node(num1, num2, cost));
         }
+
     }
 }

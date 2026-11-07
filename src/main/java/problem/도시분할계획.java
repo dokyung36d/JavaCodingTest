@@ -1,13 +1,12 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 도시분할계획 {
     static int N, M;
-    static PriorityQueue<Node> pq;
     static int[] parentList;
+    static PriorityQueue<Node> pq;
 
     public static class Node implements Comparable<Node> {
         int num1;
@@ -15,8 +14,8 @@ public class 도시분할계획 {
         int cost;
 
         public Node(int num1, int num2, int cost) {
-            this.num1 = Math.min(num1, num2);
-            this.num2 = Math.max(num1, num2);
+            this.num1 = num1;
+            this.num2 = num2;
             this.cost = cost;
         }
 
@@ -32,29 +31,28 @@ public class 도시분할계획 {
     }
 
     public static void solution() {
-        int answer = 0;
-
         int numParent = N;
 
-        while (numParent != 2) {
+        int totalCost = 0;
+        while (numParent > 2) {
             Node node = pq.poll();
 
             int num1Parent = findParent(node.num1);
             int num2Parent = findParent(node.num2);
 
             if (num1Parent == num2Parent) { continue; }
-
-            answer += node.cost;
+            union(node.num1, node.num2);
             numParent -= 1;
-            union(num1Parent, num2Parent);
+
+            totalCost += node.cost;
         }
 
 
-        System.out.println(answer);
+        System.out.println(totalCost);
     }
 
     public static int findParent(int num) {
-        if (num == parentList[num]) { return num; }
+        if (parentList[num] == num) { return num; }
 
         return parentList[num] = findParent(parentList[num]);
     }
@@ -64,7 +62,6 @@ public class 도시분할계획 {
         int num2Parent = findParent(num2);
 
         if (num1Parent == num2Parent) { return; }
-
         parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
     }
 
@@ -75,20 +72,22 @@ public class 도시분할계획 {
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
-
         parentList = new int[N];
         for (int i = 0; i < N; i++) {
             parentList[i] = i;
         }
 
+
         pq = new PriorityQueue<>();
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
+
             int num1 = Integer.parseInt(st.nextToken()) - 1;
             int num2 = Integer.parseInt(st.nextToken()) - 1;
             int cost = Integer.parseInt(st.nextToken());
 
             pq.add(new Node(num1, num2, cost));
         }
+
     }
 }
