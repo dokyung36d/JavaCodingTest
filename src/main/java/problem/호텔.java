@@ -1,8 +1,7 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 호텔 {
     static int N, C;
@@ -15,38 +14,34 @@ public class 호텔 {
 
     public static void solution() {
         int[][] dpMatrix = new int[N + 1][C + 1];
-
         for (int i = 0; i < N + 1; i++) {
-            for (int j = 1; j < C + 1; j++) {
-                dpMatrix[i][j] = Integer.MAX_VALUE / 2;
-            }
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+            dpMatrix[i][0] = 0;
         }
 
 
         for (int i = 0; i < N; i++) {
-            int cost = infoMatrix[i][0];
-            int people = infoMatrix[i][1];
+            int price = infoMatrix[i][0];
+            int numPeople = infoMatrix[i][1];
 
-            for (int j = 0; j < C + 1; j++) {
-                for (int prevPeople = 0; prevPeople <= j; prevPeople++) {
-                    int difference = j - prevPeople;
-                    int numMultiply;
+            for (int j = 1; j < C + 1; j++) {
+                int numMultiply;
+                if (j % numPeople == 0) {
+                    numMultiply = j / numPeople;
+                }
+                else {
+                    numMultiply = j / numPeople + 1;
+                }
 
-                    if (difference == 0) {
-                        numMultiply = 0;
-                    }
-                    else if (difference % people == 0) {
-                        numMultiply = difference / people;
-                    }
-                    else {
-                        numMultiply = difference / people + 1;
-                    }
-
-
-                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j], dpMatrix[i][prevPeople] + cost * numMultiply);
+                dpMatrix[i + 1][j] = dpMatrix[i][j];
+                for (int multiply = 1; multiply <= numMultiply; multiply++) {
+                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
+                            dpMatrix[i][Math.max(0, j - multiply * numPeople)] + multiply * price);
                 }
             }
         }
+
+
 
         System.out.println(dpMatrix[N][C]);
     }
@@ -58,15 +53,12 @@ public class 호텔 {
         C = Integer.parseInt(st.nextToken());
         N = Integer.parseInt(st.nextToken());
 
-
         infoMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
             infoMatrix[i][0] = Integer.parseInt(st.nextToken());
             infoMatrix[i][1] = Integer.parseInt(st.nextToken());
-
-
         }
     }
 }

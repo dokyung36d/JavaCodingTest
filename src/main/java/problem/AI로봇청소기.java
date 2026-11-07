@@ -4,7 +4,8 @@ import java.util.*;
 import java.io.*;
 
 
-public class AI로봇청소기 {
+public class AI로봇청소기
+{
     static int N, K, L;
     static int[][] mainMatrix;
     static Map<Integer, Cleaner> cleanerMap;

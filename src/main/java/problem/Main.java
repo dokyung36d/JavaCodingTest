@@ -4,27 +4,8 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int N;
-    static int[] numList;
-
-    public static class Node implements Comparable<Node> {
-        int leftIndex;
-        int rightIndex;
-
-        public Node(int leftIndex, int rightIndex) {
-            this.leftIndex = leftIndex;
-            this.rightIndex = rightIndex;
-        }
-
-        public int getSumValue() {
-            return numList[this.leftIndex] + numList[this.rightIndex];
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(Math.abs(this.getSumValue()), Math.abs(anotherNode.getSumValue()));
-        }
-    }
+    static int N, C;
+    static int[][] infoMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -32,44 +13,52 @@ public class Main {
     }
 
     public static void solution() {
-        int leftIndex = 0;
-        int rightIndex = N - 1;
+        int[][] dpMatrix = new int[N + 1][C + 1];
+        for (int i = 0; i < N + 1; i++) {
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+            dpMatrix[i][0] = 0;
+        }
 
-        Node bestNode = null;
 
-        while (leftIndex < rightIndex) {
-            Node node = new Node(leftIndex, rightIndex);
+        for (int i = 0; i < N; i++) {
+            int price = infoMatrix[i][0];
+            int numPeople = infoMatrix[i][1];
 
-            if (bestNode == null || node.compareTo(bestNode) < 0) {
-                bestNode = node;
-            }
+            for (int j = 1; j < C + 1; j++) {
+                int numMultiply;
+                if (j % numPeople == 0) {
+                    numMultiply = j / numPeople;
+                }
+                else {
+                    numMultiply = j / numPeople + 1;
+                }
 
-            if (node.getSumValue() == 0) {
-                System.out.println(numList[node.leftIndex] + " " + numList[node.rightIndex]);
-                return;
-            }
-
-            if (node.getSumValue() < 0) {
-                leftIndex += 1;
-            }
-            else {
-                rightIndex -= 1;
+                dpMatrix[i + 1][j] = dpMatrix[i][j];
+                for (int multiply = 1; multiply <= numMultiply; multiply++) {
+                    dpMatrix[i + 1][j] = Math.min(dpMatrix[i + 1][j],
+                            dpMatrix[i][Math.max(0, j - multiply * numPeople)] + multiply * price);
+                }
             }
         }
 
-        System.out.println(numList[bestNode.leftIndex] + " " + numList[bestNode.rightIndex]);
+
+
+        System.out.println(dpMatrix[N][C]);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
+        C = Integer.parseInt(st.nextToken());
         N = Integer.parseInt(st.nextToken());
-        numList = new int[N];
 
-        st = new StringTokenizer(br.readLine());
+        infoMatrix = new int[N][2];
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
+            st = new StringTokenizer(br.readLine());
+
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
         }
     }
 }
