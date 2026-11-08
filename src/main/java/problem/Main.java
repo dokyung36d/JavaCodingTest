@@ -4,8 +4,9 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int N, S;
-    static List<Integer> sumList;
+    static int N, M;
+    static int[] numList;
+    static int[][] queryList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,33 +14,35 @@ public class Main {
     }
 
     public static void solution() {
-        int leftIndex = 0;
-        int rightIndex = 1;
+        int[][] dpMatrix = new int[N][N];
+        for (int i = 0; i < N; i++) {
+            dpMatrix[i][i] = 1;
+        }
 
-        int answer = Integer.MAX_VALUE / 2;
-
-        while (rightIndex < sumList.size()) {
-            int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
-
-            if (sumValue >= S) {
-                answer = Math.min(answer, rightIndex - leftIndex);
-            }
-
-
-            if (sumValue < S) {
-                rightIndex += 1;
-            }
-            else {
-                leftIndex += 1;
+        for (int i = 0; i < N - 1; i++) {
+            if (numList[i] == numList[i + 1]) {
+                dpMatrix[i][i + 1] = 1;
             }
         }
 
-        if (answer == Integer.MAX_VALUE / 2) {
-            System.out.println(0);
+
+        for (int gap = 2; gap < N; gap++) {
+            for (int startIndex = 0; startIndex + gap < N; startIndex++) {
+                int endIndex = startIndex + gap;
+
+                if (numList[startIndex] == numList[endIndex] && dpMatrix[startIndex + 1][endIndex - 1] == 1) {
+                    dpMatrix[startIndex][endIndex] = 1;
+                }
+            }
         }
-        else {
-            System.out.println(answer);
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < M; i++) {
+            sb.append(dpMatrix[queryList[i][0]][queryList[i][1]]);
+            sb.append("\n");
         }
+
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -47,17 +50,23 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
 
         N = Integer.parseInt(st.nextToken());
-        S = Integer.parseInt(st.nextToken());
 
-        sumList = new ArrayList<>();
-        sumList.add(0);
+        numList = new int[N];
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            numList[i] = Integer.parseInt(st.nextToken());
+        }
 
 
         st = new StringTokenizer(br.readLine());
-        for (int i = 0; i < N; i++) {
-            int num = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
 
-            sumList.add(sumList.get(sumList.size() - 1) + num);
+        queryList = new int[M][2];
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+
+            queryList[i][0] = Integer.parseInt(st.nextToken()) - 1;
+            queryList[i][1] = Integer.parseInt(st.nextToken()) - 1;
         }
     }
 }
