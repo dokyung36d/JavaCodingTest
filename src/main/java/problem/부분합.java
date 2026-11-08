@@ -1,12 +1,10 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 부분합 {
     static int N, S;
-    static int[] numList;
     static List<Integer> sumList;
 
     public static void main(String[] args) throws Exception {
@@ -19,25 +17,29 @@ public class 부분합 {
         int rightIndex = 1;
 
         int answer = Integer.MAX_VALUE / 2;
+
         while (rightIndex < sumList.size()) {
             int sumValue = sumList.get(rightIndex) - sumList.get(leftIndex);
 
             if (sumValue >= S) {
-                int length = rightIndex - leftIndex;
-                answer = Math.min(answer, length);
+                answer = Math.min(answer, rightIndex - leftIndex);
+            }
 
-                leftIndex += 1;
+
+            if (sumValue < S) {
+                rightIndex += 1;
             }
             else {
-                rightIndex += 1;
+                leftIndex += 1;
             }
         }
 
         if (answer == Integer.MAX_VALUE / 2) {
             System.out.println(0);
-            return;
         }
-        System.out.println(answer);
+        else {
+            System.out.println(answer);
+        }
     }
 
     public static void init() throws IOException {
@@ -47,14 +49,15 @@ public class 부분합 {
         N = Integer.parseInt(st.nextToken());
         S = Integer.parseInt(st.nextToken());
 
-        numList = new int[N];
         sumList = new ArrayList<>();
         sumList.add(0);
 
+
         st = new StringTokenizer(br.readLine());
         for (int i = 0; i < N; i++) {
-            numList[i] = Integer.parseInt(st.nextToken());
-            sumList.add(sumList.get(sumList.size() - 1) + numList[i]);
+            int num = Integer.parseInt(st.nextToken());
+
+            sumList.add(sumList.get(sumList.size() - 1) + num);
         }
     }
 }
