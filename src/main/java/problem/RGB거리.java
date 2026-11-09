@@ -1,8 +1,7 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class RGB거리 {
     static int N;
@@ -15,6 +14,7 @@ public class RGB거리 {
 
     public static void solution() {
         int answer = Integer.MAX_VALUE / 2;
+
         for (int i = 0; i < 3; i++) {
             answer = Math.min(answer, dp(i));
         }
@@ -27,27 +27,29 @@ public class RGB거리 {
         for (int i = 0; i < N; i++) {
             Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
         }
-
-
         dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
+
+
         for (int i = 1; i < N; i++) {
             for (int curIndex = 0; curIndex < 3; curIndex++) {
                 for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
                     if (curIndex == prevIndex) { continue; }
 
-                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex], dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
+                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex],
+                            dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
                 }
             }
         }
 
 
-        int answer = Integer.MAX_VALUE / 2;
+        int minCost = Integer.MAX_VALUE / 2;
         for (int i = 0; i < 3; i++) {
             if (i == startIndex) { continue; }
 
-            answer = Math.min(answer, dpMatrix[N - 1][i]);
+            minCost = Math.min(minCost, dpMatrix[N - 1][i]);
         }
-        return answer;
+
+        return minCost;
     }
 
     public static void init() throws IOException {

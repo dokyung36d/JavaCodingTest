@@ -5,24 +5,7 @@ import java.util.*;
 
 public class Main {
     static int N;
-    static PriorityQueue<Node> nodePQ;
-
-    public static class Node implements Comparable<Node> {
-        int pk;
-        int startTime;
-        int endTime;
-
-        public Node(int pk, int startTime, int endTime) {
-            this.pk = pk;
-            this.startTime = startTime;
-            this.endTime = endTime;
-        }
-
-        @Override
-        public int compareTo(Node anotherNode) {
-            return Integer.compare(this.startTime, anotherNode.startTime);
-        }
-    }
+    static int[][] infoMatrix;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -30,27 +13,43 @@ public class Main {
     }
 
     public static void solution() {
-        PriorityQueue<Integer> classRoomPQ = new PriorityQueue<>();
-        classRoomPQ.add(0);
+        int answer = Integer.MAX_VALUE / 2;
+
+        for (int i = 0; i < 3; i++) {
+            answer = Math.min(answer, dp(i));
+        }
+
+        System.out.println(answer);
+    }
+
+    public static int dp(int startIndex) {
+        int[][] dpMatrix = new int[N][3];
+        for (int i = 0; i < N; i++) {
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
+        }
+        dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
 
 
-        while (!nodePQ.isEmpty()) {
-            Node node = nodePQ.poll();
+        for (int i = 1; i < N; i++) {
+            for (int curIndex = 0; curIndex < 3; curIndex++) {
+                for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
+                    if (curIndex == prevIndex) { continue; }
 
-            int lastClassRoomEndTime = classRoomPQ.poll();
-
-            if (node.startTime < lastClassRoomEndTime) {
-                classRoomPQ.add(lastClassRoomEndTime);
-                classRoomPQ.add(node.endTime); //강의실 추가배정
+                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex],
+                            dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
+                }
             }
-            else {
-                classRoomPQ.add(node.endTime);
-            }
-
         }
 
 
-        System.out.println(classRoomPQ.size());
+        int minCost = Integer.MAX_VALUE / 2;
+        for (int i = 0; i < 3; i++) {
+            if (i == startIndex) { continue; }
+
+            minCost = Math.min(minCost, dpMatrix[N - 1][i]);
+        }
+
+        return minCost;
     }
 
     public static void init() throws IOException {
@@ -59,16 +58,13 @@ public class Main {
 
         N = Integer.parseInt(st.nextToken());
 
-
-        nodePQ = new PriorityQueue<>();
+        infoMatrix = new int[N][3];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int pk = Integer.parseInt(st.nextToken());
-            int startTime = Integer.parseInt(st.nextToken());
-            int endTime = Integer.parseInt(st.nextToken());
-
-            nodePQ.add(new Node(pk, startTime, endTime));
+            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
+            infoMatrix[i][2] = Integer.parseInt(st.nextToken());
         }
     }
 }
