@@ -5,7 +5,9 @@ import java.util.*;
 
 public class Main {
     static int N;
-    static int[][] infoMatrix;
+    static Map<Integer, Integer> scoreMap;
+    static Map<Integer, Integer> numToIndexMap, indexToNumMap;
+    static final int MAX_NUM = 1000001;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,43 +15,24 @@ public class Main {
     }
 
     public static void solution() {
-        int answer = Integer.MAX_VALUE / 2;
-
-        for (int i = 0; i < 3; i++) {
-            answer = Math.min(answer, dp(i));
-        }
-
-        System.out.println(answer);
-    }
-
-    public static int dp(int startIndex) {
-        int[][] dpMatrix = new int[N][3];
-        for (int i = 0; i < N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
-        }
-        dpMatrix[0][startIndex] = infoMatrix[0][startIndex];
-
-
-        for (int i = 1; i < N; i++) {
-            for (int curIndex = 0; curIndex < 3; curIndex++) {
-                for (int prevIndex = 0; prevIndex < 3; prevIndex++) {
-                    if (curIndex == prevIndex) { continue; }
-
-                    dpMatrix[i][curIndex] = Math.min(dpMatrix[i][curIndex],
-                            dpMatrix[i - 1][prevIndex] + infoMatrix[i][curIndex]);
+        for (int num : scoreMap.keySet()) {
+            for (int multiplied = 2 * num; multiplied < MAX_NUM; multiplied += num) {
+                if (scoreMap.get(multiplied) != null) {
+                    scoreMap.put(multiplied, scoreMap.get(multiplied) - 1);
+                    scoreMap.put(num, scoreMap.get(num) + 1);
                 }
             }
         }
 
 
-        int minCost = Integer.MAX_VALUE / 2;
-        for (int i = 0; i < 3; i++) {
-            if (i == startIndex) { continue; }
-
-            minCost = Math.min(minCost, dpMatrix[N - 1][i]);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < N; i++) {
+            int num = indexToNumMap.get(i);
+            sb.append(scoreMap.get(num));
+            sb.append(" ");
         }
 
-        return minCost;
+        System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
     public static void init() throws IOException {
@@ -58,13 +41,17 @@ public class Main {
 
         N = Integer.parseInt(st.nextToken());
 
-        infoMatrix = new int[N][3];
-        for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
+        scoreMap = new HashMap<>();
+        numToIndexMap = new HashMap<>();
+        indexToNumMap = new HashMap<>();
 
-            infoMatrix[i][0] = Integer.parseInt(st.nextToken());
-            infoMatrix[i][1] = Integer.parseInt(st.nextToken());
-            infoMatrix[i][2] = Integer.parseInt(st.nextToken());
+        st = new StringTokenizer(br.readLine());
+        for (int i = 0; i < N; i++) {
+            int num = Integer.parseInt(st.nextToken());
+
+            scoreMap.put(num, 0);
+            numToIndexMap.put(num, i);
+            indexToNumMap.put(i, num);
         }
     }
 }
