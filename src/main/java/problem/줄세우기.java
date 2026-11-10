@@ -1,8 +1,7 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 줄세우기 {
     static int N, M;
@@ -15,10 +14,9 @@ public class 줄세우기 {
     }
 
     public static void solution() {
-        ArrayDeque<Integer> queue = new ArrayDeque<>();
+        Deque<Integer> queue = new ArrayDeque<>();
         for (int i = 0; i < N; i++) {
             if (numPointedList[i] != 0) { continue; }
-
             queue.add(i);
         }
 
@@ -28,7 +26,6 @@ public class 줄세우기 {
             int num = queue.pollFirst();
             sb.append(num + 1);
             sb.append(" ");
-
 
             for (int nearNum : graphMap.get(num)) {
                 numPointedList[nearNum] -= 1;
@@ -51,7 +48,6 @@ public class 줄세우기 {
 
 
         numPointedList = new int[N];
-
         graphMap = new HashMap<>();
         for (int i = 0; i < N; i++) {
             graphMap.put(i, new ArrayList<>());
@@ -61,11 +57,11 @@ public class 줄세우기 {
         for (int i = 0; i < M; i++) {
             st = new StringTokenizer(br.readLine());
 
-            int from = Integer.parseInt(st.nextToken()) - 1;
-            int to = Integer.parseInt(st.nextToken()) - 1;
+            int num1 = Integer.parseInt(st.nextToken()) - 1;
+            int num2 = Integer.parseInt(st.nextToken()) - 1;
 
-            graphMap.get(from).add(to);
-            numPointedList[to] += 1;
+            graphMap.get(num1).add(num2);
+            numPointedList[num2] += 1;
         }
     }
 }
