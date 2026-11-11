@@ -1,11 +1,12 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class DanceDanceRevolution {
     static List<Integer> commandList;
+    static Map<Node, Integer> scoreMap;
+
 
     public static class Node {
         int left;
@@ -16,94 +17,82 @@ public class DanceDanceRevolution {
             this.right = right;
         }
 
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) { return true; }
             if (obj == null || this.getClass() != obj.getClass()) { return false; }
 
             Node anotherNode = (Node) obj;
-            if (this.left == anotherNode.left && this.right == anotherNode.right) { return true; }
+            if (this.left == anotherNode.left && this.right == anotherNode.right) {
+                return true;
+            }
             return false;
         }
-
 
         @Override
         public int hashCode() {
             return Objects.hash(this.left, this.right);
         }
+
+        public int getCost(int from, int to) {
+            if (from == 0) { return 2; }
+            if (from == to) { return 1; }
+            if (Math.abs(from - to) == 2) { return 4; }
+
+            return 3;
+        }
     }
+
 
     public static void main(String[] args) throws Exception {
         init();
         solution();
     }
 
-
     public static void solution() {
-        Map<Node, Integer> costMap = new HashMap<>();
-        costMap.put(new Node(0, 0), 0);
+        scoreMap = new HashMap<>();
+        scoreMap.put(new Node(0, 0), 0);
 
 
         for (int command : commandList) {
-            Map<Node, Integer> updatedCostMap = new HashMap<>();
+            Map<Node, Integer> updatedScoreMap = new HashMap<>();
 
-            // Left Move
-            for (Node node : costMap.keySet()) {
-                if (command == node.right) { continue; }
+            for (Node node : scoreMap.keySet()) {
+                // Left Move
+                if (command != node.right) {
+                    int totalCost = scoreMap.get(node) + node.getCost(node.left, command);
+                    Node movedNode = new Node(command, node.right);
 
-                int cost = getCost(node.left, command);
+                    updatedScoreMap.put(movedNode, Math.min(totalCost, updatedScoreMap.getOrDefault(movedNode, Integer.MAX_VALUE / 2)));
+                }
 
+                //Right Move
+                if (command != node.left) {
+                    int totalCost = scoreMap.get(node) + node.getCost(node.right, command);
+                    Node movedNode = new Node(node.left, command);
 
-                Node updatedNode = new Node(command, node.right);
-                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
-
-                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
+                    updatedScoreMap.put(movedNode, Math.min(totalCost, updatedScoreMap.getOrDefault(movedNode, Integer.MAX_VALUE / 2)));
+                }
             }
 
-
-            // Right Move
-            for (Node node : costMap.keySet()) {
-                if (command == node.left) { continue; }
-
-                int cost = getCost(node.right, command);
-
-
-                Node updatedNode = new Node(node.left, command);
-                int prevMinCost = updatedCostMap.getOrDefault(updatedNode, Integer.MAX_VALUE / 2);
-
-                updatedCostMap.put(updatedNode, Math.min(prevMinCost, costMap.get(node) + cost));
-            }
-
-
-            costMap = updatedCostMap;
+            scoreMap = updatedScoreMap;
         }
 
 
         int answer = Integer.MAX_VALUE / 2;
-        for (Node node : costMap.keySet()) {
-            answer = Math.min(answer, costMap.get(node));
+        for (Node node : scoreMap.keySet()) {
+            answer = Math.min(answer, scoreMap.get(node));
         }
-
 
         System.out.println(answer);
     }
 
-
-    public static int getCost(int from, int to) {
-        if (from == 0) { return 2; }
-        if (Math.abs(from - to) == 2) { return 4; }
-        if (from == to) { return 1; }
-
-        return 3;
-    }
-
-
     public static void init() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
         commandList = new ArrayList<>();
-
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(bufferedReader.readLine());
-
         while (true) {
             int command = Integer.parseInt(st.nextToken());
             if (command == 0) { break; }
@@ -111,5 +100,4 @@ public class DanceDanceRevolution {
             commandList.add(command);
         }
     }
-
 }
