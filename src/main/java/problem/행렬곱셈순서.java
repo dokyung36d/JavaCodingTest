@@ -1,13 +1,11 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 행렬곱셈순서 {
     static int N;
     static int[][] infoMatrix;
-
 
     public static void main(String[] args) throws Exception {
         init();
@@ -17,15 +15,21 @@ public class 행렬곱셈순서 {
     public static void solution() {
         int[][] dpMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
-            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE);
+            Arrays.fill(dpMatrix[i], Integer.MAX_VALUE / 2);
             dpMatrix[i][i] = 0;
         }
 
-        for (int gap = 1; gap < N; gap++) {
+
+        for (int i = 0; i < N - 1; i++) {
+            dpMatrix[i][i + 1] = infoMatrix[i][0] * infoMatrix[i][1] * infoMatrix[i + 1][1];
+        }
+
+        for (int gap = 2; gap < N; gap++) {
             for (int startIndex = 0; startIndex + gap < N; startIndex++) {
                 int endIndex = startIndex + gap;
 
-                for (int midIndex = startIndex; midIndex < endIndex; midIndex++) {
+                for (int offest = 0; offest < gap; offest++) {
+                    int midIndex = startIndex + offest;
                     dpMatrix[startIndex][endIndex] = Math.min(dpMatrix[startIndex][endIndex],
                             dpMatrix[startIndex][midIndex] + dpMatrix[midIndex + 1][endIndex] +
                                     infoMatrix[startIndex][0] * infoMatrix[midIndex][1] * infoMatrix[endIndex][1]);
