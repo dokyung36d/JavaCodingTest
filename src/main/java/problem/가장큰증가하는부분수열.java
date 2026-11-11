@@ -1,34 +1,33 @@
 package problem;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public class 가장큰증가하는부분수열 {
     static int N;
     static int[] numList;
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws Exception {
         init();
+        solution();
+    }
+
+    public static void solution() {
         List<Integer> dpList = new ArrayList<>();
-        Map<Integer, Integer> dpMap = new HashMap<>();
         dpList.add(numList[0]);
 
-        int answer = 1;
-
         for (int i = 1; i < N; i++) {
-            int curNum = numList[i];
-            int index = Collections.binarySearch(dpList, curNum);
-            if (index >= 0) {
-                continue;
-            }
+            int num = numList[i];
 
-            if (curNum > dpList.get(dpList.size() - 1)) {
-                dpList.add(curNum);
+            int index = Collections.binarySearch(dpList, num);
+            if (index >= 0) { continue; }
+
+            index = - index - 1;
+            if (index == dpList.size()) {
+                dpList.add(num);
             }
             else {
-                int insertIndex = -index - 1;
-                dpList.set(insertIndex, numList[i]);
+                dpList.set(index, num);
             }
         }
 
@@ -43,6 +42,7 @@ public class 가장큰증가하는부분수열 {
 
         numList = new int[N];
         st = new StringTokenizer(br.readLine());
+
         for (int i = 0; i < N; i++) {
             numList[i] = Integer.parseInt(st.nextToken());
         }
