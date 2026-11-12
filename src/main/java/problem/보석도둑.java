@@ -1,13 +1,12 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 보석도둑 {
     static int N, K;
-    static PriorityQueue<Gem> gemPq;
-    static PriorityQueue<PolledGem> polledGemPq;
+    static PriorityQueue<Gem> gemPQ;
+    static PriorityQueue<PolledGem> polledGemPQ;
     static int[] bagList;
 
     public static class Gem implements Comparable<Gem> {
@@ -34,6 +33,11 @@ public class 보석도둑 {
             this.v = v;
         }
 
+        public PolledGem(Gem gem) {
+            this.m = gem.m;
+            this.v = gem.v;
+        }
+
         @Override
         public int compareTo(PolledGem anotherPolledGem) {
             return Integer.compare(-this.v, -anotherPolledGem.v);
@@ -46,29 +50,26 @@ public class 보석도둑 {
     }
 
     public static void solution() {
-        long answer = (long) 0;
+        long answer = 0;
 
-        for (int bag : bagList) {
-            while (!gemPq.isEmpty()) {
-                Gem gem = gemPq.poll();
+        for (int i = 0; i < K; i++) {
+            int bagSize = bagList[i];
 
-                if (gem.m > bag) {
-                    gemPq.add(gem);
+            while (!gemPQ.isEmpty()) {
+                Gem gem = gemPQ.poll();
+                if (gem.m > bagSize) {
+                    gemPQ.add(gem);
                     break;
                 }
 
-                polledGemPq.add(new PolledGem(gem.m, gem.v));
+                polledGemPQ.add(new PolledGem(gem));
             }
 
-
-            if (!polledGemPq.isEmpty()) {
-                PolledGem polledGem = polledGemPq.poll();
-
+            if (!polledGemPQ.isEmpty()) {
+                PolledGem polledGem = polledGemPQ.poll();
                 answer += (long) polledGem.v;
             }
         }
-
-
         System.out.println(answer);
     }
 
@@ -79,18 +80,17 @@ public class 보석도둑 {
         N = Integer.parseInt(st.nextToken());
         K = Integer.parseInt(st.nextToken());
 
-        gemPq = new PriorityQueue<>();
-        polledGemPq = new PriorityQueue<>();
+
+        gemPQ = new PriorityQueue<>();
+        polledGemPQ = new PriorityQueue<>();
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
 
             int m = Integer.parseInt(st.nextToken());
-            int v = Integer.parseInt(st.nextToken());
+            int k = Integer.parseInt(st.nextToken());
 
-
-            gemPq.add(new Gem(m, v));
+            gemPQ.add(new Gem(m, k));
         }
-
 
         bagList = new int[K];
         for (int i = 0; i < K; i++) {
@@ -98,7 +98,8 @@ public class 보석도둑 {
 
             bagList[i] = Integer.parseInt(st.nextToken());
         }
-
         Arrays.sort(bagList);
+
+
     }
 }
