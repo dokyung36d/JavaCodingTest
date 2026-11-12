@@ -4,45 +4,8 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int N, K;
-    static PriorityQueue<Gem> gemPQ;
-    static PriorityQueue<PolledGem> polledGemPQ;
-    static int[] bagList;
-
-    public static class Gem implements Comparable<Gem> {
-        int m;
-        int v;
-
-        public Gem(int m, int v) {
-            this.m = m;
-            this.v = v;
-        }
-
-        @Override
-        public int compareTo(Gem anotherGem) {
-            return Integer.compare(this.m, anotherGem.m);
-        }
-    }
-
-    public static class PolledGem implements Comparable<PolledGem> {
-        int m;
-        int v;
-
-        public PolledGem(int m, int v) {
-            this.m = m;
-            this.v = v;
-        }
-
-        public PolledGem(Gem gem) {
-            this.m = gem.m;
-            this.v = gem.v;
-        }
-
-        @Override
-        public int compareTo(PolledGem anotherPolledGem) {
-            return Integer.compare(-this.v, -anotherPolledGem.v);
-        }
-    }
+    static long A, B;
+    static List<Long> dpList;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -50,56 +13,41 @@ public class Main {
     }
 
     public static void solution() {
+        dpList = new ArrayList<>();
+        dpList.add((long) 1);
+        while (Math.pow(2, dpList.size()) < B) {
+            dpList.add((long) 2 * dpList.get(dpList.size() - 1) + (long) Math.pow(2, dpList.size()));
+        }
+
+        long answer = recursive(B) - recursive(A - 1);
+        System.out.println(answer);
+    }
+
+    public static long recursive(long num) {
+        if (num == 0) { return 0; }
+        if (num == 1) { return 1; }
+
         long answer = 0;
 
-        for (int i = 0; i < K; i++) {
-            int bagSize = bagList[i];
 
-            while (!gemPQ.isEmpty()) {
-                Gem gem = gemPQ.poll();
-                if (gem.m > bagSize) {
-                    gemPQ.add(gem);
-                    break;
-                }
+        int logValue = getLog2Value(num);
+        long expNum = (long) Math.pow(2, logValue);
+        answer += dpList.get(logValue - 1);
+        answer += (num - expNum + 1);
+        answer += recursive(num - expNum);
 
-                polledGemPQ.add(new PolledGem(gem));
-            }
+        return answer;
+    }
 
-            if (!polledGemPQ.isEmpty()) {
-                PolledGem polledGem = polledGemPQ.poll();
-                answer += (long) polledGem.v;
-            }
-        }
-        System.out.println(answer);
+    public static int getLog2Value(long num) {
+        return (int) (Math.log(num) /  Math.log(2));
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
 
-        N = Integer.parseInt(st.nextToken());
-        K = Integer.parseInt(st.nextToken());
-
-
-        gemPQ = new PriorityQueue<>();
-        polledGemPQ = new PriorityQueue<>();
-        for (int i = 0; i < N; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            int m = Integer.parseInt(st.nextToken());
-            int k = Integer.parseInt(st.nextToken());
-
-            gemPQ.add(new Gem(m, k));
-        }
-
-        bagList = new int[K];
-        for (int i = 0; i < K; i++) {
-            st = new StringTokenizer(br.readLine());
-
-            bagList[i] = Integer.parseInt(st.nextToken());
-        }
-        Arrays.sort(bagList);
-
-
+        A = Long.parseLong(st.nextToken());
+        B = Long.parseLong(st.nextToken());
     }
 }
