@@ -1,16 +1,13 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
-
+import java.util.*;
 
 public class 벽부수고이동하기4 {
     static int N, M;
-    static int[][] mainMatrix;
-    static int[][] dpMatrix;
-    static Map<Integer, Integer> groupSizeMap;
+    static int[][] mainMatrix, groupMatrix;
     static Pos[] directions = {new Pos(-1, 0), new Pos(0, 1), new Pos(1, 0), new Pos(0, -1)};
+    static Map<Integer, Integer> groupSizeMap;
 
     public static class Pos {
         int row;
@@ -26,11 +23,23 @@ public class 벽부수고이동하기4 {
         }
 
         public boolean isValidIndex() {
-            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) {
-                return false;
-            }
-
+            if (this.row < 0 || this.row >= N || this.col < 0 || this.col >= M) { return false; }
             return true;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Pos anotherPos = (Pos) obj;
+            if (this.row == anotherPos.row && this.col == anotherPos.col) { return true; }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.row, this.col);
         }
     }
 
@@ -40,29 +49,39 @@ public class 벽부수고이동하기4 {
     }
 
     public static void solution() {
-        setDpMatrix();
+        int pk = 2;
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                if (mainMatrix[i][j] != 0) { continue; }
+
+                bfs(new Pos(i, j), pk);
+                pk += 1;
+            }
+        }
 
 
         int[][] answerMatrix = new int[N][M];
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < M; j++) {
-                if (mainMatrix[i][j] == 0) { continue; }
+                if (mainMatrix[i][j] != 1) { continue; }
+                Pos curPos = new Pos(i, j);
 
                 Map<Integer, Integer> nearGroupMap = new HashMap<>();
                 for (Pos direction : directions) {
-                    Pos movedPos = new Pos(i, j).addPos(direction);
+                    Pos movedPos = curPos.addPos(direction);
                     if (!movedPos.isValidIndex()) { continue; }
                     if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
 
-                    nearGroupMap.put(dpMatrix[movedPos.row][movedPos.col], 1);
+                    nearGroupMap.put(mainMatrix[movedPos.row][movedPos.col], 1);
                 }
 
-                int totalSize = 0;
-                for (int uniqueNum : nearGroupMap.keySet()) {
-                    totalSize += groupSizeMap.get(uniqueNum);
+
+                int nearGroupSize = 0;
+                for (int groupPk : nearGroupMap.keySet()) {
+                    nearGroupSize += groupSizeMap.get(groupPk);
                 }
-                totalSize += 1;
-                answerMatrix[i][j] = totalSize % 10;
+
+                answerMatrix[i][j] = (nearGroupSize + 1) % 10;
             }
         }
 
@@ -74,46 +93,37 @@ public class 벽부수고이동하기4 {
             }
             sb.append("\n");
         }
+
+
         System.out.println(sb.toString().substring(0, sb.length() - 1));
     }
 
-    public static void setDpMatrix() {
-        dpMatrix = new int[N][M];
-        groupSizeMap = new HashMap<>();
+    public static void bfs(Pos startPos, int pk) {
+        Deque<Pos> queue = new ArrayDeque<>();
+        queue.add(startPos);
 
+        int groupSize = 0;
         int[][] visited = new int[N][M];
-        int uniqueNum = 1;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (mainMatrix[i][j] == 1) { continue; }
-                if (visited[i][j] == 1) { continue; }
+        while (!queue.isEmpty()) {
+            Pos curPos = queue.pollFirst();
 
-                int groupSize = 0;
+            if (visited[curPos.row][curPos.col] == 1) { continue; }
+            visited[curPos.row][curPos.col] = 1;
 
-                Deque<Pos> queue = new ArrayDeque<>();
-                queue.add(new Pos(i, j));
+            mainMatrix[curPos.row][curPos.col] = pk;
+            groupSize += 1;
 
-                while (!queue.isEmpty()) {
-                    Pos curPos = queue.poll();
-                    if (visited[curPos.row][curPos.col] == 1) { continue; }
-                    visited[curPos.row][curPos.col] = 1;
-                    dpMatrix[curPos.row][curPos.col] = uniqueNum;
-                    groupSize += 1;
+            for (Pos direction : directions) {
+                Pos movedPos = curPos.addPos(direction);
+                if (!movedPos.isValidIndex()) { continue; }
+                if (visited[movedPos.row][movedPos.col] == 1) { continue; }
+                if (mainMatrix[movedPos.row][movedPos.col] != 0) { continue; }
 
-                    for (Pos direction : directions) {
-                        Pos movedPos = curPos.addPos(direction);
-                        if (!movedPos.isValidIndex()) { continue; }
-                        if (visited[movedPos.row][movedPos.col] == 1) { continue; }
-                        if (mainMatrix[movedPos.row][movedPos.col] == 1) { continue; }
-
-                        queue.addLast(movedPos);
-                    }
-                }
-
-                groupSizeMap.put(uniqueNum, groupSize);
-                uniqueNum += 1;
+                queue.add(movedPos);
             }
         }
+
+        groupSizeMap.put(pk, groupSize);
     }
 
     public static void init() throws IOException {
@@ -123,13 +133,17 @@ public class 벽부수고이동하기4 {
         N = Integer.parseInt(st.nextToken());
         M = Integer.parseInt(st.nextToken());
 
+
         mainMatrix = new int[N][M];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
             String string = st.nextToken();
+
             for (int j = 0; j < M; j++) {
                 mainMatrix[i][j] = Character.getNumericValue(string.charAt(j));
             }
         }
+
+        groupSizeMap = new HashMap<>();
     }
 }
