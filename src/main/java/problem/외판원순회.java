@@ -1,30 +1,43 @@
 package problem;
 
-import java.util.*;
 import java.io.*;
-
+import java.util.*;
 
 public class 외판원순회 {
     static int N;
-    static int[][] graphMatrix;
-    static int allVisited;
-    static int[][] visitedMatrix;
+    static int[][] costMatrix;
+    static int allVisited ;
+    static Map<Node, Integer> visitedMap;
 
     public static class Node implements Comparable<Node> {
-        int curPos;
+        int curCity;
         int visited;
-        int cost;
+        int totalCost;
 
-        public Node(int curPos, int visited, int cost) {
-            this.curPos = curPos;
+        public Node(int curCity, int visited, int totalCost) {
+            this.curCity = curCity;
             this.visited = visited;
-            this.cost = cost;
+            this.totalCost = totalCost;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Node anotherNode = (Node) obj;
+            if (this.curCity == anotherNode.curCity && this.visited == anotherNode.visited) { return true; }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.curCity, this.visited);
+        }
 
         @Override
         public int compareTo(Node anotherNode) {
-            return Integer.compare(this.cost, anotherNode.cost);
+            return Integer.compare(this.totalCost, anotherNode.totalCost);
         }
     }
 
@@ -34,34 +47,32 @@ public class 외판원순회 {
     }
 
     public static void solution() {
-        PriorityQueue<Node> queue = new PriorityQueue<>();
-        queue.add(new Node(0, 1, 0));
-
         int answer = Integer.MAX_VALUE / 2;
-        while (!queue.isEmpty()) {
-            Node node = queue.poll();
 
-            if (node.visited == allVisited && graphMatrix[node.curPos][0] != 0) {
-                answer = Math.min(answer, node.cost + graphMatrix[node.curPos][0]);
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(0, 1, 0));
+
+        visitedMap = new HashMap<>();
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+            if (visitedMap.get(node) != null) { continue; }
+            visitedMap.put(node, 1);
+
+            if (node.visited == allVisited && costMatrix[node.curCity][0] != 0) {
+                answer = Math.min(answer, node.totalCost + costMatrix[node.curCity][0]);
                 continue;
             }
 
-            if (visitedMatrix[node.curPos][node.visited] == 1) { continue; }
-            visitedMatrix[node.curPos][node.visited] = 1;
 
             for (int i = 0; i < N; i++) {
-                if (graphMatrix[node.curPos][i] == 0) { continue; }
+                if (costMatrix[node.curCity][i] == 0) { continue; }
+                if ((node.visited & (1 << i)) != 0) { continue; }
 
-                int updatedVisited = node.visited | (1 << i);
-                if (node.visited == updatedVisited) { continue; }
-
-                if (visitedMatrix[i][updatedVisited] == 1) { continue; }
-
-
-                queue.add(new Node(i, updatedVisited, node.cost + graphMatrix[node.curPos][i]));
+                int updatedVisited = (node.visited | (1 << i));
+                pq.add(new Node(i, updatedVisited, node.totalCost + costMatrix[node.curCity][i]));
             }
         }
-
 
         System.out.println(answer);
     }
@@ -73,17 +84,12 @@ public class 외판원순회 {
         N = Integer.parseInt(st.nextToken());
         allVisited = (int) Math.pow(2, N) - 1;
 
-        graphMatrix = new int[N][N];
-
+        costMatrix = new int[N][N];
         for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
-
             for (int j = 0; j < N; j++) {
-                graphMatrix[i][j] = Integer.parseInt(st.nextToken());
+                costMatrix[i][j] = Integer.parseInt(st.nextToken());
             }
         }
-
-
-        visitedMatrix = new int[N][(int) Math.pow(2, N)];
     }
 }

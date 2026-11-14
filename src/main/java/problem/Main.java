@@ -4,8 +4,42 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int G, P;
-    static int[] parentList, planeList;
+    static int N;
+    static int[][] costMatrix;
+    static int allVisited ;
+    static Map<Node, Integer> visitedMap;
+
+    public static class Node implements Comparable<Node> {
+        int curCity;
+        int visited;
+        int totalCost;
+
+        public Node(int curCity, int visited, int totalCost) {
+            this.curCity = curCity;
+            this.visited = visited;
+            this.totalCost = totalCost;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) { return true; }
+            if (obj == null || this.getClass() != obj.getClass()) { return false; }
+
+            Node anotherNode = (Node) obj;
+            if (this.curCity == anotherNode.curCity && this.visited == anotherNode.visited) { return true; }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.curCity, this.visited);
+        }
+
+        @Override
+        public int compareTo(Node anotherNode) {
+            return Integer.compare(this.totalCost, anotherNode.totalCost);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         init();
@@ -13,56 +47,49 @@ public class Main {
     }
 
     public static void solution() {
-        for (int i = 0; i < P; i++) {
-            int plane = planeList[i];
-            int parent = findParent(plane);
+        int answer = Integer.MAX_VALUE / 2;
 
-            if (parent == 0) {
-                System.out.println(i);
-                return;
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(0, 1, 0));
+
+        visitedMap = new HashMap<>();
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+
+            if (visitedMap.get(node) != null) { continue; }
+            visitedMap.put(node, 1);
+
+            if (node.visited == allVisited && costMatrix[node.curCity][0] != 0) {
+                answer = Math.min(answer, node.totalCost + costMatrix[node.curCity][0]);
+                continue;
             }
 
 
-            union(parent, findParent(parent - 1));
+            for (int i = 0; i < N; i++) {
+                if (costMatrix[node.curCity][i] == 0) { continue; }
+                if ((node.visited & (1 << i)) != 0) { continue; }
+
+                int updatedVisited = (node.visited | (1 << i));
+                pq.add(new Node(i, updatedVisited, node.totalCost + costMatrix[node.curCity][i]));
+            }
         }
 
-        System.out.println(P);
-    }
-
-    public static int findParent(int num) {
-        if (parentList[num] == num) { return num; }
-
-        return parentList[num] = findParent(parentList[num]);
-    }
-
-    public static void union(int num1, int num2) {
-        int num1Parent = findParent(num1);
-        int num2Parent = findParent(num2);
-
-        if (num1Parent == num2Parent) { return; }
-
-        parentList[Math.max(num1Parent, num2Parent)] = Math.min(num1Parent, num2Parent);
+        System.out.println(answer);
     }
 
     public static void init() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
         StringTokenizer st = new StringTokenizer(br.readLine());
-        G = Integer.parseInt(st.nextToken());
 
-        st = new StringTokenizer(br.readLine());
-        P = Integer.parseInt(st.nextToken());
+        N = Integer.parseInt(st.nextToken());
+        allVisited = (int) Math.pow(2, N) - 1;
 
-        planeList = new int[P];
-        for (int i = 0; i < P; i++) {
+        costMatrix = new int[N][N];
+        for (int i = 0; i < N; i++) {
             st = new StringTokenizer(br.readLine());
-
-            planeList[i] = Integer.parseInt(st.nextToken());
-        }
-
-        parentList = new int[G + 1];
-        for (int i = 0; i < G + 1; i++) {
-            parentList[i] = i;
+            for (int j = 0; j < N; j++) {
+                costMatrix[i][j] = Integer.parseInt(st.nextToken());
+            }
         }
     }
 }
